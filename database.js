@@ -1,211 +1,138 @@
-// database.js - Suporta SQLite (local) e PostgreSQL (produção)
+const { Pool } = require('pg');
+require('dotenv').config();
 
-const Database = require('better-sqlite3');
+// Detectar se está usando PostgreSQL
+const isPostgres = !!process.env.DATABASE_URL;
 
-let db;
-let isPostgres = false;
+let pool = null;
 
-// ===== DETECTAR AMBIENTE =====
-if (process.env.DATABASE_URL) {
-    // PRODUÇÃO: PostgreSQL no Render
-    console.log('🐘 Usando PostgreSQL (Produção)');
-    isPostgres = true;
-    
-    // Importa pg SOMENTE quando necessário
-    const { Pool } = require('pg');
-    
-    db = new Pool({
+// Configurar conexão PostgreSQL
+if (isPostgres) {
+    pool = new Pool({
         connectionString: process.env.DATABASE_URL,
-        ssl: {
+        ssl: process.env.NODE_ENV === 'production' ? {
             rejectUnauthorized: false
-        }
+        } : false
     });
-    
-    // Testar conexão
-    db.query('SELECT NOW()', (err, res) => {
-        if (err) {
-            console.error('❌ Erro ao conectar PostgreSQL:', err);
-        } else {
-            console.log('✅ Conectado ao PostgreSQL!');
-        }
-    });
-    
+
+    console.log('🐘 Conectado ao PostgreSQL');
 } else {
-    // DESENVOLVIMENTO: SQLite local
-    console.log('💾 Usando SQLite (Local)');
-    isPostgres = false;
+    console.log('⚠️ DATABASE_URL não encontrada');
+    console.log('💡 Configure a variável DATABASE_URL no arquivo .env');
+}
+
+// Função para executar queries
+async function query(text, params = []) {
+    if (!pool) {
+        throw new Error('Database not configured');
+    }
+
+    // Converter placeholders ? para $1, $2, etc (formato PostgreSQL)
+    let paramIndex = 1;
+    const pgText = text.replace(/\?/g, () => `$${paramIndex++}`);
     
-    db = new Database('./database/nura.db');
-    console.log('✅ Conectado ao SQLite!');
-}
-
-// ===== FUNÇÕES UNIVERSAIS =====
-
-async function query(sql, params = []) {
-    if (isPostgres) {
-        let pgSql = sql;
-        params.forEach((_, index) => {
-            pgSql = pgSql.replace('?', `$${index + 1}`);
-        });
-        
-        try {
-            const result = await db.query(pgSql, params);
-            return result.rows;
-        } catch (err) {
-            console.error('❌ Erro PostgreSQL:', err);
-            throw err;
-        }
-    } else {
-        try {
-            return db.prepare(sql).all(...params);
-        } catch (err) {
-            console.error('❌ Erro SQLite:', err);
-            throw err;
-        }
-    }
-}
-
-async function get(sql, params = []) {
-    if (isPostgres) {
-        let pgSql = sql;
-        params.forEach((_, index) => {
-            pgSql = pgSql.replace('?', `$${index + 1}`);
-        });
-        
-        try {
-            const result = await db.query(pgSql, params);
-            return result.rows[0] || null;
-        } catch (err) {
-            console.error('❌ Erro PostgreSQL:', err);
-            throw err;
-        }
-    } else {
-        try {
-            return db.prepare(sql).get(...params);
-        } catch (err) {
-            console.error('❌ Erro SQLite:', err);
-            throw err;
-        }
-    }
-}
-
-async function run(sql, params = []) {
-    if (isPostgres) {
-        let pgSql = sql;
-        params.forEach((_, index) => {
-            pgSql = pgSql.replace('?', `$${index + 1}`);
-        });
-        
-        try {
-            const result = await db.query(pgSql, params);
-            return {
-                lastInsertRowid: result.rows[0]?.id,
-                changes: result.rowCount
-            };
-        } catch (err) {
-            console.error('❌ Erro PostgreSQL:', err);
-            throw err;
-        }
-    } else {
-        try {
-            return db.prepare(sql).run(...params);
-        } catch (err) {
-            console.error('❌ Erro SQLite:', err);
-            throw err;
-        }
-    }
-}
-
-async function exec(sql) {
-    if (isPostgres) {
-        try {
-            await db.query(sql);
-        } catch (err) {
-            console.error('❌ Erro PostgreSQL:', err);
-            throw err;
-        }
-    } else {
-        db.exec(sql);
-    }
-}
-
-// ===== INICIALIZAR TABELAS =====
-async function initializeDatabase() {
     try {
-        if (isPostgres) {
-            // PostgreSQL
-            await exec(`
-                CREATE TABLE IF NOT EXISTS users (
-                    id SERIAL PRIMARY KEY,
-                    username TEXT UNIQUE NOT NULL,
-                    password TEXT NOT NULL,
-                    email TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-            
-            await exec(`
-                CREATE TABLE IF NOT EXISTS tasks (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER,
-                    title TEXT NOT NULL,
-                    description TEXT,
-                    status TEXT DEFAULT 'pending',
-                    priority TEXT DEFAULT 'medium',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-            
-            console.log('✅ Tabelas PostgreSQL criadas!');
-            
-        } else {
-            // SQLite
-            exec(`
-                CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    username TEXT UNIQUE NOT NULL,
-                    password TEXT NOT NULL,
-                    email TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-            
-            exec(`
-                CREATE TABLE IF NOT EXISTS tasks (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER,
-                    title TEXT NOT NULL,
-                    description TEXT,
-                    status TEXT DEFAULT 'pending',
-                    priority TEXT DEFAULT 'medium',
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-            
-            console.log('✅ Tabelas SQLite criadas!');
-        }
-        
-        // Criar usuário padrão
-        const userCount = await get("SELECT COUNT(*) as count FROM users");
-        
-        if (userCount.count === 0) {
-            await run(
-                "INSERT INTO users (username, password, email) VALUES (?, ?, ?)",
-                ['admin', 'admin123', 'admin@nura.ia']
-            );
-            console.log('✅ Usuário padrão criado: admin/admin123');
-        }
-        
+        const result = await pool.query(pgText, params);
+        return result.rows;
     } catch (err) {
-        console.error('❌ Erro ao inicializar banco:', err);
+        console.error('❌ Erro na query:', err.message);
+        throw err;
     }
 }
 
+// Função para pegar uma única linha
+async function get(text, params = []) {
+    const rows = await query(text, params);
+    return rows[0] || null;
+}
+
+// Função para executar comandos (INSERT, UPDATE, DELETE)
+async function run(text, params = []) {
+    if (!pool) {
+        throw new Error('Database not configured');
+    }
+
+    let paramIndex = 1;
+    const pgText = text.replace(/\?/g, () => `$${paramIndex++}`);
+    
+    try {
+        const result = await pool.query(pgText, params);
+        return {
+            changes: result.rowCount,
+            lastInsertRowid: result.rows[0]?.id || null
+        };
+    } catch (err) {
+        console.error('❌ Erro ao executar comando:', err.message);
+        throw err;
+    }
+}
+
+// Inicializar banco de dados
+async function initializeDatabase() {
+    if (!pool) {
+        console.log('⚠️ Banco de dados não configurado');
+        return;
+    }
+
+    try {
+        console.log('🔧 Verificando/criando tabelas...');
+
+        // Criar tabela de usuários
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(255) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                email VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Criar tabela de tarefas
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS tasks (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                title VARCHAR(255) NOT NULL,
+                description TEXT,
+                status VARCHAR(50) DEFAULT 'pending',
+                priority VARCHAR(50) DEFAULT 'medium',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        `);
+
+        console.log('✅ Tabelas verificadas/criadas com sucesso');
+
+        // Verificar se já existe usuário admin
+        const adminExists = await get(
+            "SELECT id FROM users WHERE username = $1",
+            ['admin']
+        );
+
+        if (!adminExists) {
+            // Criar usuário admin padrão
+            await pool.query(
+                "INSERT INTO users (username, password, email) VALUES ($1, $2, $3)",
+                ['admin', 'admin123', 'admin@nura.com']
+            );
+            console.log('✅ Usuário admin criado (admin/admin123)');
+        } else {
+            console.log('✅ Usuário admin já existe');
+        }
+
+    } catch (err) {
+        console.error('❌ Erro ao inicializar banco:', err.message);
+        throw err;
+    }
+}
+
+// Fechar conexão
 function close() {
-    if (isPostgres) {
-        db.end();
-    } else {
-        db.close();
+    if (pool) {
+        pool.end();
+        console.log('✅ Conexão PostgreSQL fechada');
     }
 }
 
@@ -213,7 +140,6 @@ module.exports = {
     query,
     get,
     run,
-    exec,
     initializeDatabase,
     close,
     isPostgres

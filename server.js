@@ -2,8 +2,8 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { GoogleGenAI } = require('@google/genai');
-const db = require('./database'); // NOVA LINHA - usar o database.js
+const { GoogleGenerativeAI } = require('@google/generative-ai'); // ✅ CORRIGIDO
+const db = require('./database'); // usar o database.js
 
 dotenv.config();
 
@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY); // ✅ CORRIGIDO
 
 // ===== INICIALIZAR BANCO =====
 db.initializeDatabase();
@@ -430,18 +430,18 @@ app.post("/api/gerar-rotina", async (req, res) => {
         Apenas a rotina formatada, sem explicações.
         `;
 
-        const response = await ai.models.generateContent({
-            model: "gemini-2.0-flash",
-            contents: prompt,
-        });
+        // ✅ CORRIGIDO - usar o método correto do Gemini
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const rotina = response.text();
 
-        const rotina = response.text;
         console.log("✅ Rotina gerada com sucesso!");
 
         res.json({ 
             success: true, 
             rotina,
-            modeloUsado: "gemini-2.0-flash",
+            modeloUsado: "gemini-pro",
             descricaoOriginal: descricao,
             periodo: `${horaInicio} - ${horaFim}`,
             timestamp: new Date().toISOString()

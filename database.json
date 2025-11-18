@@ -1,0 +1,282 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Administrador",
+      "email": "admin@nura.ia",
+      "password": "admin123",
+      "created_at": "2025-11-16T02:20:14.021Z"
+    },
+    {
+      "id": 2,
+      "name": "Usuario Teste",
+      "email": "teste@nura.ia",
+      "password": "teste123",
+      "created_at": "2025-11-16T02:20:14.021Z"
+    },
+    {
+      "id": 3,
+      "name": "Pichau",
+      "email": "pichau@nura.ia",
+      "password": "nura123",
+      "created_at": "2025-11-16T02:20:14.021Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "title": "Reunião com equipe",
+      "description": "Reunião semanal",
+      "status": "pending",
+      "priority": "high",
+      "created_at": "2025-11-16T02:20:14.021Z"
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "title": "Finalizar relatório",
+      "description": "Relatório mensal",
+      "status": "in_progress",
+      "priority": "medium",
+      "created_at": "2025-11-16T02:20:14.021Z"
+    },
+    {
+      "id": 3,
+      "user_id": 1,
+      "title": "Estudar novas tecnologias",
+      "description": "Dedicar 2 horas",
+      "status": "completed",
+      "priority": "low",
+      "created_at": "2025-11-16T02:20:14.021Z"
+    },
+    {
+      "id": 4,
+      "user_id": 1,
+      "title": "## Rotina Básica e Fácil (08:00 - 18:00)",
+      "description": "",
+      "status": "pendente",
+      "priority": "low",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.835Z",
+      "updated_at": "2025-11-16T02:20:43.835Z"
+    },
+    {
+      "id": 5,
+      "user_id": 1,
+      "title": "**Acordar e Alongar:** Despertar suave, alongar o corpo e beber um copo de água.",
+      "description": "",
+      "status": "pendente",
+      "priority": "low",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.848Z",
+      "updated_at": "2025-11-16T02:20:43.848Z"
+    },
+    {
+      "id": 6,
+      "user_id": 1,
+      "title": "**Café da Manhã:** Preparar e saborear um café da manhã nutritivo.",
+      "description": "",
+      "status": "pendente",
+      "priority": "low",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.851Z",
+      "updated_at": "2025-11-16T02:20:43.851Z"
+    },
+    {
+      "id": 7,
+      "user_id": 1,
+      "title": "**Trabalho/Estudo:** Iniciar as tarefas do dia, focando em uma atividade principal.",
+      "description": "",
+      "status": "pendente",
+      "priority": "high",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.853Z",
+      "updated_at": "2025-11-16T02:20:43.853Z"
+    },
+    {
+      "id": 8,
+      "user_id": 1,
+      "title": "**Pausa Rápida:** Levantar, caminhar, alongar e tomar um chá/café.",
+      "description": "",
+      "status": "pendente",
+      "priority": "low",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.856Z",
+      "updated_at": "2025-11-16T02:20:43.856Z"
+    },
+    {
+      "id": 9,
+      "user_id": 1,
+      "title": "**Trabalho/Estudo:** Continuar com as tarefas do dia, focando em uma atividade principal.",
+      "description": "",
+      "status": "pendente",
+      "priority": "high",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.860Z",
+      "updated_at": "2025-11-16T02:20:43.860Z"
+    },
+    {
+      "id": 10,
+      "user_id": 1,
+      "title": "**Almoço:** Preparar/pedir e almoçar com calma, sem distrações.",
+      "description": "",
+      "status": "pendente",
+      "priority": "low",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.863Z",
+      "updated_at": "2025-11-16T02:20:43.863Z"
+    },
+    {
+      "id": 11,
+      "user_id": 1,
+      "title": "**Descanso/Lazer:** Relaxar, ler um livro, ouvir música ou tirar um breve cochilo (opcional).",
+      "description": "",
+      "status": "pendente",
+      "priority": "low",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.866Z",
+      "updated_at": "2025-11-16T02:20:43.866Z"
+    },
+    {
+      "id": 12,
+      "user_id": 1,
+      "title": "**Trabalho/Estudo:** Retomar as tarefas do dia, focando em uma atividade principal.",
+      "description": "",
+      "status": "pendente",
+      "priority": "high",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.869Z",
+      "updated_at": "2025-11-16T02:20:43.869Z"
+    },
+    {
+      "id": 13,
+      "user_id": 1,
+      "title": "**Pausa para o Lanche:** Fazer um lanche leve e revigorante (fruta, iogurte, etc.).",
+      "description": "",
+      "status": "pendente",
+      "priority": "low",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.872Z",
+      "updated_at": "2025-11-16T02:20:43.872Z"
+    },
+    {
+      "id": 14,
+      "user_id": 1,
+      "title": "**Trabalho/Estudo:** Finalizar as tarefas do dia, organizar e planejar o dia seguinte.",
+      "description": "",
+      "status": "pendente",
+      "priority": "high",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.875Z",
+      "updated_at": "2025-11-16T02:20:43.875Z"
+    },
+    {
+      "id": 15,
+      "user_id": 1,
+      "title": "**Atividade Física Leve/Lazer:** Caminhada, alongamento, yoga, ou atividade prazerosa para relaxar e desestressar.",
+      "description": "",
+      "status": "pendente",
+      "priority": "low",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.877Z",
+      "updated_at": "2025-11-16T02:20:43.877Z"
+    },
+    {
+      "id": 16,
+      "user_id": 1,
+      "title": "**Observações:**",
+      "description": "",
+      "status": "pendente",
+      "priority": "low",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.879Z",
+      "updated_at": "2025-11-16T02:20:43.879Z"
+    },
+    {
+      "id": 17,
+      "user_id": 1,
+      "title": "*   Esta é uma rotina básica e fácil, adaptável às suas necessidades e horários.",
+      "description": "",
+      "status": "pendente",
+      "priority": "low",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.881Z",
+      "updated_at": "2025-11-16T02:20:43.881Z"
+    },
+    {
+      "id": 18,
+      "user_id": 1,
+      "title": "*   As atividades de \"Trabalho/Estudo\" podem ser substituídas por outras tarefas, como afazeres domésticos, projetos pessoais, etc.",
+      "description": "",
+      "status": "pendente",
+      "priority": "high",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.883Z",
+      "updated_at": "2025-11-16T02:20:43.884Z"
+    },
+    {
+      "id": 19,
+      "user_id": 1,
+      "title": "*   É importante ajustar os horários das pausas e do almoço de acordo com a sua necessidade.",
+      "description": "",
+      "status": "pendente",
+      "priority": "high",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.887Z",
+      "updated_at": "2025-11-16T02:20:43.887Z"
+    },
+    {
+      "id": 20,
+      "user_id": 1,
+      "title": "*   Mantenha-se hidratado ao longo do dia.",
+      "description": "",
+      "status": "pendente",
+      "priority": "low",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.889Z",
+      "updated_at": "2025-11-16T02:20:43.889Z"
+    },
+    {
+      "id": 21,
+      "user_id": 1,
+      "title": "*   Priorize o sono para uma rotina mais eficaz.",
+      "description": "",
+      "status": "pendente",
+      "priority": "low",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.892Z",
+      "updated_at": "2025-11-16T02:20:43.892Z"
+    },
+    {
+      "id": 22,
+      "user_id": 1,
+      "title": "Lembre-se, o mais importante é criar uma rotina que funcione para você e que te ajude a alcançar seus objetivos de forma equilibrada e saudável. Boa sorte!",
+      "description": "",
+      "status": "pendente",
+      "priority": "high",
+      "due_date": "2025-11-16",
+      "responsible": "Eu",
+      "created_at": "2025-11-16T02:20:43.894Z",
+      "updated_at": "2025-11-16T02:20:43.894Z"
+    }
+  ]
+}

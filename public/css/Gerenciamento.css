@@ -1,0 +1,941 @@
+/* ===== VARIÁVEIS ===== */
+:root {
+  --primary: #3B8C6E;
+  --primary-hover: #89D99D;
+  --success: #198754;
+  --success-hover: #157347;
+  --dark: #212529;
+  --light: #f8f9fa;
+  --gray: #6c757d;
+  --border: rgba(0,0,0,0.125);
+  --container-width: 1140px;
+  --radius: 0.375rem;
+}
+
+/* ===== RESET ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial,
+sans-serif;
+  background-color: var(--light);
+  color: var(--dark);
+  line-height: 1.5;
+}
+
+/* ===== CONTAINERS ===== */
+.container {
+  width: 100%;
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+  background-color: var(--primary);
+  padding: 0.75rem 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-brand {
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.5rem;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.navbar-brand:hover {
+  opacity: 0.9;
+}
+
+.navbar-nav {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+  margin: 0;
+}
+
+.navbar-nav .nav-link {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Menu responsivo */
+.navbar-toggler {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .navbar-nav {
+    display: none;
+    flex-direction: column;
+    background-color: var(--primary);
+    padding: 1rem;
+    border-radius: var(--radius);
+    position: absolute;
+    top: 60px;
+    right: 15px;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+
+  .navbar-nav.show {
+    display: flex;
+  }
+
+  .navbar-toggler {
+    display: block;
+  }
+}
+
+/* ===== HERO ===== */
+.hero {
+  background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+  padding: 3rem 1rem;
+  text-align: center;
+  border-radius: var(--radius);
+  margin-top: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--dark);
+}
+
+.hero p {
+  font-size: 1.15rem;
+  color: var(--gray);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* ===== TOOLBAR ===== */
+.toolbar {
+  padding: 1rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.view-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background-color: #fff;
+  padding: 0.25rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.view-tab {
+  padding: 0.5rem 1rem;
+  border-radius: calc(var(--radius) - 2px);
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--gray);
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.view-tab:hover {
+  background-color: var(--light);
+}
+
+.view-tab.active {
+  background-color: var(--primary);
+  color: white;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ===== ÁREA DE CONTEÚDO ===== */
+.content-area {
+  margin-top: 1.5rem;
+}
+
+/* ===== GRUPOS DE TAREFAS ===== */
+.task-group {
+  margin-bottom: 2rem;
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  cursor: pointer;
+  background-color: var(--light);
+  transition: background-color 0.2s;
+}
+
+.group-header:hover {
+  background-color: #e9ecef;
+}
+
+.group-toggle {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.group-status {
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-progress {
+  background-color: var(--primary);
+  color: white;
+}
+
+.status-pending {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.status-completed {
+  background-color: var(--success);
+  color: white;
+}
+
+.group-count {
+  color: var(--gray);
+  font-size: 0.9rem;
+  font-weight: 600;
+  background-color: white;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+}
+
+/* ===== TABELA DE TAREFAS ===== */
+.task-table {
+  background-color: white;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 40px 2fr 1fr 1fr 1fr 1fr 100px;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--light);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.task-row {
+  display: grid;
+  grid-template-columns: 40px 2fr 1fr 1fr 1fr 1fr 100px;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.task-row:hover {
+  background-color: #f8f9fa;
+}
+
+.task-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--gray);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-checkbox:hover {
+  border-color: var(--primary);
+}
+
+.task-name {
+  font-size: 0.95rem;
+  color: var(--dark);
+  font-weight: 500;
+}
+
+.task-assignee {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover)
+100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: white;
+}
+
+.task-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--gray);
+  font-size: 0.85rem;
+}
+
+/* ===== BADGES DE PRIORIDADE ===== */
+.priority-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: inline-block;
+}
+
+.priority-high {
+  background-color: #dc3545;
+  color: white;
+}
+
+.priority-medium {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.priority-low {
+  background-color: #6c757d;
+  color: white;
+}
+
+/* ===== BADGES DE STATUS ===== */
+.status-badge {
+  padding: 0.3rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.status-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-badge.progress {
+  background-color: #d1f4e0;
+  color: var(--primary);
+}
+
+.status-badge.progress::before {
+  background-color: var(--primary);
+}
+
+.status-badge.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.pending::before {
+  background-color: #ffc107;
+}
+
+.status-badge.completed {
+  background-color: #d4edda;
+  color: var(--success);
+}
+
+.status-badge.completed::before {
+  background-color: var(--success);
+}
+
+/* ===== ADICIONAR TAREFA ===== */
+.add-task {
+  padding: 1rem;
+  color: var(--gray);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  border-top: 1px dashed var(--border);
+}
+
+.add-task:hover {
+  color: var(--primary);
+  background-color: var(--light);
+}
+
+/* ===== BOTÕES ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid transparent;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  color: #fff;
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn-success {
+  color: #fff;
+  background-color: var(--success);
+  border-color: var(--success);
+}
+
+.btn-success:hover {
+  background-color: var(--success-hover);
+  border-color: var(--success-hover);
+}
+
+.btn-secondary {
+  color: var(--dark);
+  background-color: white;
+  border-color: var(--border);
+}
+
+.btn-secondary:hover {
+  background-color: var(--light);
+}
+
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.btn-outline-danger {
+  color: #dc3545;
+  background-color: transparent;
+  border-color: #dc3545;
+}
+
+.btn-outline-danger:hover {
+  color: #fff;
+  background-color: #dc3545;
+}
+
+/* ===== CARDS ===== */
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: all 0.3s;
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+}
+
+.card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+.card-title {
+  margin-bottom: 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.card-text {
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+/* ===== ÍCONES ===== */
+.icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* ===== UTILITÁRIOS ===== */
+.text-center { text-align: center; }
+.text-muted { color: var(--gray); }
+.d-flex { display: flex; }
+.justify-content-between { justify-content: space-between; }
+.align-items-center { align-items: center; }
+.my-3 { margin-top: 1rem; margin-bottom: 1rem; }
+.my-5 { margin-top: 3rem; margin-bottom: 3rem; }
+.mb-0 { margin-bottom: 0; }
+.mb-3 { margin-bottom: 1rem; }
+.mb-4 { margin-bottom: 1.5rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 1rem; }
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* ===== FOOTER ===== */
+footer {
+  background-color: var(--dark);
+  color: rgba(255, 255, 255, 0.75);
+  text-align: center;
+  padding: 1.5rem;
+  margin-top: 3rem;
+}
+
+footer p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero p {
+    font-size: 1rem;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-actions {
+    justify-content: center;
+  }
+
+  .table-header,
+  .task-row {
+    grid-template-columns: 40px 1fr 80px;
+    font-size: 0.85rem;
+  }
+
+  .table-header div:nth-child(n+4),
+  .task-row > div:nth-child(n+4) {
+    display: none;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* ========================================
+   ESTILOS PARA SISTEMA DE MODAIS E INTERAÇÕES
+   Adicione este CSS ao final do arquivo Tela_Gerenciamento.css
+   ======================================== */
+
+/* ========================================
+   ESTILOS PARA SISTEMA DE MODAIS E INTERAÇÕES
+   Adicione este CSS ao final do arquivo Tela_Gerenciamento.css
+   ======================================== */
+
+/* ===== MODAL BASE ===== */
+/* Sobreposição escura que cobre toda a tela */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* ===== CONTEÚDO DO MODAL ===== */
+/* Caixa branca centralizada com o conteúdo */
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  min-width: 400px;
+  max-width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--dark);
+  font-size: 1.5rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* ===== INPUT DE TEXTO DO MODAL ===== */
+/* Campo de entrada estilizado para modais */
+.modal-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+  transition: all 0.3s;
+  font-family: inherit;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 140, 110, 0.1);
+}
+
+.modal-input::placeholder {
+  color: var(--gray);
+  opacity: 0.7;
+}
+
+/* ===== BOTÕES DO MODAL ===== */
+/* Container dos botões de ação */
+.modal-buttons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.modal-buttons .btn {
+  flex: 1;
+  max-width: 150px;
+}
+
+/* ===== OPÇÕES DE PRIORIDADE ===== */
+/* Botões grandes para escolher prioridade */
+.priority-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.priority-option {
+  padding: 1.25rem;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.priority-option:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Prioridade Alta - Vermelho */
+.priority-option.priority-high {
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.priority-option.priority-high:hover {
+  background: linear-gradient(135deg, #ffe5e5 0%, #ffcccc 100%);
+}
+
+/* Prioridade Média - Amarelo */
+.priority-option.priority-medium {
+  background: linear-gradient(135deg, #fffef5 0%, #fff8e5 100%);
+  border-color: #ffc107;
+  color: #856404;
+}
+
+.priority-option.priority-medium:hover {
+  background: linear-gradient(135deg, #fff8e5 0%, #fff0cc 100%);
+}
+
+/* Prioridade Baixa - Cinza */
+.priority-option.priority-low {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-color: #6c757d;
+  color: #495057;
+}
+
+.priority-option.priority-low:hover {
+  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+}
+
+/* ===== OPÇÕES DE STATUS ===== */
+/* Botões grandes para escolher status */
+.status-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.status-option {
+  padding: 1.25rem;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-option:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Status Em Progresso - Verde */
+.status-option.status-progress {
+  background: linear-gradient(135deg, #f0fdf4 0%, #d1f4e0 100%);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.status-option.status-progress:hover {
+  background: linear-gradient(135deg, #d1f4e0 0%, #b8ecd0 100%);
+}
+
+/* Status Pendente - Amarelo */
+.status-option.status-pending {
+  background: linear-gradient(135deg, #fffef5 0%, #fff3cd 100%);
+  border-color: #ffc107;
+  color: #856404;
+}
+
+.status-option.status-pending:hover {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffe8a1 100%);
+}
+
+/* Status Concluído - Verde Escuro */
+.status-option.status-completed {
+  background: linear-gradient(135deg, #f0fdf4 0%, #d4edda 100%);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.status-option.status-completed:hover {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+}
+
+/* ===== NOTIFICAÇÕES ===== */
+/* Mensagens temporárias que aparecem no topo */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--success);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  font-weight: 600;
+  animation: slideInRight 0.3s ease-out;
+}
+
+.notification.fade-out {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+/* ===== MELHORIAS NA CHECKBOX DE TAREFAS ===== */
+/* Adiciona ícone de check quando marcado */
+.task-checkbox.checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.task-checkbox.checked::after {
+  content: '✓';
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* ===== ANIMAÇÕES ===== */
+/* Entrada suave do modal */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal desliza de baixo para cima */
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Notificação entra da direita */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Saída suave */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* ===== RESPONSIVIDADE PARA MODAIS ===== */
+/* Ajustes para telas menores */
+@media (max-width: 768px) {
+  .modal-content {
+    min-width: auto;
+    width: 90%;
+    padding: 1.5rem;
+  }
+  
+  .modal-content h3 {
+    font-size: 1.25rem;
+  }
+  
+  .modal-buttons {
+    flex-direction: column;
+  }
+  
+  .modal-buttons .btn {
+    max-width: 100%;
+  }
+  
+  .priority-option,
+  .status-option {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+  
+  .notification {
+    right: 10px;
+    left: 10px;
+    top: 10px;
+  }
+}

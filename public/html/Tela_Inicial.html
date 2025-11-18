@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Ajuda e Aprendizado – Meu Navegador</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../css/TelaPrincipal.css">
+</head>
+
+<body>
+
+  <!-- barra de controle -->
+  <nav class="navbar">
+    <div class="container">
+      <a class="navbar-brand" href="#">Nura.ia</a>
+      <button class="navbar-toggler" type="button" id="menuToggle">
+        <span>☰</span>
+      </button>
+      <ul class="navbar-nav" id="navMenu">
+        <li class="nav-item"><a class="nav-link" href="Tela_Lading.html">Início</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Privacidade</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Personalizar</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Problemas</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Mobile</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- hero section -->
+  <section class="hero">
+    <div class="container">
+      <h1>Bem-vindo a sua Agenda</h1>
+      <p>Organize sua rotina, gerencie compromissos e explore dicas para otimizar seu dia com a Agenda Digital.</p>
+    </div>
+  </section>
+
+  <section class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="mb-0">Minhas tarefas</h2>
+      <button class="btn btn-primary" id="btnAdicionar">
+        + Adicionar Tarefa
+      </button>
+    </div>
+
+    <div id="blocoTarefas" class="escondido">
+      <textarea id="textareaTarefa" placeholder="Escreva sua tarefa aqui..."></textarea>
+      <div class="d-flex justify-content-between mt-2">
+        <button class="btn btn-success" id="btnSalvar">Salvar</button>
+        <button class="btn btn-secondary" id="btnCancelar">Cancelar</button>
+      </div>
+    </div>
+
+    <div id="listaTarefas" class="list-group">
+      <p class="text-muted text-center">Nenhuma tarefa adicionada ainda.</p>
+    </div>
+  </section>
+
+<!-- Seção do Assistente IA -->
+  <section class="container my-5">
+    <div class="assistente-ia-card">
+      <!-- Partículas decorativas animadas -->
+      <div class="ai-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+      </div>
+
+      <div class="ai-header">
+        <div class="ai-icon-wrapper">
+          <div class="ai-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+          </div>
+        </div>
+        <div class="ai-title-group">
+          <h2 class="ai-title">Assistente Inteligente</h2>
+          <p class="ai-subtitle">Nura & Gemini</p>
+        </div>
+        <span class="ai-badge">
+          <span class="badge-dot"></span>
+          NOVO
+        </span>
+      </div>
+
+      <div class="assistente-content">
+        <div class="ai-prompt-section">
+          <label class="ai-label">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Descreva seu dia
+          </label>
+          <textarea id="descricaoRotina" class="ai-textarea"
+            placeholder="Ex: Preciso estudar JavaScript por 2 horas, malhar na academia, almoçar, reunião às 15h, fazer compras..."
+            rows="4"></textarea>
+        </div>
+
+        <div class="ai-time-section">
+          <label class="ai-label">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Período disponível
+          </label>
+          <div class="time-inputs-wrapper">
+            <div class="time-input-group">
+              <span class="time-label">Início</span>
+              <input type="time" id="horaInicioRotina" class="ai-time-input" value="08:00">
+            </div>
+            <div class="time-separator">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </div>
+            <div class="time-input-group">
+              <span class="time-label">Fim</span>
+              <input type="time" id="horaFimRotina" class="ai-time-input" value="18:00">
+            </div>
+          </div>
+        </div>
+
+        <button class="ai-generate-btn" onclick="gerarRotinaInteligente()">
+          <span class="btn-shine"></span>
+          <span class="btn-content">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            Gerar Rotina Inteligente
+          </span>
+        </button>
+
+        <div id="resultadoRotina" class="ai-result" style="display: none;">
+          <!-- Aqui vai aparecer a rotina gerada -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- cards section -->
+  <section class="container my-6">
+    <h2 class="mb-4">Tópicos populares</h2>
+    <div class="row">
+      <div>
+        <a href="Tela_Gerenciamento.html " class="linkinvisi">
+          <div class="card">
+            <img src="https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=400&h=250&fit=crop"
+              alt="Gerencie sua agenda">
+            <div class="card-body">
+              <h5 class="card-title">Gerencie sua agenda</h5>
+              <p class="card-text">Descubra recursos e funcionalidades</p>
+            </div>
+        </a>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=250&fit=crop" alt="Ajustes">
+        <a href="TelaSincro.html" class="linkinvisi">
+          <div class="card-body">
+            <h5 class="card-title">Ajustes</h5>
+            <p class="card-text">Configure a sua agenda da sua forma</p>
+          </div>
+        </a>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?w=400&h=250&fit=crop" alt="Acessibilidade">
+        <div class="card-body">
+          <h5 class="card-title">Acessibilidade</h5>
+          <p class="card-text">Navegação simplificada para todos</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <img src="https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=250&fit=crop"
+          alt="Sincronizar dispositivo">
+        <div class="card-body">
+          <h5 class="card-title">Sincronizar dispositivo</h5>
+          <p class="card-text">Acesse seus dados de qualquer lugar</p>
+        </div>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <section class="hero_tab_preco">
+    <div class="container">
+      <h1>Planos da Nura.ia</h1>
+      <p>Escolha o plano perfeito e tenha acesso completo a todos os recursos para gerenciar sua rotina.</p>
+    </div>
+  </section>
+
+  <section class="tab_preco">
+  </section>
+
+  <!-- footer -->
+  <footer>
+    <p>&copy; Nura – Todos os direitos reservados.</p>
+  </footer>
+  <script src="../scripts/sincro_telas.js"></script>
+  <script src="../scripts/auth.js"></script>
+</body>
+
+</html>

@@ -15,27 +15,38 @@ if (isPostgres) {
         } : false
     });
 
+    pool.on('error', (err) => {
+        console.error('❌ Erro inesperado no PostgreSQL:', err);
+    });
+
     console.log('🐘 Conectado ao PostgreSQL');
 } else {
     console.log('⚠️ DATABASE_URL não encontrada');
     console.log('💡 Configure a variável DATABASE_URL no arquivo .env');
 }
 
-// Função para executar queries
+// Converter placeholders ? para $1, $2, etc (PostgreSQL)
+function convertPlaceholders(text) {
+    let paramIndex = 1;
+    return text.replace(/\?/g, () => `$${paramIndex++}`);
+}
+
+// Função para executar queries SELECT
 async function query(text, params = []) {
     if (!pool) {
-        throw new Error('Database not configured');
+        throw new Error('Database not configured. Please set DATABASE_URL');
     }
 
-    // Converter placeholders ? para $1, $2, etc (formato PostgreSQL)
-    let paramIndex = 1;
-    const pgText = text.replace(/\?/g, () => `$${paramIndex++}`);
+    const pgText = convertPlaceholders(text);
     
     try {
+        console.log('🔍 Query:', pgText, 'Params:', params);
         const result = await pool.query(pgText, params);
         return result.rows;
     } catch (err) {
         console.error('❌ Erro na query:', err.message);
+        console.error('Query:', pgText);
+        console.error('Params:', params);
         throw err;
     }
 }
@@ -49,13 +60,13 @@ async function get(text, params = []) {
 // Função para executar comandos (INSERT, UPDATE, DELETE)
 async function run(text, params = []) {
     if (!pool) {
-        throw new Error('Database not configured');
+        throw new Error('Database not configured. Please set DATABASE_URL');
     }
 
-    let paramIndex = 1;
-    const pgText = text.replace(/\?/g, () => `$${paramIndex++}`);
+    const pgText = convertPlaceholders(text);
     
     try {
+        console.log('⚙️ Run:', pgText, 'Params:', params);
         const result = await pool.query(pgText, params);
         return {
             changes: result.rowCount,
@@ -63,6 +74,8 @@ async function run(text, params = []) {
         };
     } catch (err) {
         console.error('❌ Erro ao executar comando:', err.message);
+        console.error('SQL:', pgText);
+        console.error('Params:', params);
         throw err;
     }
 }
@@ -70,7 +83,7 @@ async function run(text, params = []) {
 // Inicializar banco de dados
 async function initializeDatabase() {
     if (!pool) {
-        console.log('⚠️ Banco de dados não configurado');
+        console.log('⚠️ Banco de dados não configurado - pulando inicialização');
         return;
     }
 
@@ -87,6 +100,7 @@ async function initializeDatabase() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
+        console.log('✅ Tabela users ok');
 
         // Criar tabela de tarefas
         await pool.query(`
@@ -102,28 +116,30 @@ async function initializeDatabase() {
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         `);
-
-        console.log('✅ Tabelas verificadas/criadas com sucesso');
+        console.log('✅ Tabela tasks ok');
 
         // Verificar se já existe usuário admin
         const adminExists = await get(
-            "SELECT id FROM users WHERE username = $1",
+            "SELECT id FROM users WHERE username = ?",
             ['admin']
         );
 
         if (!adminExists) {
             // Criar usuário admin padrão
-            await pool.query(
-                "INSERT INTO users (username, password, email) VALUES ($1, $2, $3)",
+            const result = await pool.query(
+                "INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING id",
                 ['admin', 'admin123', 'admin@nura.com']
             );
-            console.log('✅ Usuário admin criado (admin/admin123)');
+            console.log('✅ Usuário admin criado (admin/admin123) - ID:', result.rows[0].id);
         } else {
-            console.log('✅ Usuário admin já existe');
+            console.log('✅ Usuário admin já existe - ID:', adminExists.id);
         }
+
+        console.log('✅ Banco de dados inicializado com sucesso!');
 
     } catch (err) {
         console.error('❌ Erro ao inicializar banco:', err.message);
+        console.error('Stack:', err.stack);
         throw err;
     }
 }

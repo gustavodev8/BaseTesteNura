@@ -399,7 +399,7 @@ app.post("/api/login", async (req, res) => {
 
 app.post("/api/gerar-rotina", async (req, res) => {
     console.log("📥 Recebendo requisição para gerar rotina");
-    
+  
     try {
         const { descricao, horaInicio = "08:00", horaFim = "18:00" } = req.body;
 
@@ -432,18 +432,18 @@ app.post("/api/gerar-rotina", async (req, res) => {
         Apenas a rotina formatada, sem explicações.
         `;
 
-        // ✅ CORRIGIDO - usar o método correto do Gemini
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const rotina = response.text();
+        const response = await ai.models.generateContent({
+            model: "gemini-2.0-flash",
+            contents: prompt,
+        });
 
+        const rotina = response.text;
         console.log("✅ Rotina gerada com sucesso!");
 
         res.json({ 
             success: true, 
             rotina,
-            modeloUsado: "gemini-pro",
+            modeloUsado: "gemini-2.0-flash",
             descricaoOriginal: descricao,
             periodo: `${horaInicio} - ${horaFim}`,
             timestamp: new Date().toISOString()

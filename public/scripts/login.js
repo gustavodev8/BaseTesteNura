@@ -1,26 +1,18 @@
-/* ========================================
-   SISTEMA DE LOGIN - Nura.ia
-   Arquivo: login.js
-   ⚠️ APENAS BACKEND - SEM MUDANÇAS NO HTML
-   ======================================== */
-
 const API_URL = 'https://basetestenura-3.onrender.com';
+
 // ===== FUNÇÃO DE LOGIN =====
 async function login(event) {
-    if (event) event.preventDefault(); // Previne o recarregamento da página
+    if (event) event.preventDefault();
     
     const email = document.getElementById('iusuario').value.trim();
     const password = document.getElementById('isenha').value;
-    const messageDiv = document.getElementById('login-message');
     const submitButton = document.getElementById('ienviar');
 
-    // Validações básicas
     if (!email || !password) {
         showMessage('Por favor, preencha todos os campos!', 'error');
         return;
     }
 
-    // Desabilitar botão durante o login
     submitButton.disabled = true;
     const originalValue = submitButton.value;
     submitButton.value = 'Entrando...';
@@ -28,14 +20,13 @@ async function login(event) {
     try {
         console.log('🔐 Tentando login...');
         
-        // ✅ ROTA CORRIGIDA: /api/login
         const response = await fetch(`${API_URL}/api/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ 
-                username: email,  // O servidor espera "username"
+                username: email,
                 password: password 
             })
         });
@@ -45,13 +36,12 @@ async function login(event) {
         if (response.ok && data.success) {
             console.log('✅ Login bem-sucedido!');
             
-            // Salvar dados do usuário no localStorage
             localStorage.setItem('nura_user', JSON.stringify(data.user));
             localStorage.setItem('nura_logged_in', 'true');
             
             showMessage('Login realizado com sucesso! Redirecionando...', 'success');
             
-            // Redirecionar para a tela inicial
+            // ✅ CORRIGIDO: usar /inicial ao invés de Tela_Inicial.html
             setTimeout(() => {
                 window.location.href = '/inicial';
             }, 1000);
@@ -88,7 +78,6 @@ function showMessage(message, type) {
         messageDiv.style.color = 'white';
     }
     
-    // Esconder mensagem após 5 segundos
     setTimeout(() => {
         messageDiv.style.display = 'none';
     }, 5000);
@@ -99,9 +88,10 @@ function checkIfAlreadyLoggedIn() {
     const isLoggedIn = localStorage.getItem('nura_logged_in');
     const userData = localStorage.getItem('nura_user');
     
+    // ✅ CORRIGIDO: usar /inicial
     if (isLoggedIn === 'true' && userData) {
         console.log('✅ Usuário já está logado, redirecionando...');
-        window.location.href = 'Tela_Inicial.html';
+        window.location.href = '/inicial';
     }
 }
 
@@ -109,10 +99,9 @@ function checkIfAlreadyLoggedIn() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Sistema de login inicializado');
     
-    // Verificar se já está logado
-    checkIfAlreadyLoggedIn();
+    // ❌ COMENTAR ESTA LINHA TEMPORARIAMENTE PARA TESTAR
+    // checkIfAlreadyLoggedIn();
     
-    // Adicionar event listener ao formulário
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', login);
@@ -121,7 +110,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('❌ Formulário de login não encontrado!');
     }
     
-    // Enter na senha para fazer login
     const passwordInput = document.getElementById('isenha');
     if (passwordInput) {
         passwordInput.addEventListener('keypress', function(e) {

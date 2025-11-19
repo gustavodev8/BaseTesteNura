@@ -397,8 +397,6 @@ app.post("/api/login", async (req, res) => {
 
 // ===== ROTA DE IA - GERAR ROTINA =====
 
-// ===== ROTA DE IA - GERAR ROTINA =====
-
 app.post("/api/gerar-rotina", async (req, res) => {
     console.log("📥 Recebendo requisição para gerar rotina");
     console.log("📝 Body:", req.body);
@@ -438,10 +436,10 @@ Formato:
 Apenas a rotina formatada, sem explicações.
 `;
 
-        // ✅ CORREÇÃO: usar genAI ao invés de ai
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        // ✅ USAR GEMINI 2.0 FLASH
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
         
-        console.log("⏳ Aguardando resposta do Gemini...");
+        console.log("⏳ Aguardando resposta do Gemini 2.0 Flash...");
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const rotina = response.text();
@@ -452,7 +450,7 @@ Apenas a rotina formatada, sem explicações.
         res.json({ 
             success: true, 
             rotina,
-            modeloUsado: "gemini-pro",
+            modeloUsado: "gemini-2.0-flash-exp",
             descricaoOriginal: descricao,
             periodo: `${horaInicio} - ${horaFim}`,
             timestamp: new Date().toISOString()
@@ -482,14 +480,6 @@ Apenas a rotina formatada, sem explicações.
         });
     }
 });
-
-// ===== ENCERRAMENTO GRACIOSO =====
-process.on('SIGINT', () => {
-    db.close();
-    console.log('✅ Conexão com BD fechada.');
-    process.exit(0);
-});
-
 // ===== INICIAR SERVIDOR =====
 app.listen(PORT, () => {
     console.log(`\n🎉 SERVIDOR NURA FUNCIONANDO!`);

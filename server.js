@@ -459,6 +459,12 @@ app.post("/api/gerar-rotina", async (req, res) => {
     }
 });
 
+app.get('/login', (req, res) => {
+    const filePath = path.join(__dirname, 'public/html/Tela_Login.html');
+    console.log('🔍 Tentando servir:', filePath);
+    res.sendFile(filePath);
+});
+
 // ===== ENCERRAMENTO GRACIOSO =====
 process.on('SIGINT', () => {
     db.close();

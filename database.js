@@ -88,6 +88,12 @@ async function initializeDatabase() {
     }
 
     try {
+        console.log('🔧 Testando conexão com PostgreSQL...');
+        
+        // Testar conexão primeiro
+        await pool.query('SELECT NOW()');
+        console.log('✅ Conexão com PostgreSQL estabelecida!');
+        
         console.log('🔧 Verificando/criando tabelas...');
 
         // Criar tabela de usuários

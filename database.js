@@ -93,8 +93,16 @@ async function initializeDatabase() {
     try {
         console.log('🔧 Testando conexão com PostgreSQL...');
         
-        // Testar conexão primeiro
-        await pool.query('SELECT NOW()');
+        // Testar conexão primeiro com timeout
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout de conexão (5s)')), 5000)
+        );
+        
+        await Promise.race([
+            pool.query('SELECT NOW()'),
+            timeoutPromise
+        ]);
+        
         console.log('✅ Conexão com PostgreSQL estabelecida!');
         
         console.log('🔧 Verificando/criando tabelas...');

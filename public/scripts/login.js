@@ -4,8 +4,7 @@
    ⚠️ APENAS BACKEND - SEM MUDANÇAS NO HTML
    ======================================== */
 
-const API_URL = 'http://localhost:3000';
-
+const API_URL = 'https://basetestenura-3.onrender.com';
 // ===== FUNÇÃO DE LOGIN =====
 async function login(event) {
     if (event) event.preventDefault(); // Previne o recarregamento da página

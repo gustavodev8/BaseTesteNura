@@ -8,7 +8,7 @@
 let tasks = [];
 let currentEditingTask = null;
 let currentUser = null;
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://basetestenura-3.onrender.com';
 
 // ===== OBTER USUÁRIO LOGADO =====
 async function getCurrentUser() {
@@ -949,14 +949,13 @@ document.addEventListener('DOMContentLoaded', async function() {
   
   console.log('👤 Usuário logado:', currentUser.nome);
   
-  // ✅ DEPOIS: Carrega tarefas do usuário
+  // Carrega tarefas do usuário
   await loadTasksFromDatabase();
   initializeEventListeners();
   initializeGroupToggles();
   initializeMenuToggle();
 });
 
-// ===== TORNA FUNÇÕES GLOBAIS =====
 window.toggleTaskComplete = toggleTaskComplete;
 window.deleteTask = deleteTask;
 window.showAIModal = showAIModal;

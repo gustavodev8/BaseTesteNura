@@ -3,7 +3,7 @@
    Arquivo: sincro_telas.js
    ======================================== */
 
-const API_URL = window.API_URL || 'http://localhost:3000';
+const API_URL = 'https://basetestenura-3.onrender.com';
 
 let homeTasks = [];
 let currentUser = null;

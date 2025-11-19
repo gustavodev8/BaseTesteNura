@@ -397,72 +397,90 @@ app.post("/api/login", async (req, res) => {
 
 // ===== ROTA DE IA - GERAR ROTINA =====
 
+// ===== ROTA DE IA - GERAR ROTINA =====
+
 app.post("/api/gerar-rotina", async (req, res) => {
     console.log("📥 Recebendo requisição para gerar rotina");
-  
+    console.log("📝 Body:", req.body);
+    
     try {
         const { descricao, horaInicio = "08:00", horaFim = "18:00" } = req.body;
 
         if (!descricao) {
+            console.log("❌ Descrição não fornecida");
             return res.status(400).json({ 
                 success: false,
-                error: "❌ Descrição do dia é obrigatória" 
+                error: "Descrição do dia é obrigatória" 
             });
         }
 
         if (!GEMINI_API_KEY) {
+            console.log("❌ API Key não configurada");
             return res.status(500).json({ 
                 success: false,
-                error: "❌ Chave da API Gemini não configurada" 
+                error: "Chave da API Gemini não configurada no servidor" 
             });
         }
 
-        console.log("🧠 Gerando rotina para:", descricao);
+        console.log("🧠 Gerando rotina com Gemini para:", descricao);
+        console.log("⏰ Período:", horaInicio, "às", horaFim);
 
         const prompt = `
-        Com base nesta descrição: "${descricao}"
+Com base nesta descrição: "${descricao}"
 
-        Horário: ${horaInicio} às ${horaFim}
+Horário: ${horaInicio} às ${horaFim}
 
-        Crie uma rotina organizada em português com horários específicos, emojis e intervalos.
-        Formato:
-        🕗 08:00-09:00 → Atividade
-        🕘 09:00-09:15 → Intervalo
+Crie uma rotina organizada em português com horários específicos, emojis e intervalos.
+Formato:
+🕗 08:00-09:00 → Atividade
+🕘 09:00-09:15 → Intervalo
 
-        Apenas a rotina formatada, sem explicações.
-        `;
+Apenas a rotina formatada, sem explicações.
+`;
 
-        const response = await ai.models.generateContent({
-            model: "gemini-2.0-flash",
-            contents: prompt,
-        });
+        // ✅ CORREÇÃO: usar genAI ao invés de ai
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        
+        console.log("⏳ Aguardando resposta do Gemini...");
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const rotina = response.text();
 
-        const rotina = response.text;
         console.log("✅ Rotina gerada com sucesso!");
+        console.log("📄 Tamanho da resposta:", rotina.length, "caracteres");
 
         res.json({ 
             success: true, 
             rotina,
-            modeloUsado: "gemini-2.0-flash",
+            modeloUsado: "gemini-pro",
             descricaoOriginal: descricao,
             periodo: `${horaInicio} - ${horaFim}`,
             timestamp: new Date().toISOString()
         });
 
     } catch (err) {
-        console.error("💥 Erro ao gerar rotina:", err);
+        console.error("💥 ERRO DETALHADO ao gerar rotina:");
+        console.error("Tipo:", err.name);
+        console.error("Mensagem:", err.message);
+        console.error("Stack:", err.stack);
+        
+        let errorMessage = "Erro ao gerar rotina";
+        
+        if (err.message?.includes("API key")) {
+            errorMessage = "API Key do Gemini inválida ou não configurada";
+        } else if (err.message?.includes("quota")) {
+            errorMessage = "Limite de requisições da API Gemini excedido";
+        } else if (err.message?.includes("model")) {
+            errorMessage = "Modelo do Gemini não disponível";
+        }
+        
         res.status(500).json({ 
             success: false,
-            error: "Erro ao gerar rotina",
-            message: err.message
+            error: errorMessage,
+            details: err.message,
+            timestamp: new Date().toISOString()
         });
     }
-});
-
-app.get('/login', (req, res) => {
-    const filePath = path.join(__dirname, 'public/html/Tela_Login.html');
-    console.log('🔍 Tentando servir:', filePath);
-    res.sendFile(filePath);
 });
 
 // ===== ENCERRAMENTO GRACIOSO =====

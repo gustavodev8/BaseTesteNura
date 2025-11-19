@@ -1,4 +1,4 @@
-const API_URL = 'https://basetestenura-3.onrender.com';
+const API_URL = 'http://localhost:3000';
 
 // ===== FUNÇÃO DE LOGIN =====
 async function login(event) {

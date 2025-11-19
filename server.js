@@ -360,21 +360,19 @@ app.post("/api/login", async (req, res) => {
     }
     
     try {
-        // ✅ CORRIGIDO: buscar por name OU email
         const user = await db.get(
-            `SELECT id, name, email FROM users 
-             WHERE (name = ? OR email = ?) AND password = ?`,
-            [username, username, password]
+            `SELECT id, username, email FROM users WHERE username = ? AND password = ?`,
+            [username, password]
         );
         
         if (user) {
-            console.log('✅ Login bem-sucedido:', user.name);
+            console.log('✅ Login bem-sucedido:', user.username);
             res.json({
                 success: true,
                 message: "Login realizado com sucesso!",
                 user: {
                     id: user.id,
-                    username: user.name, // usar name como username
+                    username: user.username,
                     email: user.email
                 }
             });

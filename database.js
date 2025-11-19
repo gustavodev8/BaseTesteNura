@@ -1,119 +1,154 @@
 const { Pool } = require('pg');
-const dotenv = require('dotenv');
-dotenv.config();
+require('dotenv').config();
 
-let pool;
+// Detectar se está usando PostgreSQL
 const isPostgres = !!process.env.DATABASE_URL;
 
+let pool = null;
+
+// Configurar conexão PostgreSQL
 if (isPostgres) {
-    console.log('🐘 Conectando ao PostgreSQL...');
-    
     pool = new Pool({
         connectionString: process.env.DATABASE_URL,
-        ssl: {
-            rejectUnauthorized: false // ⚠️ IMPORTANTE para Render/Supabase
-        },
-        connectionTimeoutMillis: 10000, // 10 segundos
-        idleTimeoutMillis: 30000,
-        max: 10 // máximo de conexões
+        ssl: process.env.NODE_ENV === 'production' ? {
+            rejectUnauthorized: false
+        } : false
     });
 
-    // Testar conexão
-    pool.query('SELECT NOW()', (err, res) => {
-        if (err) {
-            console.error('❌ Erro ao conectar PostgreSQL:', err.message);
-        } else {
-            console.log('✅ PostgreSQL conectado com sucesso!');
-        }
+    pool.on('error', (err) => {
+        console.error('❌ Erro inesperado no PostgreSQL:', err);
     });
+
+    console.log('🐘 Conectado ao PostgreSQL');
+} else {
+    console.log('⚠️ DATABASE_URL não encontrada');
+    console.log('💡 Configure a variável DATABASE_URL no arquivo .env');
 }
 
-// Função para queries
-async function query(sql, params = []) {
-    if (!isPostgres) {
-        throw new Error('PostgreSQL não configurado');
+// Converter placeholders ? para $1, $2, etc (PostgreSQL)
+function convertPlaceholders(text) {
+    let paramIndex = 1;
+    const converted = text.replace(/\?/g, () => `${paramIndex++}`);
+    console.log('🔄 SQL Original:', text);
+    console.log('🔄 SQL Convertido:', converted);
+    return converted;
+}
+
+// Função para executar queries SELECT
+async function query(text, params = []) {
+    if (!pool) {
+        throw new Error('Database not configured. Please set DATABASE_URL');
     }
+
+    const pgText = convertPlaceholders(text);
     
-    const client = await pool.connect();
     try {
-        const result = await client.query(sql, params);
+        console.log('🔍 Query:', pgText, 'Params:', params);
+        const result = await pool.query(pgText, params);
         return result.rows;
-    } finally {
-        client.release();
+    } catch (err) {
+        console.error('❌ Erro na query:', err.message);
+        console.error('Query:', pgText);
+        console.error('Params:', params);
+        throw err;
     }
 }
 
-// Função para buscar um registro
-async function get(sql, params = []) {
-    const rows = await query(sql, params);
+// Função para pegar uma única linha
+async function get(text, params = []) {
+    const rows = await query(text, params);
     return rows[0] || null;
 }
 
-// Função para executar comandos
-async function run(sql, params = []) {
-    const result = await pool.query(sql, params);
-    return { changes: result.rowCount };
+// Função para executar comandos (INSERT, UPDATE, DELETE)
+async function run(text, params = []) {
+    if (!pool) {
+        throw new Error('Database not configured. Please set DATABASE_URL');
+    }
+
+    const pgText = convertPlaceholders(text);
+    
+    try {
+        console.log('⚙️ Run:', pgText, 'Params:', params);
+        const result = await pool.query(pgText, params);
+        return {
+            changes: result.rowCount,
+            lastInsertRowid: result.rows[0]?.id || null
+        };
+    } catch (err) {
+        console.error('❌ Erro ao executar comando:', err.message);
+        console.error('SQL:', pgText);
+        console.error('Params:', params);
+        throw err;
+    }
 }
 
-// Inicializar banco (criar tabelas se não existirem)
+// Inicializar banco de dados
 async function initializeDatabase() {
-    if (!isPostgres) {
-        console.log('⚠️ PostgreSQL não configurado, pulando inicialização');
+    if (!pool) {
+        console.log('⚠️ Banco de dados não configurado - pulando inicialização');
         return;
     }
 
     try {
-        console.log('🔧 Inicializando banco de dados...');
+        console.log('🔧 Testando conexão com PostgreSQL...');
+        
+        // Testar conexão primeiro
+        await pool.query('SELECT NOW()');
+        console.log('✅ Conexão com PostgreSQL estabelecida!');
+        
+        console.log('🔧 Verificando/criando tabelas...');
 
-        // Criar tabela users
-        await query(`
+        // Criar tabela de usuários
+        await pool.query(`
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) UNIQUE NOT NULL,
+                username VARCHAR(255) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
+                email VARCHAR(255),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
+        console.log('✅ Tabela users ok');
 
-        // Criar tabela tasks
-        await query(`
+        // Criar tabela de tarefas
+        await pool.query(`
             CREATE TABLE IF NOT EXISTS tasks (
                 id SERIAL PRIMARY KEY,
-                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                title TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                title VARCHAR(255) NOT NULL,
                 description TEXT,
                 status VARCHAR(50) DEFAULT 'pending',
-                priority VARCHAR(20) DEFAULT 'low',
-                due_date DATE,
-                responsible VARCHAR(255),
+                priority VARCHAR(50) DEFAULT 'medium',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         `);
+        console.log('✅ Tabela tasks ok');
 
-        // Criar índices
-        await query(`CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id)`);
-        await query(`CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)`);
+        // Verificar se já existe usuário admin
+        const adminExists = await get(
+            "SELECT id FROM users WHERE username = ?",
+            ['admin']
+        );
 
-        // Inserir usuários padrão se não existirem
-        const userCount = await get('SELECT COUNT(*) as count FROM users');
-        
-        if (userCount.count === 0) {
-            console.log('📝 Inserindo usuários padrão...');
-            await query(`
-                INSERT INTO users (name, email, password) VALUES
-                ('Administrador', 'admin@nura.ia', 'admin123'),
-                ('Usuario Teste', 'teste@nura.ia', 'teste123'),
-                ('Pichau', 'pichau@nura.ia', 'nura123')
-            `);
-            console.log('✅ Usuários criados!');
+        if (!adminExists) {
+            // Criar usuário admin padrão
+            const result = await pool.query(
+                "INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING id",
+                ['admin', 'admin123', 'admin@nura.com']
+            );
+            console.log('✅ Usuário admin criado (admin/admin123) - ID:', result.rows[0].id);
+        } else {
+            console.log('✅ Usuário admin já existe - ID:', adminExists.id);
         }
 
         console.log('✅ Banco de dados inicializado com sucesso!');
-        
+
     } catch (err) {
         console.error('❌ Erro ao inicializar banco:', err.message);
+        console.error('Stack:', err.stack);
         throw err;
     }
 }
@@ -122,7 +157,7 @@ async function initializeDatabase() {
 function close() {
     if (pool) {
         pool.end();
-        console.log('✅ Pool PostgreSQL fechado');
+        console.log('✅ Conexão PostgreSQL fechada');
     }
 }
 

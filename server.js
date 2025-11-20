@@ -437,7 +437,7 @@ Apenas a rotina formatada, sem explicações.
 `;
 
         // ✅ USAR GEMINI 2.0 FLASH
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-0514" });
         
         console.log("⏳ Aguardando resposta do Gemini 2.0 Flash...");
         const result = await model.generateContent(prompt);

@@ -24,7 +24,12 @@ function getCurrentUserId() {
     if (!currentUserId) {
         const userData = localStorage.getItem('nura_user');
         if (userData) {
-            currentUserId = JSON.parse(userData).id;
+            try {
+                currentUserId = JSON.parse(userData).id;
+            } catch (e) {
+                console.error('❌ Erro ao parsear usuário:', e);
+                return null;
+            }
         }
     }
     return currentUserId;
@@ -53,14 +58,19 @@ async function loadSettingsFromDatabase() {
             
             if (data.success && data.settings) {
                 Object.assign(nuraSettings, data.settings);
-                console.log('✅ Configurações carregadas do banco');
+                console.log('✅ Configurações carregadas do banco:', nuraSettings);
                 applySettings();
+                updateUIWithSettings();
                 return true;
             }
         } else if (response.status === 404) {
             console.log('📝 Criando configurações padrão...');
             await saveSettingsToDatabase();
+            updateUIWithSettings();
             return true;
+        } else {
+            console.error('❌ Erro:', response.status);
+            return false;
         }
     } catch (err) {
         console.error('❌ Erro ao carregar configurações:', err);
@@ -91,12 +101,15 @@ async function saveSettingsToDatabase() {
         });
 
         if (response.ok) {
-            console.log('✅ Configurações salvas no banco');
-            return true;
-        } else {
-            console.error('❌ Erro ao salvar configurações');
-            return false;
+            const data = await response.json();
+            if (data.success) {
+                console.log('✅ Configurações salvas no banco');
+                return true;
+            }
         }
+        
+        console.error('❌ Erro ao salvar configurações');
+        return false;
     } catch (err) {
         console.error('❌ Erro de conexão:', err);
         return false;
@@ -106,15 +119,12 @@ async function saveSettingsToDatabase() {
 // ===== ATUALIZAR CONFIGURAÇÃO ESPECÍFICA =====
 async function updateSetting(key, value) {
     nuraSettings[key] = value;
-    
-    // Salvar no banco
     const saved = await saveSettingsToDatabase();
     
     if (saved) {
         console.log(`✅ ${key} = ${value}`);
     } else {
-        console.warn(`⚠️ Erro ao salvar ${key}, usando localStorage`);
-        localStorage.setItem(`nura_${key}`, value);
+        console.warn(`⚠️ Erro ao salvar ${key}`);
     }
     
     return saved;
@@ -125,21 +135,51 @@ function applySettings() {
     // Aplicar modo escuro
     if (nuraSettings.darkMode) {
         document.body.classList.add('dark-mode');
+    } else {
+        document.body.classList.remove('dark-mode');
     }
     
     // Aplicar cor primária
     document.documentElement.style.setProperty('--primary-color', nuraSettings.primaryColor);
     
-    // Aplicar filtros
-    if (nuraSettings.hideCompleted) {
-        applyHideCompleted();
-    }
-    
-    if (nuraSettings.highlightUrgent) {
-        applyHighlightUrgent();
-    }
-    
     console.log('🎨 Configurações aplicadas');
+}
+
+// ===== ATUALIZAR INTERFACE COM AS CONFIGURAÇÕES =====
+function updateUIWithSettings() {
+    // Atualizar toggle do modo escuro
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        if (nuraSettings.darkMode) {
+            darkModeToggle.classList.add('active');
+        } else {
+            darkModeToggle.classList.remove('active');
+        }
+    }
+    
+    // Atualizar cor ativa
+    document.querySelectorAll('.color-option').forEach(color => {
+        if (color.getAttribute('data-color') === nuraSettings.primaryColor) {
+            color.classList.add('active');
+        } else {
+            color.classList.remove('active');
+        }
+    });
+    
+    // Atualizar toggles
+    const toggles = document.querySelectorAll('.toggle-switch');
+    toggles.forEach(toggle => {
+        const key = toggle.textContent.toLowerCase();
+        if (key.includes('escuro') || key.includes('dark')) {
+            if (nuraSettings.darkMode) toggle.classList.add('active');
+        } else if (key.includes('concluída') || key.includes('completed')) {
+            if (nuraSettings.hideCompleted) toggle.classList.add('active');
+        } else if (key.includes('urgente') || key.includes('urgent')) {
+            if (nuraSettings.highlightUrgent) toggle.classList.add('active');
+        } else if (key.includes('sugestão') || key.includes('suggestion')) {
+            if (nuraSettings.autoSuggestions) toggle.classList.add('active');
+        }
+    });
 }
 
 // ===== FILTRO: OCULTAR TAREFAS CONCLUÍDAS =====
@@ -154,19 +194,12 @@ async function toggleHideCompleted(enabled) {
     } else {
         console.log('👁️ Tarefas concluídas visíveis');
         document.querySelectorAll('[data-task-status="completed"]').forEach(task => {
-            task.style.display = 'block';
+            task.style.display = '';
         });
     }
     
-    showNotification(enabled ? 'Tarefas concluídas ocultadas' : 'Tarefas concluídas visíveis');
-    return enabled;
-}
-
-// ===== APLICAR HIDE COMPLETED =====
-function applyHideCompleted() {
-    document.querySelectorAll('[data-task-status="completed"]').forEach(task => {
-        task.style.display = 'none';
-    });
+    showNotification(enabled ? '👁️ Tarefas concluídas ocultadas' : '👁️ Tarefas concluídas visíveis');
+    return saved;
 }
 
 // ===== FILTRO: DESTACAR TAREFAS URGENTES =====
@@ -180,47 +213,31 @@ async function toggleHighlightUrgent(enabled) {
         document.querySelectorAll('[data-task-priority]').forEach(task => {
             task.style.borderLeft = '';
             task.style.backgroundColor = '';
-            task.style.order = '';
         });
         showNotification('➡️ Tarefas normalizadas');
     }
     
-    return enabled;
+    return saved;
 }
 
 // ===== APLICAR HIGHLIGHT URGENT =====
 function applyHighlightUrgent() {
-    const taskContainer = document.querySelector('[data-tasks-container]') || 
-                        document.querySelector('.tasks-list') ||
-                        document.querySelector('#tasks-container');
+    const tasks = document.querySelectorAll('[data-task-priority]');
     
-    if (taskContainer) {
-        const tasks = Array.from(taskContainer.querySelectorAll('[data-task-priority]'));
+    tasks.forEach(task => {
+        const priority = task.getAttribute('data-task-priority') || 'low';
         
-        tasks.sort((a, b) => {
-            const priorityOrder = { high: 0, medium: 1, low: 2 };
-            const priorityA = a.getAttribute('data-task-priority') || 'low';
-            const priorityB = b.getAttribute('data-task-priority') || 'low';
-            
-            return priorityOrder[priorityA] - priorityOrder[priorityB];
-        });
-        
-        tasks.forEach(task => {
-            const priority = task.getAttribute('data-task-priority') || 'low';
-            
-            if (priority === 'high') {
-                task.style.borderLeft = '5px solid #e74c3c';
-                task.style.backgroundColor = '#ffe8e8';
-                task.style.order = '-1';
-            } else if (priority === 'medium') {
-                task.style.borderLeft = '5px solid #f39c12';
-            } else {
-                task.style.borderLeft = '5px solid #2ecc71';
-            }
-            
-            taskContainer.appendChild(task);
-        });
-    }
+        if (priority === 'high') {
+            task.style.borderLeft = '5px solid #e74c3c';
+            task.style.backgroundColor = '#ffe8e8';
+        } else if (priority === 'medium') {
+            task.style.borderLeft = '5px solid #f39c12';
+            task.style.backgroundColor = '#fff5e6';
+        } else {
+            task.style.borderLeft = '5px solid #2ecc71';
+            task.style.backgroundColor = '#f0fdf4';
+        }
+    });
 }
 
 // ===== ASSISTENTE IA: SUGESTÕES AUTOMÁTICAS =====
@@ -229,51 +246,20 @@ async function toggleAutoSuggestions(enabled) {
     
     if (enabled) {
         console.log('💡 Sugestões automáticas ativadas');
-        showNotification('Sugestões de IA ativadas!');
-        monitorTasksForSuggestions();
+        showNotification('💡 Sugestões de IA ativadas!');
     } else {
         console.log('🔕 Sugestões automáticas desativadas');
-        showNotification('Sugestões de IA desativadas');
+        showNotification('🔕 Sugestões de IA desativadas');
     }
     
-    return enabled;
-}
-
-// ===== ASSISTENTE IA: MONITORAR TAREFAS =====
-function monitorTasksForSuggestions() {
-    if (!nuraSettings.autoSuggestions) return;
-    
-    const tasks = document.querySelectorAll('[data-task]');
-    
-    if (tasks.length > 10) {
-        showNotification('💡 Dica: Você tem muitas tarefas. Considere priorizar!');
-    }
-    
-    const now = new Date();
-    tasks.forEach(task => {
-        const dueDate = task.getAttribute('data-task-duedate');
-        if (dueDate) {
-            const taskDate = new Date(dueDate);
-            if (taskDate < now && task.getAttribute('data-task-status') !== 'completed') {
-                showNotification('⏰ Alerta: Você tem tarefas vencidas!');
-            }
-        }
-    });
+    return saved;
 }
 
 // ===== ASSISTENTE IA: NÍVEL DE DETALHAMENTO =====
 async function setDetailLevel(level) {
     const saved = await updateSetting('detailLevel', level);
-    
-    const descriptions = {
-        'Básico': 'Informações essenciais',
-        'Médio': 'Informações balanceadas',
-        'Detalhado': 'Informações completas',
-        'Ultra Detalhado': 'Muito detalhado'
-    };
-    
-    showNotification(`Detalhamento: ${level}`);
-    return level;
+    showNotification(`📊 Detalhamento: ${level}`);
+    return saved;
 }
 
 // ===== PLANOS: OBTER INFORMAÇÕES =====
@@ -283,21 +269,18 @@ function getPlanInfo() {
             name: 'Gratuito',
             price: 'R$ 0',
             tasks: 10,
-            routinesPerWeek: 1,
             features: ['Até 10 tarefas', '1 rotina/semana', 'Sincronização básica']
         },
         'pro': {
             name: 'Pro',
             price: 'R$ 29/mês',
             tasks: 'Ilimitado',
-            routinesPerWeek: 5,
             features: ['Tarefas ilimitadas', '5 rotinas/semana', 'Sincronização real-time', 'Sugestões IA']
         },
         'premium': {
             name: 'Premium',
             price: 'R$ 99/mês',
             tasks: 'Ilimitado',
-            routinesPerWeek: 'Ilimitado',
             features: ['Tudo no Pro', 'Rotinas ilimitadas', 'IA avançada', 'Suporte 24/7']
         }
     };
@@ -308,21 +291,16 @@ function getPlanInfo() {
 // ===== PLANOS: SELECIONAR PLANO =====
 async function selectPlan(planName) {
     if (planName === 'premium') {
-        showNotification('🚀 Redirecionando para pagamento...');
-        alert('Upgrade para Premium\n\nValor: R$ 99/mês\n\n(Simulado para teste)');
-        await updateSetting('currentPlan', 'premium');
+        if (confirm('🚀 Upgrade para Premium - R$ 99/mês?\n\n(Simulado para teste)')) {
+            await updateSetting('currentPlan', 'premium');
+            showNotification('🚀 Upgrade realizado!');
+        }
     } else if (planName === 'free') {
-        if (confirm('⚠️ Você perderá acesso aos recursos Pro')) {
+        if (confirm('⚠️ Você perderá acesso aos recursos Pro. Tem certeza?')) {
             await updateSetting('currentPlan', 'free');
-            showNotification('Downgrade realizado');
+            showNotification('📉 Downgrade realizado');
         }
     }
-}
-
-// ===== PLANOS: GERENCIAR =====
-function managePlan() {
-    const planInfo = getPlanInfo();
-    alert(`Plano Atual: ${planInfo.name}\nPreço: ${planInfo.price}\nRenovação: ${nuraSettings.planRenewalDate}`);
 }
 
 // ===== PLANOS: CANCELAR =====
@@ -345,49 +323,126 @@ async function toggleDarkMode(enabled) {
         showNotification('☀️ Modo claro ativado');
     }
     
-    return enabled;
+    return saved;
 }
 
 // ===== APARÊNCIA: TROCAR COR =====
 async function setPrimaryColor(hexColor) {
     const saved = await updateSetting('primaryColor', hexColor);
     document.documentElement.style.setProperty('--primary-color', hexColor);
-    showNotification(`🎨 Cor atualizada: ${hexColor}`);
+    showNotification(`🎨 Cor atualizada`);
+    return saved;
 }
 
 // ===== NOTIFICAÇÃO =====
 function showNotification(message) {
     console.log(`📢 ${message}`);
-    const notif = document.getElementById('notification') || 
-                 document.querySelector('.notification');
     
-    if (notif) {
-        notif.textContent = message;
-        notif.style.display = 'block';
-        setTimeout(() => { notif.style.display = 'none'; }, 3000);
+    // Tentar encontrar elemento de notificação
+    let notif = document.getElementById('notification');
+    
+    if (!notif) {
+        // Criar elemento se não existir
+        notif = document.createElement('div');
+        notif.id = 'notification';
+        notif.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #49a09d;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 9999;
+            font-size: 14px;
+            animation: slideIn 0.3s ease;
+        `;
+        document.body.appendChild(notif);
     }
+    
+    notif.textContent = message;
+    notif.style.display = 'block';
+    notif.style.opacity = '1';
+    
+    setTimeout(() => {
+        notif.style.opacity = '0';
+        setTimeout(() => {
+            notif.style.display = 'none';
+        }, 300);
+    }, 3000);
 }
 
-// ===== INICIALIZAÇÃO =====
+// ===== INICIALIZAR - CARREGAR CONFIGURAÇÕES =====
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('⚙️ Carregando configurações...');
+    console.log('⚙️ Carregando sistema de configurações...');
     loadSettingsFromDatabase();
+});
+
+// ===== EVENTOS DO HTML ORIGINAL =====
+// Os eventos já existem no HTML inline, apenas garantindo que funcionem
+
+// Dark Mode Toggle
+document.addEventListener('DOMContentLoaded', () => {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', function() {
+            const newState = !nuraSettings.darkMode;
+            toggleDarkMode(newState);
+            this.classList.toggle('active');
+        });
+    }
+    
+    // Cores - mantendo o comportamento original
+    document.querySelectorAll('.color-option').forEach(color => {
+        color.addEventListener('click', function() {
+            document.querySelectorAll('.color-option').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            const hexColor = this.getAttribute('data-color');
+            setPrimaryColor(hexColor);
+        });
+    });
+    
+    // Toggle switches - mantendo comportamento original
+    document.querySelectorAll('.toggle-switch').forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            
+            // Identificar qual toggle foi clicado pelo contexto
+            const parent = this.closest('.setting-row') || this.closest('[class*="setting"]');
+            if (parent) {
+                const text = parent.textContent.toLowerCase();
+                
+                if (text.includes('escuro') || text.includes('dark mode')) {
+                    toggleDarkMode(!nuraSettings.darkMode);
+                } else if (text.includes('concluída') || text.includes('hide completed')) {
+                    toggleHideCompleted(!nuraSettings.hideCompleted);
+                } else if (text.includes('urgente') || text.includes('highlight urgent')) {
+                    toggleHighlightUrgent(!nuraSettings.highlightUrgent);
+                } else if (text.includes('sugestão') || text.includes('auto suggestion')) {
+                    toggleAutoSuggestions(!nuraSettings.autoSuggestions);
+                }
+            }
+        });
+    });
 });
 
 // ===== EXPORTAR FUNÇÕES =====
 window.nuraSettingsFunctions = {
+    loadSettingsFromDatabase,
+    saveSettingsToDatabase,
+    updateSetting,
     toggleHideCompleted,
     toggleHighlightUrgent,
     toggleAutoSuggestions,
     setDetailLevel,
     getPlanInfo,
     selectPlan,
-    managePlan,
     cancelPlan,
     toggleDarkMode,
     setPrimaryColor,
-    getSettings: () => nuraSettings,
-    loadSettingsFromDatabase
+    showNotification,
+    getSettings: () => ({ ...nuraSettings })
 };
 
-console.log('✅ settings.js carregado!');
+console.log('✅ settings.js carregado e pronto!');

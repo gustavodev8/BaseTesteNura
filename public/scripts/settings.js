@@ -147,6 +147,8 @@ function applySettings() {
 
 // ===== ATUALIZAR INTERFACE COM AS CONFIGURAÇÕES =====
 function updateUIWithSettings() {
+    console.log('🔄 Atualizando interface com:', nuraSettings);
+    
     // Atualizar toggle do modo escuro
     const darkModeToggle = document.getElementById('darkModeToggle');
     if (darkModeToggle) {
@@ -157,29 +159,45 @@ function updateUIWithSettings() {
         }
     }
     
+    // Atualizar TODOS os toggles
+    document.querySelectorAll('.setting-row').forEach(row => {
+        const toggle = row.querySelector('.toggle-switch');
+        if (!toggle) return;
+        
+        const label = row.querySelector('.setting-label');
+        if (!label) return;
+        
+        const text = label.textContent.toLowerCase();
+        
+        // Mapear cada toggle para sua configuração
+        if (text.includes('modo escuro')) {
+            toggle.classList.toggle('active', nuraSettings.darkMode);
+        } else if (text.includes('ocultar tarefas') || text.includes('concluídas')) {
+            toggle.classList.toggle('active', nuraSettings.hideCompleted);
+        } else if (text.includes('destacar') || text.includes('urgentes')) {
+            toggle.classList.toggle('active', nuraSettings.highlightUrgent);
+        } else if (text.includes('sugestões')) {
+            toggle.classList.toggle('active', nuraSettings.autoSuggestions);
+        }
+    });
+    
     // Atualizar cor ativa
     document.querySelectorAll('.color-option').forEach(color => {
-        if (color.getAttribute('data-color') === nuraSettings.primaryColor) {
+        const colorValue = color.getAttribute('data-color');
+        if (colorValue === nuraSettings.primaryColor) {
             color.classList.add('active');
         } else {
             color.classList.remove('active');
         }
     });
     
-    // Atualizar toggles
-    const toggles = document.querySelectorAll('.toggle-switch');
-    toggles.forEach(toggle => {
-        const key = toggle.textContent.toLowerCase();
-        if (key.includes('escuro') || key.includes('dark')) {
-            if (nuraSettings.darkMode) toggle.classList.add('active');
-        } else if (key.includes('concluída') || key.includes('completed')) {
-            if (nuraSettings.hideCompleted) toggle.classList.add('active');
-        } else if (key.includes('urgente') || key.includes('urgent')) {
-            if (nuraSettings.highlightUrgent) toggle.classList.add('active');
-        } else if (key.includes('sugestão') || key.includes('suggestion')) {
-            if (nuraSettings.autoSuggestions) toggle.classList.add('active');
-        }
-    });
+    // Atualizar select de detalhamento
+    const detailSelect = document.querySelector('select');
+    if (detailSelect) {
+        detailSelect.value = nuraSettings.detailLevel;
+    }
+    
+    console.log('✅ Interface atualizada!');
 }
 
 // ===== FILTRO: OCULTAR TAREFAS CONCLUÍDAS =====
@@ -380,48 +398,48 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ===== EVENTOS DO HTML ORIGINAL =====
-// Os eventos já existem no HTML inline, apenas garantindo que funcionem
-
-// Dark Mode Toggle
 document.addEventListener('DOMContentLoaded', () => {
     const darkModeToggle = document.getElementById('darkModeToggle');
     if (darkModeToggle) {
         darkModeToggle.addEventListener('click', function() {
             const newState = !nuraSettings.darkMode;
             toggleDarkMode(newState);
-            this.classList.toggle('active');
+            // NÃO precisa de this.classList.toggle aqui, a função já faz isso
         });
     }
     
-    // Cores - mantendo o comportamento original
+    // Cores
     document.querySelectorAll('.color-option').forEach(color => {
         color.addEventListener('click', function() {
-            document.querySelectorAll('.color-option').forEach(c => c.classList.remove('active'));
-            this.classList.add('active');
             const hexColor = this.getAttribute('data-color');
             setPrimaryColor(hexColor);
+            // updateUIWithSettings será chamado automaticamente
         });
     });
     
-    // Toggle switches - mantendo comportamento original
+    // Toggle switches
     document.querySelectorAll('.toggle-switch').forEach(toggle => {
-        toggle.addEventListener('click', function() {
-            this.classList.toggle('active');
+        // Remover listeners antigos se existirem
+        const newToggle = toggle.cloneNode(true);
+        toggle.parentNode.replaceChild(newToggle, toggle);
+        
+        newToggle.addEventListener('click', function() {
+            const row = this.closest('.setting-row');
+            if (!row) return;
             
-            // Identificar qual toggle foi clicado pelo contexto
-            const parent = this.closest('.setting-row') || this.closest('[class*="setting"]');
-            if (parent) {
-                const text = parent.textContent.toLowerCase();
-                
-                if (text.includes('escuro') || text.includes('dark mode')) {
-                    toggleDarkMode(!nuraSettings.darkMode);
-                } else if (text.includes('concluída') || text.includes('hide completed')) {
-                    toggleHideCompleted(!nuraSettings.hideCompleted);
-                } else if (text.includes('urgente') || text.includes('highlight urgent')) {
-                    toggleHighlightUrgent(!nuraSettings.highlightUrgent);
-                } else if (text.includes('sugestão') || text.includes('auto suggestion')) {
-                    toggleAutoSuggestions(!nuraSettings.autoSuggestions);
-                }
+            const label = row.querySelector('.setting-label');
+            if (!label) return;
+            
+            const text = label.textContent.toLowerCase();
+            
+            if (text.includes('modo escuro')) {
+                toggleDarkMode(!nuraSettings.darkMode);
+            } else if (text.includes('ocultar tarefas') || text.includes('concluídas')) {
+                toggleHideCompleted(!nuraSettings.hideCompleted);
+            } else if (text.includes('destacar') || text.includes('urgentes')) {
+                toggleHighlightUrgent(!nuraSettings.highlightUrgent);
+            } else if (text.includes('sugestões')) {
+                toggleAutoSuggestions(!nuraSettings.autoSuggestions);
             }
         });
     });

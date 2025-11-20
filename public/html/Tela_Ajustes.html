@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações - Nura</title>
+    <link rel="stylesheet" href="../css/Ajustes.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>Configurações</h1>
+                <p>Personalize sua experiência</p>
+            </div>
+            
+            <ul class="nav-list">
+                <li class="nav-item active" data-section="appearance">Aparência</li>
+                <li class="nav-item" data-section="tasks">Tarefas</li>
+                <li class="nav-item" data-section="ai">Assistente IA</li>
+                <li class="nav-item" data-section="notifications">Notificações</li>
+                <li class="nav-item" data-section="plans">Planos</li>
+                <li class="nav-item" data-section="account">Conta</li>
+            </ul>
+        </aside>
+        
+        <main class="content">
+            <!-- Aparência -->
+            <section class="section active" id="appearance">
+                <h2 class="section-title">Aparência</h2>
+                <p class="section-subtitle">Personalize a interface do sistema</p>
+                
+                <div class="setting-group">
+                    <h3 class="group-title">Tema</h3>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Modo escuro</div>
+                            <div class="setting-description">Ativa o tema escuro para reduzir o brilho</div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="toggle-switch" id="darkModeToggle"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3 class="group-title">Cor principal</h3>
+                    <div class="color-grid">
+                        <div class="color-option active" style="background: #49a09d;" data-color="#49a09d"></div>
+                        <div class="color-option" style="background: #667eea;" data-color="#667eea"></div>
+                        <div class="color-option" style="background: #e74c3c;" data-color="#e74c3c"></div>
+                        <div class="color-option" style="background: #2ecc71;" data-color="#2ecc71"></div>
+                        <div class="color-option" style="background: #f39c12;" data-color="#f39c12"></div>
+                        <div class="color-option" style="background: #9b59b6;" data-color="#9b59b6"></div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3 class="group-title">Tipografia</h3>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Tamanho da fonte</div>
+                            <div class="setting-description">Ajuste o tamanho do texto</div>
+                        </div>
+                        <div class="setting-control">
+                            <select>
+                                <option>Pequeno</option>
+                                <option selected>Médio</option>
+                                <option>Grande</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tarefas -->
+            <section class="section" id="tasks">
+                <h2 class="section-title">Tarefas</h2>
+                <p class="section-subtitle">Configure como suas tarefas são exibidas</p>
+                
+                <div class="setting-group">
+                    <h3 class="group-title">Visualização</h3>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Modo de exibição padrão</div>
+                            <div class="setting-description">Escolha como visualizar suas tarefas</div>
+                        </div>
+                        <div class="setting-control">
+                            <select>
+                                <option selected>Lista</option>
+                                <option>Kanban</option>
+                                <option>Calendário</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Ordenar por</div>
+                            <div class="setting-description">Define a ordem de exibição</div>
+                        </div>
+                        <div class="setting-control">
+                            <select>
+                                <option selected>Mais recentes</option>
+                                <option>Mais antigas</option>
+                                <option>Prioridade</option>
+                                <option>Alfabética</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3 class="group-title">Filtros</h3>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Ocultar tarefas concluídas</div>
+                            <div class="setting-description">Separar tarefas finalizadas</div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="toggle-switch active"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Destacar tarefas urgentes</div>
+                            <div class="setting-description">Prioridades no topo</div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="toggle-switch active"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- IA -->
+            <section class="section" id="ai">
+                <h2 class="section-title">Assistente IA</h2>
+                <p class="section-subtitle">Configure o comportamento da inteligência artificial</p>
+                
+                <div class="setting-group">
+                    <h3 class="group-title">Geração de rotinas</h3>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Sugestões automáticas</div>
+                            <div class="setting-description">A IA sugere melhorias</div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="toggle-switch active"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Nível de detalhamento</div>
+                            <div class="setting-description">Informações das rotinas</div>
+                        </div>
+                        <div class="setting-control">
+                            <select>
+                                <option>Básico</option>
+                                <option selected>Médio</option>
+                                <option>Detalhado</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Horário padrão</div>
+                            <div class="setting-description">Período para geração</div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="time-range">
+                                <input type="time" value="08:00">
+                                <span class="time-separator">—</span>
+                                <input type="time" value="18:00">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Notificações -->
+            <section class="section" id="notifications">
+                <h2 class="section-title">Notificações</h2>
+                <p class="section-subtitle">Gerencie como você recebe alertas</p>
+                
+                <div class="setting-group">
+                    <h3 class="group-title">Alertas</h3>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Notificações no navegador</div>
+                            <div class="setting-description">Alertas mesmo minimizado</div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="toggle-switch"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Resumo diário por email</div>
+                            <div class="setting-description">Tarefas pendentes às 8h</div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="toggle-switch"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Relatório semanal</div>
+                            <div class="setting-description">Estatísticas às segundas</div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="toggle-switch active"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Planos -->
+            <section class="section" id="plans">
+                <h2 class="section-title">Planos e Assinatura</h2>
+                <p class="section-subtitle">Escolha o melhor plano para você</p>
+                
+                <div class="setting-group">
+                    <h3 class="group-title">Disponíveis</h3>
+                    <div class="plans-container">
+                        <div class="plan-card">
+                            <div class="plan-name">Gratuito</div>
+                            <div class="plan-price">R$ 0</div>
+                            <div class="plan-period">para sempre</div>
+                            <ul class="plan-features">
+                                <li>Até 10 tarefas</li>
+                                <li>Sincronização básica</li>
+                                <li>Suporte por email</li>
+                            </ul>
+                            <button class="btn" style="width: 100%; margin-top: 12px;">Manter</button>
+                        </div>
+                        
+                        <div class="plan-card active">
+                            <div class="plan-badge">Seu plano</div>
+                            <div class="plan-name">Pro</div>
+                            <div class="plan-price">R$ 29</div>
+                            <div class="plan-period">por mês</div>
+                            <ul class="plan-features">
+                                <li>Tarefas ilimitadas</li>
+                                <li>Sincronização em tempo real</li>
+                                <li>Sugestões de IA</li>
+                                <li>Suporte prioritário</li>
+                            </ul>
+                            <button class="btn" style="width: 100%; margin-top: 12px;" disabled>Seu plano atual</button>
+                        </div>
+                        
+                        <div class="plan-card">
+                            <div class="plan-name">Premium</div>
+                            <div class="plan-price">R$ 99</div>
+                            <div class="plan-period">por mês</div>
+                            <ul class="plan-features">
+                                <li>Tudo no Pro</li>
+                                <li>IA avançada</li>
+                                <li>Relatórios personalizados</li>
+                                <li>Suporte 24/7 VIP</li>
+                            </ul>
+                            <button class="btn btn-primary" style="width: 100%; margin-top: 12px;">Fazer upgrade</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3 class="group-title">Gerenciar</h3>
+                    <p style="color: #999; margin-bottom: 16px; font-size: 0.9rem;">Assinatura vence em 30 de dezembro de 2025</p>
+                    <div class="button-group">
+                        <button class="btn">Trocar plano</button>
+                        <button class="btn btn-danger">Cancelar assinatura</button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Conta -->
+            <section class="section" id="account">
+                <h2 class="section-title">Conta</h2>
+                <p class="section-subtitle">Gerencie suas informações pessoais</p>
+                
+                <div class="setting-group">
+                    <h3 class="group-title">Informações</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Nome completo</label>
+                        <input type="text" class="form-input" value="Administrador" placeholder="Seu nome">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" value="admin@nura.ia" placeholder="seu@email.com">
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn btn-primary">Salvar</button>
+                        <button class="btn">Cancelar</button>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3 class="group-title">Segurança</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Nova senha</label>
+                        <input type="password" class="form-input" placeholder="Digite sua nova senha">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Confirmar senha</label>
+                        <input type="password" class="form-input" placeholder="Confirme sua nova senha">
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn btn-primary">Alterar senha</button>
+                    </div>
+                </div>
+                
+                <div class="danger-zone">
+                    <div class="danger-zone-title">Zona de perigo</div>
+                    <div class="danger-zone-description">
+                        Excluir sua conta irá remover permanentemente todos os seus dados.
+                    </div>
+                    <button class="btn btn-danger">Excluir conta</button>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script>
+        // Navegação
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                item.classList.add('active');
+                document.getElementById(item.dataset.section).classList.add('active');
+            });
+        });
+        
+        // Cores
+        document.querySelectorAll('.color-option').forEach(color => {
+            color.addEventListener('click', () => {
+                document.querySelectorAll('.color-option').forEach(c => c.classList.remove('active'));
+                color.classList.add('active');
+            });
+        });
+        
+        // Toggle switches
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+            });
+        });
+        
+        // Modo escuro
+        document.getElementById('darkModeToggle').addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            this.classList.toggle('active');
+        });
+    </script>
+</body>
+</html>

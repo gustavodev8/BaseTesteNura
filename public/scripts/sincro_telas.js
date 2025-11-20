@@ -68,9 +68,9 @@ function initializeTaskSystem() {
             const tarefaData = {
                 title: texto,
                 description: 'Tarefa criada na página inicial',
-                status: 'pendente',
+                status: 'pending',
                 priority: 'medium',
-                user_id: currentUser.id // ✅ ENVIAR ID DO USUÁRIO
+                user_id: currentUser.id
             };
 
             console.log('📤 Enviando tarefa:', tarefaData);
@@ -131,7 +131,6 @@ async function loadAndDisplayTasksFromDatabase() {
     try {
         console.log(`📥 Carregando tarefas do usuário ${currentUser.username}...`);
         
-        // ✅ ENVIAR user_id na query
         const response = await fetch(`${API_URL}/api/tasks?user_id=${currentUser.id}`);
         const data = await response.json();
         
@@ -140,6 +139,7 @@ async function loadAndDisplayTasksFromDatabase() {
             console.log(`✅ ${homeTasks.length} tarefas carregadas`);
             
             renderAllTasks();
+            applyTaskFilters(); // ✅ APLICAR FILTROS
         } else {
             console.error('❌ Erro:', data.error);
             showEmptyState();
@@ -187,6 +187,10 @@ function createTaskElement(task) {
     
     taskDiv.className = `list-group-item d-flex justify-content-between align-items-center ${isCompleted ? 'completed-task' : ''}`;
     taskDiv.setAttribute('data-task-id', task.id);
+    
+    // ✅ ADICIONAR ATRIBUTOS PARA FILTROS
+    taskDiv.setAttribute('data-task-status', isCompleted ? 'completed' : 'pending');
+    taskDiv.setAttribute('data-task-priority', task.priority || 'medium');
 
     const taskTitle = task.title || task.name || 'Tarefa sem nome';
 
@@ -235,6 +239,56 @@ function createTaskElement(task) {
     return taskDiv;
 }
 
+// ===== APLICAR FILTROS DE CONFIGURAÇÃO =====
+function applyTaskFilters() {
+    if (!window.nuraSettingsFunctions) {
+        console.log('⚠️ Sistema de configurações não carregado ainda');
+        return;
+    }
+
+    const settings = window.nuraSettingsFunctions.getSettings();
+    console.log('🔍 Aplicando filtros:', settings);
+
+    // 1. Filtro: Ocultar tarefas concluídas
+    if (settings.hideCompleted) {
+        console.log('🙈 Ocultando tarefas concluídas');
+        document.querySelectorAll('[data-task-status="completed"]').forEach(task => {
+            task.style.display = 'none';
+        });
+    } else {
+        console.log('👁️ Mostrando todas as tarefas');
+        document.querySelectorAll('[data-task-status="completed"]').forEach(task => {
+            task.style.display = '';
+        });
+    }
+
+    // 2. Filtro: Destacar tarefas urgentes
+    if (settings.highlightUrgent) {
+        console.log('🚨 Destacando tarefas urgentes');
+        
+        document.querySelectorAll('[data-task-priority="high"]').forEach(task => {
+            task.style.borderLeft = '5px solid #e74c3c';
+            task.style.backgroundColor = '#ffe8e8';
+        });
+
+        document.querySelectorAll('[data-task-priority="medium"]').forEach(task => {
+            task.style.borderLeft = '5px solid #f39c12';
+            task.style.backgroundColor = '#fff5e6';
+        });
+
+        document.querySelectorAll('[data-task-priority="low"]').forEach(task => {
+            task.style.borderLeft = '5px solid #2ecc71';
+            task.style.backgroundColor = '#f0fdf4';
+        });
+    } else {
+        console.log('➡️ Removendo destaque de tarefas');
+        document.querySelectorAll('[data-task-priority]').forEach(task => {
+            task.style.borderLeft = '';
+            task.style.backgroundColor = '';
+        });
+    }
+}
+
 // ===== ALTERAR STATUS =====
 async function toggleTaskFromHome(id) {
     if (!currentUser) {
@@ -249,7 +303,7 @@ async function toggleTaskFromHome(id) {
     }
 
     const isCompleted = task.status === 'completed' || task.status === 'concluido' || task.status === 'concluída';
-    const newStatus = isCompleted ? 'pendente' : 'concluída';
+    const newStatus = isCompleted ? 'pending' : 'completed';
     
     console.log(`🔄 Alternando status da tarefa ${id}: ${task.status} → ${newStatus}`);
     
@@ -261,7 +315,7 @@ async function toggleTaskFromHome(id) {
             },
             body: JSON.stringify({ 
                 status: newStatus,
-                user_id: currentUser.id // ✅ ENVIAR user_id
+                user_id: currentUser.id
             })
         });
         
@@ -271,7 +325,8 @@ async function toggleTaskFromHome(id) {
             console.log('✅ Status atualizado!');
             task.status = newStatus;
             renderAllTasks();
-            showNotification(newStatus === 'concluída' ? '✅ Tarefa concluída!' : '⏳ Tarefa reaberta!');
+            applyTaskFilters(); // ✅ REAPLICAR FILTROS
+            showNotification(newStatus === 'completed' ? '✅ Tarefa concluída!' : '⏳ Tarefa reaberta!');
         } else {
             console.error('❌ Erro:', result);
             showNotification('❌ Erro ao atualizar tarefa');
@@ -299,7 +354,6 @@ async function deleteTaskFromHome(id) {
     console.log(`🗑️ Excluindo tarefa ${id}...`);
     
     try {
-        // ✅ ENVIAR user_id na URL
         const response = await fetch(`${API_URL}/api/tasks/${id}?user_id=${currentUser.id}`, {
             method: 'DELETE'
         });
@@ -310,6 +364,7 @@ async function deleteTaskFromHome(id) {
             console.log('✅ Tarefa excluída!');
             homeTasks = homeTasks.filter(t => t.id !== id);
             renderAllTasks();
+            applyTaskFilters(); // ✅ REAPLICAR FILTROS
             showNotification('🗑️ Tarefa excluída com sucesso!');
         } else {
             console.error('❌ Erro:', result);
@@ -404,8 +459,8 @@ async function salvarTarefasDaRotina(rotinaTexto) {
                     title: texto.substring(0, 100),
                     description: 'Importado da rotina IA',
                     priority: 'medium',
-                    status: 'pendente',
-                    user_id: currentUser.id // ✅ ENVIAR user_id
+                    status: 'pending',
+                    user_id: currentUser.id
                 };
 
                 try {
@@ -470,5 +525,6 @@ window.toggleTaskFromHome = toggleTaskFromHome;
 window.deleteTaskFromHome = deleteTaskFromHome;
 window.gerarRotinaInteligente = gerarRotinaInteligente;
 window.salvarTarefasDaRotina = salvarTarefasDaRotina;
+window.applyTaskFilters = applyTaskFilters; // ✅ EXPORTAR
 
 console.log('✅ sincro_telas.js carregado!');

@@ -1,10 +1,11 @@
 // ===== SISTEMA DE CONFIGURAÇÕES NURA COM BANCO DE DADOS =====
 // Arquivo: public/scripts/settings.js
 
-const API_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:3000' 
-    : 'https://basetestenura-3.onrender.com';
-
+if (typeof API_URL === 'undefined') {
+    var API_URL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000' 
+        : 'https://basetestenura-3.onrender.com';
+}
 let currentUserId = null;
 
 // ===== OBJETO DE CONFIGURAÇÕES =====

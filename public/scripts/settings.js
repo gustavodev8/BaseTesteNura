@@ -1,456 +1,475 @@
-// ===== SISTEMA DE CONFIGURAÇÕES NURA COM BANCO DE DADOS =====
-// Arquivo: public/scripts/settings.js
+/* ========================================
+   SISTEMA DE CONFIGURAÇÕES - NURA
+   Arquivo: settings.js
+   Funcionalidade: Gerenciar configurações do usuário
+   ======================================== */
 
-const API_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:3000' 
-    : 'https://basetestenura-3.onrender.com';
+const API_URL = 'https://basetestenura-3.onrender.com';
+let currentUser = null;
+let userSettings = {};
 
-let currentUserId = null;
-
-// ===== OBJETO DE CONFIGURAÇÕES =====
-const nuraSettings = {
-    hideCompleted: false,
-    highlightUrgent: true,
-    autoSuggestions: true,
-    detailLevel: 'Médio',
-    darkMode: false,
-    primaryColor: '#49a09d',
-    currentPlan: 'pro',
-    planRenewalDate: '30 de dezembro de 2025'
-};
-
-// ===== OBTER ID DO USUÁRIO =====
-function getCurrentUserId() {
-    if (!currentUserId) {
-        const userData = localStorage.getItem('nura_user');
-        if (userData) {
-            try {
-                currentUserId = JSON.parse(userData).id;
-            } catch (e) {
-                console.error('❌ Erro ao parsear usuário:', e);
-                return null;
-            }
-        }
+// ===== INICIALIZAÇÃO =====
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('⚙️ Inicializando sistema de configurações...');
+    
+    // Obter usuário logado
+    currentUser = getCurrentUser();
+    
+    if (!currentUser) {
+        console.error('❌ Usuário não está logado!');
+        window.location.href = '/login';
+        return;
     }
-    return currentUserId;
-}
+    
+    console.log('👤 Usuário logado:', currentUser.username);
+    
+    // Carregar configurações do usuário
+    loadUserSettings();
+    
+    // Inicializar event listeners
+    initializeEventListeners();
+});
 
-// ===== CARREGAR CONFIGURAÇÕES DO BANCO =====
-async function loadSettingsFromDatabase() {
+// ===== CARREGAR CONFIGURAÇÕES DO USUÁRIO =====
+async function loadUserSettings() {
+    if (!currentUser) return;
+    
     try {
-        const userId = getCurrentUserId();
+        console.log(`📥 Carregando configurações do usuário ${currentUser.id}...`);
         
-        if (!userId) {
-            console.warn('⚠️ Usuário não identificado');
-            return false;
-        }
-
-        const response = await fetch(`${API_URL}/api/settings/${userId}`, {
+        const response = await fetch(`${API_URL}/api/settings/${currentUser.id}`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-                'x-user-id': userId
+                'x-user-id': currentUser.id.toString()
             }
         });
-
-        if (response.ok) {
-            const data = await response.json();
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            userSettings = result.settings;
+            console.log('✅ Configurações carregadas:', userSettings);
             
-            if (data.success && data.settings) {
-                Object.assign(nuraSettings, data.settings);
-                console.log('✅ Configurações carregadas do banco:', nuraSettings);
-                applySettings();
-                updateUIWithSettings();
-                return true;
-            }
-        } else if (response.status === 404) {
-            console.log('📝 Criando configurações padrão...');
-            await saveSettingsToDatabase();
-            updateUIWithSettings();
-            return true;
+            // Aplicar configurações na interface
+            applySettingsToInterface();
         } else {
-            console.error('❌ Erro:', response.status);
-            return false;
+            console.log('📝 Criando configurações padrão...');
+            // Se não existir, criar com valores padrão
+            userSettings = createDefaultSettings();
+            await saveUserSettings();
         }
-    } catch (err) {
-        console.error('❌ Erro ao carregar configurações:', err);
-        return false;
+    } catch (error) {
+        console.error('❌ Erro ao carregar configurações:', error);
+        // Usar configurações padrão em caso de erro
+        userSettings = createDefaultSettings();
+        applySettingsToInterface();
     }
 }
 
-// ===== SALVAR CONFIGURAÇÕES NO BANCO =====
-async function saveSettingsToDatabase() {
-    try {
-        const userId = getCurrentUserId();
-        
-        if (!userId) {
-            console.warn('⚠️ Usuário não identificado');
-            return false;
-        }
-
-        const response = await fetch(`${API_URL}/api/settings/${userId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-user-id': userId
-            },
-            body: JSON.stringify({
-                user_id: userId,
-                settings: nuraSettings
-            })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            if (data.success) {
-                console.log('✅ Configurações salvas no banco');
-                return true;
-            }
-        }
-        
-        console.error('❌ Erro ao salvar configurações');
-        return false;
-    } catch (err) {
-        console.error('❌ Erro de conexão:', err);
-        return false;
-    }
+// ===== CRIAR CONFIGURAÇÕES PADRÃO =====
+function createDefaultSettings() {
+    return {
+        hideCompleted: true,        // Ocultar tarefas concluídas
+        highlightUrgent: true,      // Destacar tarefas urgentes
+        autoSuggestions: true,      // Sugestões automáticas da IA
+        detailLevel: 'Médio',       // Nível de detalhamento
+        darkMode: false,            // Modo escuro
+        primaryColor: '#49a09d',    // Cor principal
+        currentPlan: 'pro',         // Plano atual
+        planRenewalDate: '30 de dezembro de 2025'
+    };
 }
 
 // ===== APLICAR CONFIGURAÇÕES NA INTERFACE =====
-function applySettings() {
-    // Aplicar modo escuro
-    if (nuraSettings.darkMode) {
+function applySettingsToInterface() {
+    console.log('🎨 Aplicando configurações na interface...');
+    
+    // 1. Toggle switches
+    const toggles = {
+        'hide-completed': userSettings.hideCompleted,
+        'highlight-urgent': userSettings.highlightUrgent,
+        'auto-suggestions': userSettings.autoSuggestions,
+        'dark-mode': userSettings.darkMode
+    };
+    
+    Object.entries(toggles).forEach(([id, isActive]) => {
+        const toggle = document.querySelector(`[data-setting="${id}"]`) || 
+                      document.querySelector(`#${id}Toggle`) ||
+                      document.getElementById(id);
+        
+        if (toggle) {
+            if (isActive) {
+                toggle.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+            }
+        }
+    });
+    
+    // 2. Modo escuro
+    if (userSettings.darkMode) {
         document.body.classList.add('dark-mode');
-    } else {
-        document.body.classList.remove('dark-mode');
     }
     
-    // Aplicar cor primária
-    document.documentElement.style.setProperty('--primary-color', nuraSettings.primaryColor);
-    
-    console.log('🎨 Configurações aplicadas');
-}
-
-// ===== ATUALIZAR INTERFACE COM AS CONFIGURAÇÕES =====
-function updateUIWithSettings() {
-    console.log('🔄 Atualizando interface com:', nuraSettings);
-    
-    // Atualizar toggle do modo escuro
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    if (darkModeToggle) {
-        if (nuraSettings.darkMode) {
-            darkModeToggle.classList.add('active');
-        } else {
-            darkModeToggle.classList.remove('active');
-        }
-    }
-    
-    // Atualizar TODOS os toggles
-    document.querySelectorAll('.setting-row').forEach(row => {
-        const toggle = row.querySelector('.toggle-switch');
-        if (!toggle) return;
+    // 3. Cor principal
+    if (userSettings.primaryColor) {
+        document.documentElement.style.setProperty('--primary-color', userSettings.primaryColor);
         
-        const label = row.querySelector('.setting-label');
-        if (!label) return;
-        
-        const text = label.textContent.toLowerCase();
-        
-        // Mapear cada toggle para sua configuração
-        if (text.includes('modo escuro')) {
-            toggle.classList.toggle('active', nuraSettings.darkMode);
-        } else if (text.includes('ocultar tarefas') || text.includes('concluídas')) {
-            toggle.classList.toggle('active', nuraSettings.hideCompleted);
-        } else if (text.includes('destacar') || text.includes('urgentes')) {
-            toggle.classList.toggle('active', nuraSettings.highlightUrgent);
-        } else if (text.includes('sugestões')) {
-            toggle.classList.toggle('active', nuraSettings.autoSuggestions);
-        }
-    });
-    
-    // Atualizar cor ativa
-    document.querySelectorAll('.color-option').forEach(color => {
-        const colorValue = color.getAttribute('data-color');
-        if (colorValue === nuraSettings.primaryColor) {
-            color.classList.add('active');
-        } else {
-            color.classList.remove('active');
-        }
-    });
-    
-    // Atualizar select de detalhamento
-    const detailSelect = document.querySelector('select');
-    if (detailSelect) {
-        detailSelect.value = nuraSettings.detailLevel;
-    }
-    
-    console.log('✅ Interface atualizada!');
-}
-
-// ===== FILTRO: OCULTAR TAREFAS CONCLUÍDAS =====
-async function toggleHideCompleted(enabled) {
-    nuraSettings.hideCompleted = enabled;
-    
-    // Atualizar UI imediatamente
-    const toggle = Array.from(document.querySelectorAll('.toggle-switch')).find(t => {
-        const row = t.closest('.setting-row');
-        return row?.textContent.toLowerCase().includes('ocultar tarefas');
-    });
-    if (toggle) toggle.classList.toggle('active', enabled);
-    
-    document.querySelectorAll('[data-task-status="completed"]').forEach(task => {
-        task.style.display = enabled ? 'none' : '';
-    });
-    
-    await saveSettingsToDatabase();
-    showNotification(enabled ? '👁️ Tarefas concluídas ocultadas' : '👁️ Tarefas concluídas visíveis');
-}
-
-// ===== FILTRO: DESTACAR TAREFAS URGENTES =====
-async function toggleHighlightUrgent(enabled) {
-    nuraSettings.highlightUrgent = enabled;
-    
-    const toggle = Array.from(document.querySelectorAll('.toggle-switch')).find(t => {
-        const row = t.closest('.setting-row');
-        return row?.textContent.toLowerCase().includes('destacar');
-    });
-    if (toggle) toggle.classList.toggle('active', enabled);
-    
-    if (enabled) {
-        applyHighlightUrgent();
-    } else {
-        document.querySelectorAll('[data-task-priority]').forEach(task => {
-            task.style.borderLeft = '';
-            task.style.backgroundColor = '';
+        // Marcar cor ativa
+        const colorOptions = document.querySelectorAll('.color-option');
+        colorOptions.forEach(option => {
+            option.classList.remove('active');
+            if (option.dataset.color === userSettings.primaryColor) {
+                option.classList.add('active');
+            }
         });
     }
     
-    await saveSettingsToDatabase();
-    showNotification(enabled ? '🚨 Tarefas urgentes destacadas' : '➡️ Tarefas normalizadas');
-}
-
-// ===== APLICAR HIGHLIGHT URGENT =====
-function applyHighlightUrgent() {
-    const tasks = document.querySelectorAll('[data-task-priority]');
-    
-    tasks.forEach(task => {
-        const priority = task.getAttribute('data-task-priority') || 'low';
-        
-        if (priority === 'high') {
-            task.style.borderLeft = '5px solid #e74c3c';
-            task.style.backgroundColor = '#ffe8e8';
-        } else if (priority === 'medium') {
-            task.style.borderLeft = '5px solid #f39c12';
-            task.style.backgroundColor = '#fff5e6';
-        } else {
-            task.style.borderLeft = '5px solid #2ecc71';
-            task.style.backgroundColor = '#f0fdf4';
-        }
-    });
-}
-
-// ===== ASSISTENTE IA: SUGESTÕES AUTOMÁTICAS =====
-async function toggleAutoSuggestions(enabled) {
-    nuraSettings.autoSuggestions = enabled;
-    
-    const toggle = Array.from(document.querySelectorAll('.toggle-switch')).find(t => {
-        const row = t.closest('.setting-row');
-        return row?.textContent.toLowerCase().includes('sugestões');
-    });
-    if (toggle) toggle.classList.toggle('active', enabled);
-    
-    await saveSettingsToDatabase();
-    showNotification(enabled ? '💡 Sugestões de IA ativadas!' : '🔕 Sugestões de IA desativadas');
-}
-
-// ===== ASSISTENTE IA: NÍVEL DE DETALHAMENTO =====
-async function setDetailLevel(level) {
-    nuraSettings.detailLevel = level;
-    await saveSettingsToDatabase();
-    showNotification(`📊 Detalhamento: ${level}`);
-}
-
-// ===== PLANOS: OBTER INFORMAÇÕES =====
-function getPlanInfo() {
-    const plans = {
-        'free': {
-            name: 'Gratuito',
-            price: 'R$ 0',
-            tasks: 10,
-            features: ['Até 10 tarefas', '1 rotina/semana', 'Sincronização básica']
-        },
-        'pro': {
-            name: 'Pro',
-            price: 'R$ 29/mês',
-            tasks: 'Ilimitado',
-            features: ['Tarefas ilimitadas', '5 rotinas/semana', 'Sincronização real-time', 'Sugestões IA']
-        },
-        'premium': {
-            name: 'Premium',
-            price: 'R$ 99/mês',
-            tasks: 'Ilimitado',
-            features: ['Tudo no Pro', 'Rotinas ilimitadas', 'IA avançada', 'Suporte 24/7']
-        }
+    // 4. Selects
+    const selects = {
+        'detail-level': userSettings.detailLevel
     };
     
-    return plans[nuraSettings.currentPlan] || plans['pro'];
-}
-
-// ===== PLANOS: SELECIONAR PLANO =====
-async function selectPlan(planName) {
-    if (planName === 'premium') {
-        if (confirm('🚀 Upgrade para Premium - R$ 99/mês?\n\n(Simulado para teste)')) {
-            nuraSettings.currentPlan = 'premium';
-            await saveSettingsToDatabase();
-            showNotification('🚀 Upgrade realizado!');
+    Object.entries(selects).forEach(([id, value]) => {
+        const select = document.querySelector(`[data-setting="${id}"]`) || document.getElementById(id);
+        if (select && select.tagName === 'SELECT') {
+            select.value = value;
         }
-    } else if (planName === 'free') {
-        if (confirm('⚠️ Você perderá acesso aos recursos Pro. Tem certeza?')) {
-            nuraSettings.currentPlan = 'free';
-            await saveSettingsToDatabase();
-            showNotification('📉 Downgrade realizado');
-        }
-    }
-}
-
-// ===== PLANOS: CANCELAR =====
-async function cancelPlan() {
-    if (confirm('⚠️ Cancelar assinatura? Você será downgrade em 30 dias')) {
-        nuraSettings.currentPlan = 'free';
-        await saveSettingsToDatabase();
-        showNotification('❌ Assinatura cancelada');
-    }
-}
-
-// ===== APARÊNCIA: MODO ESCURO =====
-async function toggleDarkMode(enabled) {
-    nuraSettings.darkMode = enabled;
-    
-    const toggle = document.getElementById('darkModeToggle');
-    if (toggle) toggle.classList.toggle('active', enabled);
-    
-    document.body.classList.toggle('dark-mode', enabled);
-    
-    await saveSettingsToDatabase();
-    showNotification(enabled ? '🌙 Modo escuro ativado' : '☀️ Modo claro ativado');
-}
-
-// ===== APARÊNCIA: TROCAR COR =====
-async function setPrimaryColor(hexColor) {
-    nuraSettings.primaryColor = hexColor;
-    
-    document.querySelectorAll('.color-option').forEach(c => {
-        c.classList.toggle('active', c.getAttribute('data-color') === hexColor);
     });
     
-    document.documentElement.style.setProperty('--primary-color', hexColor);
-    
-    await saveSettingsToDatabase();
-    showNotification('🎨 Cor atualizada');
+    console.log('✅ Interface atualizada com as configurações');
 }
 
-// ===== NOTIFICAÇÃO =====
-function showNotification(message) {
-    console.log(`📢 ${message}`);
+// ===== INICIALIZAR EVENT LISTENERS =====
+function initializeEventListeners() {
+    console.log('🔗 Inicializando event listeners...');
     
-    let notif = document.getElementById('notification');
+    // 1. Toggle switches - Buscar por diferentes seletores
+    const allToggles = [
+        ...document.querySelectorAll('.toggle-switch'),
+        ...document.querySelectorAll('[data-toggle]'),
+        ...document.querySelectorAll('.setting-control .toggle-switch')
+    ];
     
-    if (!notif) {
-        notif = document.createElement('div');
-        notif.id = 'notification';
-        notif.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #49a09d;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            z-index: 9999;
-            font-size: 14px;
-            animation: slideIn 0.3s ease;
-        `;
-        document.body.appendChild(notif);
+    allToggles.forEach((toggle, index) => {
+        if (!toggle.dataset.listenerAdded) {
+            toggle.addEventListener('click', handleToggleClick);
+            toggle.dataset.listenerAdded = 'true';
+            console.log(`📌 Listener adicionado ao toggle ${index + 1}`);
+        }
+    });
+    
+    // 2. Cores
+    document.querySelectorAll('.color-option').forEach(color => {
+        if (!color.dataset.listenerAdded) {
+            color.addEventListener('click', () => handleColorChange(color.dataset.color));
+            color.dataset.listenerAdded = 'true';
+        }
+    });
+    
+    // 3. Selects
+    document.querySelectorAll('select').forEach(select => {
+        if (!select.dataset.listenerAdded) {
+            select.addEventListener('change', handleSelectChange);
+            select.dataset.listenerAdded = 'true';
+        }
+    });
+    
+    // 4. Navegação entre seções
+    document.querySelectorAll('.nav-item').forEach(item => {
+        if (!item.dataset.navListenerAdded) {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                item.classList.add('active');
+                document.getElementById(item.dataset.section).classList.add('active');
+            });
+            item.dataset.navListenerAdded = 'true';
+        }
+    });
+    
+    console.log('✅ Event listeners inicializados');
+}
+
+// ===== MANIPULAR TOGGLE CLICKS =====
+async function handleToggleClick(event) {
+    const toggle = event.target.closest('.toggle-switch');
+    if (!toggle) return;
+    
+    const isActive = toggle.classList.contains('active');
+    const newValue = !isActive;
+    
+    // Determinar qual configuração está sendo alterada
+    let settingKey = null;
+    let settingName = '';
+    
+    // Buscar pelo contexto da configuração
+    const parentRow = toggle.closest('.setting-row');
+    if (parentRow) {
+        const label = parentRow.querySelector('.setting-label');
+        if (label) {
+            const labelText = label.textContent.trim().toLowerCase();
+            
+            if (labelText.includes('ocultar tarefas concluídas')) {
+                settingKey = 'hideCompleted';
+                settingName = 'Ocultar tarefas concluídas';
+            } else if (labelText.includes('destacar tarefas urgentes')) {
+                settingKey = 'highlightUrgent';
+                settingName = 'Destacar tarefas urgentes';
+            } else if (labelText.includes('sugestões automáticas')) {
+                settingKey = 'autoSuggestions';
+                settingName = 'Sugestões automáticas';
+            } else if (labelText.includes('modo escuro')) {
+                settingKey = 'darkMode';
+                settingName = 'Modo escuro';
+            }
+        }
     }
     
-    notif.textContent = message;
-    notif.style.display = 'block';
-    notif.style.opacity = '1';
+    // Se não conseguiu identificar pelo contexto, tentar por ID
+    if (!settingKey && toggle.id) {
+        if (toggle.id.includes('darkMode')) {
+            settingKey = 'darkMode';
+            settingName = 'Modo escuro';
+        }
+    }
     
+    if (!settingKey) {
+        console.warn('⚠️ Não foi possível identificar a configuração do toggle');
+        return;
+    }
+    
+    console.log(`🔄 Alterando ${settingName}: ${isActive} → ${newValue}`);
+    
+    try {
+        // Atualizar visualmente primeiro (feedback imediato)
+        if (newValue) {
+            toggle.classList.add('active');
+        } else {
+            toggle.classList.remove('active');
+        }
+        
+        // Aplicar mudanças específicas
+        if (settingKey === 'darkMode') {
+            if (newValue) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        }
+        
+        // Salvar no backend
+        await updateSetting(settingKey, newValue);
+        
+        // Atualizar configurações locais
+        userSettings[settingKey] = newValue;
+        
+        // Aplicar mudanças nas outras telas (se necessário)
+        applySettingToOtherPages(settingKey, newValue);
+        
+        showNotification(`✅ ${settingName} ${newValue ? 'ativado' : 'desativado'}!`);
+        
+    } catch (error) {
+        console.error('❌ Erro ao salvar configuração:', error);
+        
+        // Reverter mudança visual em caso de erro
+        if (newValue) {
+            toggle.classList.remove('active');
+        } else {
+            toggle.classList.add('active');
+        }
+        
+        if (settingKey === 'darkMode') {
+            document.body.classList.toggle('dark-mode');
+        }
+        
+        showNotification('❌ Erro ao salvar configuração');
+    }
+}
+
+// ===== MANIPULAR MUDANÇAS DE COR =====
+async function handleColorChange(color) {
+    console.log(`🎨 Alterando cor principal para: ${color}`);
+    
+    try {
+        // Atualizar visualmente
+        document.querySelectorAll('.color-option').forEach(c => c.classList.remove('active'));
+        document.querySelector(`[data-color="${color}"]`).classList.add('active');
+        
+        // Aplicar cor
+        document.documentElement.style.setProperty('--primary-color', color);
+        
+        // Salvar no backend
+        await updateSetting('primaryColor', color);
+        
+        // Atualizar configurações locais
+        userSettings.primaryColor = color;
+        
+        showNotification('✅ Cor alterada com sucesso!');
+        
+    } catch (error) {
+        console.error('❌ Erro ao salvar cor:', error);
+        showNotification('❌ Erro ao salvar cor');
+    }
+}
+
+// ===== MANIPULAR SELECTS =====
+async function handleSelectChange(event) {
+    const select = event.target;
+    const value = select.value;
+    
+    let settingKey = null;
+    let settingName = '';
+    
+    // Identificar qual select
+    const parentRow = select.closest('.setting-row');
+    if (parentRow) {
+        const label = parentRow.querySelector('.setting-label');
+        if (label) {
+            const labelText = label.textContent.trim().toLowerCase();
+            
+            if (labelText.includes('nível de detalhamento')) {
+                settingKey = 'detailLevel';
+                settingName = 'Nível de detalhamento';
+            }
+        }
+    }
+    
+    if (!settingKey) return;
+    
+    console.log(`📋 Alterando ${settingName} para: ${value}`);
+    
+    try {
+        await updateSetting(settingKey, value);
+        userSettings[settingKey] = value;
+        showNotification(`✅ ${settingName} alterado para "${value}"!`);
+    } catch (error) {
+        console.error('❌ Erro ao salvar configuração:', error);
+        showNotification('❌ Erro ao salvar configuração');
+    }
+}
+
+// ===== ATUALIZAR CONFIGURAÇÃO NO BACKEND =====
+async function updateSetting(key, value) {
+    if (!currentUser) {
+        throw new Error('Usuário não identificado');
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/api/settings/${currentUser.id}/${key}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': currentUser.id.toString()
+            },
+            body: JSON.stringify({ value })
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Erro desconhecido');
+        }
+        
+        console.log(`✅ Configuração ${key} salva no servidor`);
+        return result;
+        
+    } catch (error) {
+        console.error('❌ Erro ao comunicar com servidor:', error);
+        throw error;
+    }
+}
+
+// ===== SALVAR TODAS AS CONFIGURAÇÕES =====
+async function saveUserSettings() {
+    if (!currentUser) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/api/settings/${currentUser.id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': currentUser.id.toString()
+            },
+            body: JSON.stringify({ settings: userSettings })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log('✅ Todas as configurações salvas');
+        } else {
+            throw new Error(result.error);
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro ao salvar configurações:', error);
+    }
+}
+
+// ===== APLICAR CONFIGURAÇÕES EM OUTRAS PÁGINAS =====
+function applySettingToOtherPages(settingKey, value) {
+    // Salvar no localStorage para outras páginas acessarem
+    const settingsForOtherPages = JSON.parse(localStorage.getItem('nura_settings') || '{}');
+    settingsForOtherPages[settingKey] = value;
+    localStorage.setItem('nura_settings', JSON.stringify(settingsForOtherPages));
+    
+    console.log(`💾 Configuração ${settingKey} salva no localStorage para outras páginas`);
+}
+
+// ===== OBTER USUÁRIO ATUAL =====
+function getCurrentUser() {
+    const userStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+    return userStr ? JSON.parse(userStr) : null;
+}
+
+// ===== MOSTRAR NOTIFICAÇÃO =====
+function showNotification(message) {
+    // Remover notificação existente
+    const existing = document.querySelector('.settings-notification');
+    if (existing) {
+        existing.remove();
+    }
+    
+    const notification = document.createElement('div');
+    notification.className = 'settings-notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #49a09d;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        font-weight: 500;
+        font-size: 0.9rem;
+        opacity: 0;
+        transform: translateX(100px);
+        transition: all 0.3s ease;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Animar entrada
     setTimeout(() => {
-        notif.style.opacity = '0';
-        setTimeout(() => {
-            notif.style.display = 'none';
-        }, 300);
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 10);
+    
+    // Remover após 3 segundos
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100px)';
+        setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
 
-// ===== INICIALIZAR - CARREGAR CONFIGURAÇÕES =====
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('⚙️ Carregando sistema de configurações...');
-    loadSettingsFromDatabase();
-});
+// ===== EXPORTAR FUNÇÕES GLOBAIS =====
+window.loadUserSettings = loadUserSettings;
+window.applySettingsToInterface = applySettingsToInterface;
+window.updateSetting = updateSetting;
 
-// ===== EVENTOS DO HTML ORIGINAL =====
-document.addEventListener('DOMContentLoaded', () => {
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    if (darkModeToggle) {
-        darkModeToggle.addEventListener('click', function() {
-            const newState = !nuraSettings.darkMode;
-            toggleDarkMode(newState);
-        });
-    }
-    
-    // Cores
-    document.querySelectorAll('.color-option').forEach(color => {
-        color.addEventListener('click', function() {
-            const hexColor = this.getAttribute('data-color');
-            setPrimaryColor(hexColor);
-        });
-    });
-    
-    // Toggle switches
-    document.querySelectorAll('.toggle-switch').forEach(toggle => {
-        const newToggle = toggle.cloneNode(true);
-        toggle.parentNode.replaceChild(newToggle, toggle);
-        
-        newToggle.addEventListener('click', function() {
-            const row = this.closest('.setting-row');
-            if (!row) return;
-            
-            const label = row.querySelector('.setting-label');
-            if (!label) return;
-            
-            const text = label.textContent.toLowerCase();
-            
-            if (text.includes('modo escuro')) {
-                toggleDarkMode(!nuraSettings.darkMode);
-            } else if (text.includes('ocultar tarefas') || text.includes('concluídas')) {
-                toggleHideCompleted(!nuraSettings.hideCompleted);
-            } else if (text.includes('destacar') || text.includes('urgentes')) {
-                toggleHighlightUrgent(!nuraSettings.highlightUrgent);
-            } else if (text.includes('sugestões')) {
-                toggleAutoSuggestions(!nuraSettings.autoSuggestions);
-            }
-        });
-    });
-});
-
-// ===== EXPORTAR FUNÇÕES =====
-window.nuraSettingsFunctions = {
-    loadSettingsFromDatabase,
-    saveSettingsToDatabase,
-    toggleHideCompleted,
-    toggleHighlightUrgent,
-    toggleAutoSuggestions,
-    setDetailLevel,
-    getPlanInfo,
-    selectPlan,
-    cancelPlan,
-    toggleDarkMode,
-    setPrimaryColor,
-    showNotification,
-    getSettings: () => ({ ...nuraSettings })
-};
-
-console.log('✅ settings.js carregado e pronto!');
+console.log('✅ settings.js carregado!');

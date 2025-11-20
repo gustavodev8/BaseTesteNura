@@ -38,7 +38,7 @@
                             <div class="setting-description">Ativa o tema escuro para reduzir o brilho</div>
                         </div>
                         <div class="setting-control">
-                            <div class="toggle-switch" id="darkModeToggle"></div>
+                            <div class="toggle-switch" id="darkModeToggle" data-setting="dark-mode"></div>
                         </div>
                     </div>
                 </div>
@@ -63,7 +63,7 @@
                             <div class="setting-description">Ajuste o tamanho do texto</div>
                         </div>
                         <div class="setting-control">
-                            <select>
+                            <select data-setting="font-size">
                                 <option>Pequeno</option>
                                 <option selected>Médio</option>
                                 <option>Grande</option>
@@ -86,7 +86,7 @@
                             <div class="setting-description">Escolha como visualizar suas tarefas</div>
                         </div>
                         <div class="setting-control">
-                            <select>
+                            <select data-setting="view-mode">
                                 <option selected>Lista</option>
                                 <option>Kanban</option>
                                 <option>Calendário</option>
@@ -100,7 +100,7 @@
                             <div class="setting-description">Define a ordem de exibição</div>
                         </div>
                         <div class="setting-control">
-                            <select>
+                            <select data-setting="sort-order">
                                 <option selected>Mais recentes</option>
                                 <option>Mais antigas</option>
                                 <option>Prioridade</option>
@@ -118,7 +118,7 @@
                             <div class="setting-description">Separar tarefas finalizadas</div>
                         </div>
                         <div class="setting-control">
-                            <div class="toggle-switch active"></div>
+                            <div class="toggle-switch active" data-setting="hide-completed"></div>
                         </div>
                     </div>
                     
@@ -128,7 +128,7 @@
                             <div class="setting-description">Prioridades no topo</div>
                         </div>
                         <div class="setting-control">
-                            <div class="toggle-switch active"></div>
+                            <div class="toggle-switch active" data-setting="highlight-urgent"></div>
                         </div>
                     </div>
                 </div>
@@ -147,7 +147,7 @@
                             <div class="setting-description">A IA sugere melhorias</div>
                         </div>
                         <div class="setting-control">
-                            <div class="toggle-switch active"></div>
+                            <div class="toggle-switch active" data-setting="auto-suggestions"></div>
                         </div>
                     </div>
                     
@@ -157,7 +157,7 @@
                             <div class="setting-description">Informações das rotinas</div>
                         </div>
                         <div class="setting-control">
-                            <select>
+                            <select data-setting="detail-level">
                                 <option>Básico</option>
                                 <option selected>Médio</option>
                                 <option>Detalhado</option>
@@ -172,9 +172,9 @@
                         </div>
                         <div class="setting-control">
                             <div class="time-range">
-                                <input type="time" value="08:00">
+                                <input type="time" value="08:00" data-setting="default-start-time">
                                 <span class="time-separator">—</span>
-                                <input type="time" value="18:00">
+                                <input type="time" value="18:00" data-setting="default-end-time">
                             </div>
                         </div>
                     </div>
@@ -194,7 +194,7 @@
                             <div class="setting-description">Alertas mesmo minimizado</div>
                         </div>
                         <div class="setting-control">
-                            <div class="toggle-switch"></div>
+                            <div class="toggle-switch" data-setting="browser-notifications"></div>
                         </div>
                     </div>
                     
@@ -204,7 +204,7 @@
                             <div class="setting-description">Tarefas pendentes às 8h</div>
                         </div>
                         <div class="setting-control">
-                            <div class="toggle-switch"></div>
+                            <div class="toggle-switch" data-setting="daily-email"></div>
                         </div>
                     </div>
                     
@@ -214,7 +214,7 @@
                             <div class="setting-description">Estatísticas às segundas</div>
                         </div>
                         <div class="setting-control">
-                            <div class="toggle-switch active"></div>
+                            <div class="toggle-switch active" data-setting="weekly-report"></div>
                         </div>
                     </div>
                 </div>
@@ -332,38 +332,9 @@
         </main>
     </div>
     
-    <script>
-        // Navegação
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', () => {
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-                item.classList.add('active');
-                document.getElementById(item.dataset.section).classList.add('active');
-            });
-        });
-        
-        // Cores
-        document.querySelectorAll('.color-option').forEach(color => {
-            color.addEventListener('click', () => {
-                document.querySelectorAll('.color-option').forEach(c => c.classList.remove('active'));
-                color.classList.add('active');
-            });
-        });
-        
-        // Toggle switches
-        document.querySelectorAll('.toggle-switch').forEach(toggle => {
-            toggle.addEventListener('click', () => {
-                toggle.classList.toggle('active');
-            });
-        });
-        
-        // Modo escuro
-        document.getElementById('darkModeToggle').addEventListener('click', function() {
-            document.body.classList.toggle('dark-mode');
-            this.classList.toggle('active');
-        });
-    </script>
+    <!-- ✅ SCRIPTS ATUALIZADOS -->
+    <script src="../scripts/auth.js"></script>
+    <script src="../scripts/settings-applier.js"></script>
     <script src="../scripts/settings.js"></script>
 </body>
 </html>

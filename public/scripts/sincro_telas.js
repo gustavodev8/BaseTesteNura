@@ -1,6 +1,7 @@
 /* ========================================
    SISTEMA DE TAREFAS - COM SEPARAÇÃO POR USUÁRIO
-   Arquivo: sincro_telas.js
+   Arquivo: sincro_telas_updated.js
+   VERSÃO ATUALIZADA COM CONFIGURAÇÕES
    ======================================== */
 
 const API_URL = 'https://basetestenura-3.onrender.com';
@@ -25,6 +26,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initializeTaskSystem();
     loadAndDisplayTasksFromDatabase();
+    
+    // ✅ CARREGAR CONFIGURAÇÕES APÓS INICIALIZAR
+    setTimeout(() => {
+        if (window.loadAndApplyGlobalSettings) {
+            window.loadAndApplyGlobalSettings();
+        }
+    }, 1000);
 });
 
 // ===== INICIALIZAR SISTEMA DE TAREFAS =====
@@ -178,6 +186,12 @@ function renderAllTasks() {
         const taskElement = createTaskElement(task);
         container.appendChild(taskElement);
     });
+    
+    // ✅ APLICAR CONFIGURAÇÕES APÓS RENDERIZAR
+    setTimeout(() => {
+        applyTaskFiltering();
+        console.log('⚙️ Configurações aplicadas nas tarefas');
+    }, 200);
 }
 
 // ===== CRIAR ELEMENTO DE TAREFA =====
@@ -186,7 +200,11 @@ function createTaskElement(task) {
     const isCompleted = task.status === 'completed' || task.status === 'concluido' || task.status === 'concluída';
     
     taskDiv.className = `list-group-item d-flex justify-content-between align-items-center ${isCompleted ? 'completed-task' : ''}`;
+    
+    // ✅ ADICIONAR ATRIBUTOS PARA CONFIGURAÇÕES
     taskDiv.setAttribute('data-task-id', task.id);
+    taskDiv.setAttribute('data-status', task.status || 'pending');
+    taskDiv.setAttribute('data-priority', task.priority || 'medium');
 
     const taskTitle = task.title || task.name || 'Tarefa sem nome';
 
@@ -233,6 +251,144 @@ function createTaskElement(task) {
     `;
 
     return taskDiv;
+}
+
+// ===== APLICAR FILTROS DE TAREFA =====
+function applyTaskFiltering() {
+    // Obter configurações do localStorage
+    const settings = JSON.parse(localStorage.getItem('nura_settings') || '{}');
+    
+    const hideCompleted = settings.hideCompleted !== false; // Padrão: true
+    const highlightUrgent = settings.highlightUrgent !== false; // Padrão: true
+    
+    const taskElements = document.querySelectorAll('.list-group-item[data-task-id]');
+    
+    if (taskElements.length === 0) return;
+    
+    console.log(`🎯 Aplicando filtros em ${taskElements.length} tarefas`);
+    console.log(`   - Ocultar concluídas: ${hideCompleted}`);
+    console.log(`   - Destacar urgentes: ${highlightUrgent}`);
+    
+    let visibleCount = 0;
+    
+    taskElements.forEach(taskElement => {
+        const isCompleted = taskElement.classList.contains('completed-task') || 
+                           taskElement.dataset.status === 'completed' ||
+                           taskElement.dataset.status === 'concluida' ||
+                           taskElement.dataset.status === 'concluída';
+        
+        const isUrgent = taskElement.dataset.priority === 'high' || 
+                        taskElement.dataset.priority === 'alta';
+        
+        // 1. FILTRO: Ocultar tarefas concluídas
+        if (hideCompleted && isCompleted) {
+            taskElement.style.display = 'none';
+            taskElement.classList.add('hidden-by-filter');
+        } else {
+            taskElement.style.display = '';
+            taskElement.classList.remove('hidden-by-filter');
+            visibleCount++;
+        }
+        
+        // 2. DESTAQUE: Destacar tarefas urgentes
+        if (highlightUrgent && isUrgent && !isCompleted && taskElement.style.display !== 'none') {
+            applyUrgentHighlight(taskElement);
+        } else {
+            removeUrgentHighlight(taskElement);
+        }
+    });
+    
+    // Verificar se todas as tarefas estão ocultas
+    if (visibleCount === 0 && taskElements.length > 0) {
+        showFilteredEmptyMessage();
+    } else {
+        hideFilteredEmptyMessage();
+    }
+}
+
+// ===== APLICAR DESTAQUE DE URGÊNCIA =====
+function applyUrgentHighlight(taskElement) {
+    if (taskElement.classList.contains('urgent-highlighted')) return;
+    
+    taskElement.classList.add('urgent-highlighted');
+    taskElement.style.cssText += `
+        border-left: 4px solid #e74c3c !important;
+        background: linear-gradient(90deg, rgba(231, 76, 60, 0.1) 0%, transparent 100%) !important;
+        box-shadow: 0 2px 4px rgba(231, 76, 60, 0.1) !important;
+    `;
+    
+    // Adicionar badge de urgência se não existir
+    if (!taskElement.querySelector('.urgent-badge')) {
+        const badge = document.createElement('span');
+        badge.className = 'urgent-badge';
+        badge.style.cssText = `
+            background: #e74c3c;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 8px;
+            display: inline-block;
+        `;
+        badge.textContent = 'URGENTE';
+        
+        const titleElement = taskElement.querySelector('h5');
+        if (titleElement) {
+            titleElement.appendChild(badge);
+        }
+    }
+}
+
+// ===== REMOVER DESTAQUE DE URGÊNCIA =====
+function removeUrgentHighlight(taskElement) {
+    taskElement.classList.remove('urgent-highlighted');
+    
+    // Remover estilos inline
+    taskElement.style.borderLeft = '';
+    taskElement.style.background = '';
+    taskElement.style.boxShadow = '';
+    
+    // Remover badge se existir
+    const badge = taskElement.querySelector('.urgent-badge');
+    if (badge) {
+        badge.remove();
+    }
+}
+
+// ===== MOSTRAR MENSAGEM DE FILTRO VAZIO =====
+function showFilteredEmptyMessage() {
+    const container = document.getElementById('listaTarefas');
+    if (!container) return;
+    
+    // Remover mensagem existente
+    hideFilteredEmptyMessage();
+    
+    const message = document.createElement('div');
+    message.className = 'filtered-empty-message';
+    message.style.cssText = `
+        text-align: center;
+        padding: 40px 20px;
+        color: #666;
+        font-style: italic;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin: 20px 0;
+    `;
+    message.innerHTML = `
+        <p>🎯 Todas as tarefas foram filtradas pelas suas configurações</p>
+        <small>Vá para <a href="Tela_Ajustes.html" style="color: #49a09d;">Configurações</a> para ajustar os filtros</small>
+    `;
+    
+    container.appendChild(message);
+}
+
+// ===== OCULTAR MENSAGEM DE FILTRO VAZIO =====
+function hideFilteredEmptyMessage() {
+    const message = document.querySelector('.filtered-empty-message');
+    if (message) {
+        message.remove();
+    }
 }
 
 // ===== ALTERAR STATUS =====
@@ -465,10 +621,17 @@ function showNotification(message) {
     }, 3000);
 }
 
+// ===== OBTER USUÁRIO ATUAL =====
+function getCurrentUser() {
+    const userStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+    return userStr ? JSON.parse(userStr) : null;
+}
+
 // ===== TORNA FUNÇÕES GLOBAIS =====
 window.toggleTaskFromHome = toggleTaskFromHome;
 window.deleteTaskFromHome = deleteTaskFromHome;
 window.gerarRotinaInteligente = gerarRotinaInteligente;
 window.salvarTarefasDaRotina = salvarTarefasDaRotina;
+window.applyTaskFiltering = applyTaskFiltering;
 
-console.log('✅ sincro_telas.js carregado!');
+console.log('✅ sincro_telas_updated.js carregado!');

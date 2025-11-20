@@ -437,7 +437,7 @@ Apenas a rotina formatada, sem explicações.
 `;
 
         // ✅ USAR GEMINI 2.0 FLASH
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         
         console.log("⏳ Aguardando resposta do Gemini 2.0 Flash...");
         const result = await model.generateContent(prompt);
@@ -480,6 +480,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         });
     }
 });
+
 // ===== INICIAR SERVIDOR =====
 app.listen(PORT, () => {
     console.log(`\n🎉 SERVIDOR NURA FUNCIONANDO!`);

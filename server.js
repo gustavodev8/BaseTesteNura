@@ -87,6 +87,10 @@ app.get('/Tela_CriaConta.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/html/Tela_CriaConta.html'));
 });
 
+app.get('/Tela_Ajustes.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/html/Tela_Ajustes.html'));
+});
+
 // ===== ROTAS DA API - TAREFAS =====
 
 // GET - Buscar tarefas do usuário

@@ -489,6 +489,251 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     }
 });
 
+// ===== GET - CARREGAR CONFIGURAÇÕES DO USUÁRIO =====
+app.get('/api/settings/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const headerUserId = req.headers['x-user-id'];
+        
+        // Validar se o usuário está acessando suas próprias configurações
+        if (userId !== headerUserId) {
+            return res.status(403).json({
+                success: false,
+                error: 'Acesso negado'
+            });
+        }
+        
+        const settings = await db.get(
+            'SELECT * FROM user_settings WHERE user_id = ?',
+            [userId]
+        );
+        
+        if (settings) {
+            // Converter snake_case para camelCase
+            const formattedSettings = {
+                hideCompleted: settings.hide_completed,
+                highlightUrgent: settings.highlight_urgent,
+                autoSuggestions: settings.auto_suggestions,
+                detailLevel: settings.detail_level,
+                darkMode: settings.dark_mode,
+                primaryColor: settings.primary_color,
+                currentPlan: settings.current_plan,
+                planRenewalDate: settings.plan_renewal_date
+            };
+            
+            res.json({
+                success: true,
+                settings: formattedSettings
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                error: 'Configurações não encontradas'
+            });
+        }
+    } catch (err) {
+        console.error('❌ Erro ao carregar configurações:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao carregar configurações'
+        });
+    }
+});
+
+// ===== POST - SALVAR OU ATUALIZAR CONFIGURAÇÕES =====
+app.post('/api/settings/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { settings } = req.body;
+        const headerUserId = req.headers['x-user-id'];
+        
+        // Validar acesso
+        if (userId !== headerUserId) {
+            return res.status(403).json({
+                success: false,
+                error: 'Acesso negado'
+            });
+        }
+        
+        // Validar dados
+        if (!settings || typeof settings !== 'object') {
+            return res.status(400).json({
+                success: false,
+                error: 'Configurações inválidas'
+            });
+        }
+        
+        // Verificar se já existe
+        const existing = await db.get(
+            'SELECT id FROM user_settings WHERE user_id = ?',
+            [userId]
+        );
+        
+        if (existing) {
+            // UPDATE
+            const result = await db.run(
+                `UPDATE user_settings SET 
+                    hide_completed = ?,
+                    highlight_urgent = ?,
+                    auto_suggestions = ?,
+                    detail_level = ?,
+                    dark_mode = ?,
+                    primary_color = ?,
+                    current_plan = ?,
+                    plan_renewal_date = ?,
+                    updated_at = NOW()
+                WHERE user_id = ?`,
+                [
+                    settings.hideCompleted || false,
+                    settings.highlightUrgent !== false,
+                    settings.autoSuggestions !== false,
+                    settings.detailLevel || 'Médio',
+                    settings.darkMode || false,
+                    settings.primaryColor || '#49a09d',
+                    settings.currentPlan || 'pro',
+                    settings.planRenewalDate || '30 de dezembro de 2025',
+                    userId
+                ]
+            );
+            
+            console.log(`✅ Configurações atualizadas para usuário ${userId}`);
+        } else {
+            // INSERT
+            const result = await db.run(
+                `INSERT INTO user_settings 
+                (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    userId,
+                    settings.hideCompleted || false,
+                    settings.highlightUrgent !== false,
+                    settings.autoSuggestions !== false,
+                    settings.detailLevel || 'Médio',
+                    settings.darkMode || false,
+                    settings.primaryColor || '#49a09d',
+                    settings.currentPlan || 'pro',
+                    settings.planRenewalDate || '30 de dezembro de 2025'
+                ]
+            );
+            
+            console.log(`✅ Configurações criadas para usuário ${userId}`);
+        }
+        
+        res.json({
+            success: true,
+            message: 'Configurações salvas com sucesso'
+        });
+        
+    } catch (err) {
+        console.error('❌ Erro ao salvar configurações:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao salvar configurações'
+        });
+    }
+});
+
+// ===== PUT - ATUALIZAR CONFIGURAÇÃO ESPECÍFICA =====
+app.put('/api/settings/:userId/:setting', async (req, res) => {
+    try {
+        const { userId, setting } = req.params;
+        const { value } = req.body;
+        const headerUserId = req.headers['x-user-id'];
+        
+        if (userId !== headerUserId) {
+            return res.status(403).json({
+                success: false,
+                error: 'Acesso negado'
+            });
+        }
+        
+        // Mapear camelCase para snake_case
+        const settingMap = {
+            hideCompleted: 'hide_completed',
+            highlightUrgent: 'highlight_urgent',
+            autoSuggestions: 'auto_suggestions',
+            detailLevel: 'detail_level',
+            darkMode: 'dark_mode',
+            primaryColor: 'primary_color',
+            currentPlan: 'current_plan',
+            planRenewalDate: 'plan_renewal_date'
+        };
+        
+        const dbSetting = settingMap[setting];
+        
+        if (!dbSetting) {
+            return res.status(400).json({
+                success: false,
+                error: 'Configuração inválida'
+            });
+        }
+        
+        const sql = `UPDATE user_settings SET ${dbSetting} = ?, updated_at = NOW() WHERE user_id = ?`;
+        
+        const result = await db.run(sql, [value, userId]);
+        
+        if (result.changes > 0) {
+            console.log(`✅ ${setting} atualizado para ${value}`);
+            res.json({
+                success: true,
+                message: `${setting} atualizado`
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                error: 'Usuário não encontrado'
+            });
+        }
+        
+    } catch (err) {
+        console.error('❌ Erro ao atualizar configuração:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao atualizar configuração'
+        });
+    }
+});
+
+// ===== DELETE - RESETAR CONFIGURAÇÕES =====
+app.delete('/api/settings/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const headerUserId = req.headers['x-user-id'];
+        
+        if (userId !== headerUserId) {
+            return res.status(403).json({
+                success: false,
+                error: 'Acesso negado'
+            });
+        }
+        
+        const result = await db.run(
+            'DELETE FROM user_settings WHERE user_id = ?',
+            [userId]
+        );
+        
+        if (result.changes > 0) {
+            console.log(`✅ Configurações resetadas para usuário ${userId}`);
+            res.json({
+                success: true,
+                message: 'Configurações resetadas'
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                error: 'Configurações não encontradas'
+            });
+        }
+        
+    } catch (err) {
+        console.error('❌ Erro ao deletar configurações:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao deletar configurações'
+        });
+    }
+});
+
 // ===== INICIAR SERVIDOR =====
 app.listen(PORT, () => {
     console.log(`\n🎉 SERVIDOR NURA FUNCIONANDO!`);

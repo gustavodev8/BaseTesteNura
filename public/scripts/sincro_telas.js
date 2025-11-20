@@ -9,10 +9,9 @@ let homeTasks = [];
 let currentUser = null;
 
 // ===== INICIALIZAÇÃO =====
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Iniciando sistema de tarefas...');
     
-    // Obter usuário logado
     currentUser = getCurrentUser();
     
     if (!currentUser) {
@@ -24,6 +23,12 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('👤 Usuário logado:', currentUser.username);
     
     initializeTaskSystem();
+    
+    // ✅ AGUARDAR SETTINGS CARREGAR
+    if (window.nuraSettingsFunctions) {
+        await window.nuraSettingsFunctions.loadSettingsFromDatabase();
+    }
+    
     loadAndDisplayTasksFromDatabase();
 });
 

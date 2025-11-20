@@ -1,5 +1,10 @@
 // ===== SISTEMA DE CONFIGURAÇÕES NURA COM BANCO DE DADOS =====
 // Arquivo: public/scripts/settings.js
+
+const SETTINGS_API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000' 
+    : 'https://basetestenura-3.onrender.com';
+
 let currentUserId = null;
 
 // ===== OBJETO DE CONFIGURAÇÕES =====
@@ -40,7 +45,7 @@ async function loadSettingsFromDatabase() {
             return false;
         }
 
-        const response = await fetch(`${API_URL}/api/settings/${userId}`, {
+        const response = await fetch(`${SETTINGS_API_URL}/api/settings/${userId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -83,7 +88,7 @@ async function saveSettingsToDatabase() {
             return false;
         }
 
-        const response = await fetch(`${API_URL}/api/settings/${userId}`, {
+        const response = await fetch(`${SETTINGS_API_URL}/api/settings/${userId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

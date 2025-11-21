@@ -434,10 +434,18 @@ app.post("/api/gerar-rotina", async (req, res) => {
         const prompt = `
 Com base nesta descrição: "${descricao}"
 
-Horário: ${horaInicio} às ${horaFim}
+Entre os Horários : ${horaInicio} às ${horaFim}
 
-Crie uma rotina organizada em português com horários específicos, intervalos.
-Formato:
+Crie uma rotina organizada em português com horários específicos, intervalos (se for necessario)
+uma rotina focada em produtividade e bem-estar.
+
+Use emojis para destacar cada atividade.
+
+caso a descrição seja escrita formalmente, adapte para um tom mais casual e profissional.
+caso a descrição seja escrita de forma informal, adapte para um tom mais informal e amigável.
+
+Evite longas explicações - vá direto ao ponto com atividades claras e objetivas neste exemplo de Formato:
+
 🕗 08:00-09:00 → Atividade
 🕘 09:00-09:15 → Intervalo
 
@@ -536,80 +544,6 @@ async function salvarTarefasDaRotina(rotinaTexto) {
 
     showNotification(`✅ ${salvas} tarefas salvas com prioridades definidas!`);
     loadAndDisplayTasksFromDatabase();
-}
-
-// ===== FUNÇÃO PARA DETERMINAR PRIORIDADE BASEADA NO CONTEÚDO =====
-function determinarPrioridade(textoTarefa) {
-    const texto = textoTarefa.toLowerCase();
-    
-    // Palavras-chave para ALTA prioridade
-    const palavrasAlta = [
-        'urgente', 'importante', 'crítico', 'prazo', 'deadline', 
-        'reunião', 'apresentação', 'entrega', 'cliente', 'projeto',
-        'trabalho', 'estudo', 'prova', 'exame', 'compromisso',
-        'pagamento', 'conta', 'vencimento', 'médico', 'saúde'
-    ];
-    
-    // Palavras-chave para BAIXA prioridade
-    const palavrasBaixa = [
-        'descanso', 'relaxar', 'lazer', 'pausa', 'intervalo',
-        'lanche', 'café', 'alongamento', 'caminhada', 'hobby',
-        'série', 'jogo', 'música', 'leitura', 'entretenimento'
-    ];
-    
-    // Verificar alta prioridade
-    for (const palavra of palavrasAlta) {
-        if (texto.includes(palavra)) {
-            return 'high';
-        }
-    }
-    
-    // Verificar baixa prioridade
-    for (const palavra of palavrasBaixa) {
-        if (texto.includes(palavra)) {
-            return 'low';
-        }
-    }
-    
-    // Caso padrão: média prioridade
-    return 'medium';
-}
-
-// ✅ FUNÇÃO PARA DETERMINAR PRIORIDADE BASEADA NO CONTEÚDO
-function determinarPrioridade(textoTarefa) {
-    const texto = textoTarefa.toLowerCase();
-    
-    // Palavras-chave para ALTA prioridade
-    const palavrasAlta = [
-        'urgente', 'importante', 'crítico', 'prazo', 'deadline', 
-        'reunião', 'apresentação', 'entrega', 'cliente', 'projeto',
-        'trabalho', 'estudo', 'prova', 'exame', 'compromisso',
-        'pagamento', 'conta', 'vencimento', 'médico', 'saúde'
-    ];
-    
-    // Palavras-chave para BAIXA prioridade
-    const palavrasBaixa = [
-        'descanso', 'relaxar', 'lazer', 'pausa', 'intervalo',
-        'lanche', 'café', 'alongamento', 'caminhada', 'hobby',
-        'série', 'jogo', 'música', 'leitura', 'entretenimento'
-    ];
-    
-    // Verificar alta prioridade
-    for (const palavra of palavrasAlta) {
-        if (texto.includes(palavra)) {
-            return 'high';
-        }
-    }
-    
-    // Verificar baixa prioridade
-    for (const palavra of palavrasBaixa) {
-        if (texto.includes(palavra)) {
-            return 'low';
-        }
-    }
-    
-    // Caso padrão: média prioridade
-    return 'medium';
 }
 
 // ===== GET - CARREGAR CONFIGURAÇÕES DO USUÁRIO =====

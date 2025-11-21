@@ -599,11 +599,119 @@ function showNotification(message) {
     }, 3000);
 }
 
+// ===== ASSISTENTE IA =====
+async function gerarRotinaInteligente() {
+    const descricao = document.getElementById('descricaoRotina').value.trim();
+    const horaInicio = document.getElementById('horaInicioRotina').value;
+    const horaFim = document.getElementById('horaFimRotina').value;
+    const resultadoDiv = document.getElementById('resultadoRotina');
+
+    if (!descricao) {
+        alert('Por favor, descreva seu dia!');
+        return;
+    }
+
+    try {
+        resultadoDiv.innerHTML = '<div class="ai-loading">🤖 Gerando sua rotina inteligente...</div>';
+        resultadoDiv.style.display = 'block';
+
+        const response = await fetch(`${API_URL}/api/gerar-rotina`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                descricao: descricao,
+                horaInicio: horaInicio,
+                horaFim: horaFim
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            resultadoDiv.innerHTML = `
+                <div class="ai-success">
+                    <h4>📅 Sua Rotina Inteligente</h4>
+                    <div class="rotina-content">${formatarRotina(result.rotina)}</div>
+                    <button class="btn btn-primary mt-3" onclick="salvarTarefasDaRotina(\`${result.rotina.replace(/`/g, '\\`')}\`)">
+                        💾 Salvar Tarefas da Rotina
+                    </button>
+                </div>
+            `;
+        } else {
+            resultadoDiv.innerHTML = `<div class="ai-error">❌ Erro: ${result.error}</div>`;
+        }
+
+    } catch (error) {
+        console.error('Erro:', error);
+        resultadoDiv.innerHTML = '<div class="ai-error">❌ Erro de conexão</div>';
+    }
+}
+
+// ===== SALVAR TAREFAS DA ROTINA =====
+async function salvarTarefasDaRotina(rotinaTexto) {
+    if (!currentUser) {
+        alert('❌ Erro: Usuário não identificado!');
+        return;
+    }
+
+    const linhas = rotinaTexto.split('\n').filter(linha => linha.trim());
+    let salvas = 0;
+    
+    for (const linha of linhas) {
+        if (linha.includes('→') || linha.match(/\d{1,2}:\d{2}/)) {
+            let texto = linha.split('→')[1] || linha;
+            texto = texto.replace(/[🔴🟡🟢🕗🕙🕛🕑🕓🕕📚💪☕🍽️📊🚀🎯]/g, '').trim();
+            
+            if (texto && texto.length > 2) {
+                const tarefa = {
+                    title: texto.substring(0, 100),
+                    description: 'Importado da rotina IA',
+                    priority: 'medium',
+                    status: 'pending',
+                    user_id: currentUser.id
+                };
+
+                try {
+                    const response = await fetch(`${API_URL}/api/tasks`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(tarefa)
+                    });
+
+                    const result = await response.json();
+                    if (result.success) salvas++;
+                } catch (error) {
+                    console.error('Erro:', error);
+                }
+            }
+        }
+    }
+
+    showNotification(`✅ ${salvas} tarefas salvas!`);
+    loadAndDisplayTasksFromDatabase();
+}
+
+function formatarRotina(texto) {
+    return texto.split('\n').map(linha => {
+        if (linha.trim()) {
+            return `<div class="rotina-item">${linha}</div>`;
+        }
+        return '';
+    }).join('');
+}
+
+
 // ===== TORNA FUNÇÕES GLOBAIS =====
 window.toggleTaskFromHome = toggleTaskFromHome;
 window.deleteTaskFromHome = deleteTaskFromHome;
-window.changeTaskStatus = changeTaskStatus; // ✅ NOVO
-window.renderAllTasks = renderAllTasks; // ✅ EXPORTAR
+window.changeTaskStatus = changeTaskStatus; 
+window.renderAllTasks = renderAllTasks; 
 window.applyTaskFilters = applyTaskFilters;
+window.gerarRotinaInteligente = gerarRotinaInteligente; 
+window.salvarTarefasDaRotina = salvarTarefasDaRotina;
 
 console.log('✅ sincro_telas.js carregado!');

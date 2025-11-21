@@ -179,6 +179,11 @@ function renderAllTasks() {
     } else {
         renderListView(container);
     }
+    
+    // ✅ APLICAR DESTAQUES APÓS RENDERIZAR
+    setTimeout(() => {
+        forceApplyHighlights();
+    }, 100);
 }
 
 // ===== RENDERIZAR VISTA EM LISTA =====
@@ -305,7 +310,20 @@ function createKanbanCard(task, currentStatus) {
     });
 
     card.addEventListener('mouseleave', () => {
-        card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        const settings = window.nuraSettingsFunctions ? window.nuraSettingsFunctions.getSettings() : { highlightUrgent: false };
+        if (settings.highlightUrgent) {
+            // Manter o box-shadow dos destaques
+            const priority = task.priority || 'medium';
+            if (priority === 'high') {
+                card.style.boxShadow = '0 2px 8px rgba(231, 76, 60, 0.3)';
+            } else if (priority === 'medium') {
+                card.style.boxShadow = '0 2px 8px rgba(243, 156, 18, 0.2)';
+            } else {
+                card.style.boxShadow = '0 2px 8px rgba(46, 204, 113, 0.2)';
+            }
+        } else {
+            card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        }
         card.style.transform = 'translateY(0)';
     });
 
@@ -458,37 +476,78 @@ function applyTaskFilters() {
 
     // 2. Filtro: Destacar tarefas urgentes
     if (settings.highlightUrgent) {
-        console.log('🚨 Destacando tarefas urgentes');
-        
-        document.querySelectorAll('[data-task-priority="high"]').forEach(task => {
-            task.style.borderLeft = '5px solid #e74c3c';
-            if (!task.classList.contains('kanban-card')) {
-                task.style.backgroundColor = '#ffe8e8';
-            }
-        });
-
-        document.querySelectorAll('[data-task-priority="medium"]').forEach(task => {
-            task.style.borderLeft = '5px solid #f39c12';
-            if (!task.classList.contains('kanban-card')) {
-                task.style.backgroundColor = '#fff5e6';
-            }
-        });
-
-        document.querySelectorAll('[data-task-priority="low"]').forEach(task => {
-            task.style.borderLeft = '5px solid #2ecc71';
-            if (!task.classList.contains('kanban-card')) {
-                task.style.backgroundColor = '#f0fdf4';
-            }
-        });
+        console.log('🚨 Ativando destaques urgentes');
+        forceApplyHighlights(); // ✅ CHAMAR A FUNÇÃO
     } else {
         console.log('➡️ Removendo destaque de tarefas');
         document.querySelectorAll('[data-task-priority]').forEach(task => {
-            if (!task.classList.contains('kanban-card')) {
-                task.style.borderLeft = '';
-                task.style.backgroundColor = '';
+            task.style.borderLeft = '';
+            task.style.backgroundColor = '';
+            if (task.classList.contains('kanban-card')) {
+                task.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
             }
         });
     }
+}
+
+// ===== FORÇAR APLICAÇÃO DE DESTAQUES =====
+function forceApplyHighlights() {
+    console.log('🎨 Forçando destaques...');
+    
+    if (!window.nuraSettingsFunctions) {
+        console.log('⚠️ Settings não carregado');
+        return;
+    }
+    
+    const settings = window.nuraSettingsFunctions.getSettings();
+    
+    if (!settings.highlightUrgent) {
+        console.log('❌ Destaque desativado nas configurações');
+        return;
+    }
+    
+    console.log('✅ Destaque ATIVADO - aplicando...');
+    
+    // HIGH priority
+    const highTasks = document.querySelectorAll('[data-task-priority="high"]');
+    console.log(`🔴 Aplicando em ${highTasks.length} tarefas HIGH`);
+    highTasks.forEach(task => {
+        if (task.classList.contains('kanban-card')) {
+            task.style.borderLeft = '4px solid #e74c3c';
+            task.style.boxShadow = '0 2px 8px rgba(231, 76, 60, 0.3)';
+        } else {
+            task.style.borderLeft = '5px solid #e74c3c';
+            task.style.backgroundColor = '#ffe8e8';
+        }
+    });
+    
+    // MEDIUM priority
+    const mediumTasks = document.querySelectorAll('[data-task-priority="medium"]');
+    console.log(`🟡 Aplicando em ${mediumTasks.length} tarefas MEDIUM`);
+    mediumTasks.forEach(task => {
+        if (task.classList.contains('kanban-card')) {
+            task.style.borderLeft = '4px solid #f39c12';
+            task.style.boxShadow = '0 2px 8px rgba(243, 156, 18, 0.2)';
+        } else {
+            task.style.borderLeft = '5px solid #f39c12';
+            task.style.backgroundColor = '#fff5e6';
+        }
+    });
+    
+    // LOW priority
+    const lowTasks = document.querySelectorAll('[data-task-priority="low"]');
+    console.log(`🟢 Aplicando em ${lowTasks.length} tarefas LOW`);
+    lowTasks.forEach(task => {
+        if (task.classList.contains('kanban-card')) {
+            task.style.borderLeft = '4px solid #2ecc71';
+            task.style.boxShadow = '0 2px 8px rgba(46, 204, 113, 0.2)';
+        } else {
+            task.style.borderLeft = '5px solid #2ecc71';
+            task.style.backgroundColor = '#f0fdf4';
+        }
+    });
+    
+    console.log('✅ Destaques aplicados com sucesso!');
 }
 
 // ===== ALTERAR STATUS (LISTA) =====
@@ -759,5 +818,6 @@ window.renderAllTasks = renderAllTasks;
 window.applyTaskFilters = applyTaskFilters;
 window.gerarRotinaInteligente = gerarRotinaInteligente; 
 window.salvarTarefasDaRotina = salvarTarefasDaRotina;
+window.forceApplyHighlights = forceApplyHighlights; // ✅ EXPORTAR
 
-console.log('✅ sincro_telas.js carregado com prioridade inteligente!');
+console.log('✅ sincro_telas.js carregado com prioridade inteligente e destaques funcionando!');

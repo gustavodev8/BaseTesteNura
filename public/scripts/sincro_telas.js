@@ -574,8 +574,6 @@ function showEmptyState() {
     `;
 }
 
-// ... (resto das funções do arquivo original: gerarRotinaInteligente, salvarTarefasDaRotina, etc)
-
 function showNotification(message) {
     const notification = document.createElement('div');
     notification.style.cssText = `
@@ -649,7 +647,7 @@ async function gerarRotinaInteligente() {
     }
 }
 
-// ===== SALVAR TAREFAS DA ROTINA =====
+// ===== SALVAR TAREFAS DA ROTINA COM PRIORIDADE INTELIGENTE =====
 async function salvarTarefasDaRotina(rotinaTexto) {
     if (!currentUser) {
         alert('❌ Erro: Usuário não identificado!');
@@ -659,16 +657,23 @@ async function salvarTarefasDaRotina(rotinaTexto) {
     const linhas = rotinaTexto.split('\n').filter(linha => linha.trim());
     let salvas = 0;
     
+    console.log('🔍 Iniciando importação de', linhas.length, 'linhas');
+    
     for (const linha of linhas) {
         if (linha.includes('→') || linha.match(/\d{1,2}:\d{2}/)) {
             let texto = linha.split('→')[1] || linha;
             texto = texto.replace(/[🔴🟡🟢🕗🕙🕛🕑🕓🕕📚💪☕🍽️📊🚀🎯]/g, '').trim();
             
             if (texto && texto.length > 2) {
+                // ✅ DETERMINAR PRIORIDADE INTELIGENTE
+                const priority = determinarPrioridade(texto);
+                
+                console.log('📝', texto, '→ Prioridade:', priority);
+                
                 const tarefa = {
                     title: texto.substring(0, 100),
                     description: 'Importado da rotina IA',
-                    priority: 'medium',
+                    priority: priority, // ✅ USAR PRIORIDADE DETERMINADA
                     status: 'pending',
                     user_id: currentUser.id
                 };
@@ -685,14 +690,56 @@ async function salvarTarefasDaRotina(rotinaTexto) {
                     const result = await response.json();
                     if (result.success) salvas++;
                 } catch (error) {
-                    console.error('Erro:', error);
+                    console.error('❌ Erro ao salvar:', error);
                 }
             }
         }
     }
 
-    showNotification(`✅ ${salvas} tarefas salvas!`);
+    console.log('✅ Total salvo:', salvas, 'tarefas');
+    showNotification(`✅ ${salvas} tarefas salvas com prioridades definidas!`);
     loadAndDisplayTasksFromDatabase();
+}
+
+// ===== DETERMINAR PRIORIDADE BASEADA NO CONTEÚDO =====
+function determinarPrioridade(textoTarefa) {
+    const texto = textoTarefa.toLowerCase();
+    
+    console.log('🔍 Analisando:', texto);
+    
+    // Palavras-chave para ALTA prioridade
+    const palavrasAlta = [
+        'urgente', 'importante', 'crítico', 'prazo', 'deadline', 
+        'reunião', 'apresentação', 'entrega', 'cliente', 'projeto',
+        'trabalho', 'estudo', 'prova', 'exame', 'compromisso',
+        'pagamento', 'conta', 'vencimento', 'médico', 'saúde'
+    ];
+    
+    // Palavras-chave para BAIXA prioridade
+    const palavrasBaixa = [
+        'descanso', 'relaxar', 'lazer', 'pausa', 'intervalo',
+        'lanche', 'café', 'alongamento', 'caminhada', 'hobby',
+        'série', 'jogo', 'música', 'leitura', 'entretenimento'
+    ];
+    
+    // Verificar alta prioridade
+    for (const palavra of palavrasAlta) {
+        if (texto.includes(palavra)) {
+            console.log('✅ Palavra encontrada:', palavra, '→ HIGH');
+            return 'high';
+        }
+    }
+    
+    // Verificar baixa prioridade
+    for (const palavra of palavrasBaixa) {
+        if (texto.includes(palavra)) {
+            console.log('✅ Palavra encontrada:', palavra, '→ LOW');
+            return 'low';
+        }
+    }
+    
+    console.log('➡️ Nenhuma palavra-chave → MEDIUM');
+    return 'medium';
 }
 
 function formatarRotina(texto) {
@@ -704,7 +751,6 @@ function formatarRotina(texto) {
     }).join('');
 }
 
-
 // ===== TORNA FUNÇÕES GLOBAIS =====
 window.toggleTaskFromHome = toggleTaskFromHome;
 window.deleteTaskFromHome = deleteTaskFromHome;
@@ -714,4 +760,4 @@ window.applyTaskFilters = applyTaskFilters;
 window.gerarRotinaInteligente = gerarRotinaInteligente; 
 window.salvarTarefasDaRotina = salvarTarefasDaRotina;
 
-console.log('✅ sincro_telas.js carregado!');
+console.log('✅ sincro_telas.js carregado com prioridade inteligente!');

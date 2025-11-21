@@ -193,14 +193,32 @@ function renderListView(container) {
     container.style.flexDirection = '';
     container.style.gap = '';
 
+    // ✅ ORDENAR POR PRIORIDADE E DEPOIS POR STATUS
+    const priorityOrder = { high: 1, medium: 2, low: 3 };
+    
     const sortedTasks = [...homeTasks].sort((a, b) => {
         const aCompleted = a.status === 'completed' || a.status === 'concluido' || a.status === 'concluída';
         const bCompleted = b.status === 'completed' || b.status === 'concluido' || b.status === 'concluída';
         
+        // 1. Tarefas concluídas vão para o final
         if (aCompleted && !bCompleted) return 1;
         if (!aCompleted && bCompleted) return -1;
+        
+        // 2. Se ambas não concluídas, ordenar por PRIORIDADE
+        if (!aCompleted && !bCompleted) {
+            const aPriority = priorityOrder[a.priority] || 2;
+            const bPriority = priorityOrder[b.priority] || 2;
+            
+            if (aPriority !== bPriority) {
+                return aPriority - bPriority; // HIGH (1) vem antes de MEDIUM (2) vem antes de LOW (3)
+            }
+        }
+        
+        // 3. Se mesma prioridade, ordenar por data (mais recente primeiro)
         return new Date(b.created_at) - new Date(a.created_at);
     });
+
+    console.log('📊 Tarefas ordenadas por prioridade:', sortedTasks.map(t => `${t.title} (${t.priority})`));
 
     sortedTasks.forEach(task => {
         const taskElement = createTaskElement(task);
@@ -276,11 +294,23 @@ function renderKanbanView(container) {
 
         columnDiv.appendChild(header);
 
-        // Adicionar tarefas
-        column.tasks.forEach(task => {
-            const card = createKanbanCard(task, columnKey);
-            columnDiv.appendChild(card);
-        });
+const priorityOrder = { high: 1, medium: 2, low: 3 };
+const sortedColumnTasks = column.tasks.sort((a, b) => {
+    const aPriority = priorityOrder[a.priority] || 2;
+    const bPriority = priorityOrder[b.priority] || 2;
+    
+    if (aPriority !== bPriority) {
+        return aPriority - bPriority;
+    }
+    
+    return new Date(b.created_at) - new Date(a.created_at);
+});
+
+// Adicionar tarefas ordenadas
+sortedColumnTasks.forEach(task => {
+    const card = createKanbanCard(task, columnKey);
+    columnDiv.appendChild(card);
+});
 
         container.appendChild(columnDiv);
     });

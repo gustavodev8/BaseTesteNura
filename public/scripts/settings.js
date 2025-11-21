@@ -238,21 +238,73 @@ async function toggleHideCompleted(enabled) {
 }
 
 // ===== FILTRO: DESTACAR TAREFAS URGENTES =====
+
 async function toggleHighlightUrgent(enabled) {
     nuraSettings.highlightUrgent = enabled;
     
+    // Atualizar toggle visual
     const toggle = Array.from(document.querySelectorAll('.toggle-switch')).find(t => {
         const row = t.closest('.setting-row');
         return row?.textContent.toLowerCase().includes('destacar');
     });
     if (toggle) toggle.classList.toggle('active', enabled);
     
+    console.log('🎨 Destacar urgentes:', enabled);
+    
     if (enabled) {
-        applyHighlightUrgent();
+        // Aplicar destaques
+        console.log('✅ Aplicando destaques...');
+        
+        // Para cards do Kanban
+        document.querySelectorAll('.kanban-card[data-task-priority="high"]').forEach(task => {
+            console.log('🔴 Card HIGH encontrado');
+            task.style.borderLeft = '4px solid #e74c3c';
+            task.style.boxShadow = '0 2px 8px rgba(231, 76, 60, 0.3)';
+        });
+        
+        document.querySelectorAll('.kanban-card[data-task-priority="medium"]').forEach(task => {
+            console.log('🟡 Card MEDIUM encontrado');
+            task.style.borderLeft = '4px solid #f39c12';
+            task.style.boxShadow = '0 2px 8px rgba(243, 156, 18, 0.2)';
+        });
+        
+        document.querySelectorAll('.kanban-card[data-task-priority="low"]').forEach(task => {
+            console.log('🟢 Card LOW encontrado');
+            task.style.borderLeft = '4px solid #2ecc71';
+            task.style.boxShadow = '0 2px 8px rgba(46, 204, 113, 0.2)';
+        });
+        
+        // Para lista
+        document.querySelectorAll('.list-group-item[data-task-priority="high"]').forEach(task => {
+            console.log('🔴 Lista HIGH encontrado');
+            task.style.borderLeft = '5px solid #e74c3c';
+            task.style.backgroundColor = '#ffe8e8';
+        });
+        
+        document.querySelectorAll('.list-group-item[data-task-priority="medium"]').forEach(task => {
+            console.log('🟡 Lista MEDIUM encontrado');
+            task.style.borderLeft = '5px solid #f39c12';
+            task.style.backgroundColor = '#fff5e6';
+        });
+        
+        document.querySelectorAll('.list-group-item[data-task-priority="low"]').forEach(task => {
+            console.log('🟢 Lista LOW encontrado');
+            task.style.borderLeft = '5px solid #2ecc71';
+            task.style.backgroundColor = '#f0fdf4';
+        });
+        
     } else {
+        // Remover destaques
+        console.log('❌ Removendo destaques...');
+        
         document.querySelectorAll('[data-task-priority]').forEach(task => {
-            task.style.borderLeft = '';
-            task.style.backgroundColor = '';
+            if (task.classList.contains('kanban-card')) {
+                task.style.borderLeft = '';
+                task.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            } else {
+                task.style.borderLeft = '';
+                task.style.backgroundColor = '';
+            }
         });
     }
     
@@ -262,20 +314,39 @@ async function toggleHighlightUrgent(enabled) {
 
 // ===== APLICAR HIGHLIGHT URGENT =====
 function applyHighlightUrgent() {
+    console.log('🎨 Aplicando destaques nas tarefas...');
+    
     const tasks = document.querySelectorAll('[data-task-priority]');
+    console.log('📊 Total de tarefas encontradas:', tasks.length);
     
     tasks.forEach(task => {
-        const priority = task.getAttribute('data-task-priority') || 'low';
+        const priority = task.getAttribute('data-task-priority') || 'medium';
+        console.log('Tarefa com prioridade:', priority);
         
-        if (priority === 'high') {
-            task.style.borderLeft = '5px solid #e74c3c';
-            task.style.backgroundColor = '#ffe8e8';
-        } else if (priority === 'medium') {
-            task.style.borderLeft = '5px solid #f39c12';
-            task.style.backgroundColor = '#fff5e6';
+        if (task.classList.contains('kanban-card')) {
+            // Estilo para cards Kanban
+            if (priority === 'high') {
+                task.style.borderLeft = '4px solid #e74c3c';
+                task.style.boxShadow = '0 2px 8px rgba(231, 76, 60, 0.3)';
+            } else if (priority === 'medium') {
+                task.style.borderLeft = '4px solid #f39c12';
+                task.style.boxShadow = '0 2px 8px rgba(243, 156, 18, 0.2)';
+            } else {
+                task.style.borderLeft = '4px solid #2ecc71';
+                task.style.boxShadow = '0 2px 8px rgba(46, 204, 113, 0.2)';
+            }
         } else {
-            task.style.borderLeft = '5px solid #2ecc71';
-            task.style.backgroundColor = '#f0fdf4';
+            // Estilo para lista
+            if (priority === 'high') {
+                task.style.borderLeft = '5px solid #e74c3c';
+                task.style.backgroundColor = '#ffe8e8';
+            } else if (priority === 'medium') {
+                task.style.borderLeft = '5px solid #f39c12';
+                task.style.backgroundColor = '#fff5e6';
+            } else {
+                task.style.borderLeft = '5px solid #2ecc71';
+                task.style.backgroundColor = '#f0fdf4';
+            }
         }
     });
 }

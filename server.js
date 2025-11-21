@@ -495,7 +495,6 @@ app.get('/api/settings/:userId', async (req, res) => {
         const { userId } = req.params;
         const headerUserId = req.headers['x-user-id'];
         
-        // Validar se o usuário está acessando suas próprias configurações
         if (userId !== headerUserId) {
             return res.status(403).json({
                 success: false,
@@ -509,7 +508,6 @@ app.get('/api/settings/:userId', async (req, res) => {
         );
         
         if (settings) {
-            // Converter snake_case para camelCase
             const formattedSettings = {
                 hideCompleted: settings.hide_completed,
                 highlightUrgent: settings.highlight_urgent,
@@ -518,7 +516,8 @@ app.get('/api/settings/:userId', async (req, res) => {
                 darkMode: settings.dark_mode,
                 primaryColor: settings.primary_color,
                 currentPlan: settings.current_plan,
-                planRenewalDate: settings.plan_renewal_date
+                planRenewalDate: settings.plan_renewal_date,
+                viewMode: settings.view_mode || 'lista' // ✅ ADICIONAR
             };
             
             res.json({
@@ -547,7 +546,6 @@ app.post('/api/settings/:userId', async (req, res) => {
         const { settings } = req.body;
         const headerUserId = req.headers['x-user-id'];
         
-        // Validar acesso
         if (userId !== headerUserId) {
             return res.status(403).json({
                 success: false,
@@ -555,7 +553,6 @@ app.post('/api/settings/:userId', async (req, res) => {
             });
         }
         
-        // Validar dados
         if (!settings || typeof settings !== 'object') {
             return res.status(400).json({
                 success: false,
@@ -563,7 +560,6 @@ app.post('/api/settings/:userId', async (req, res) => {
             });
         }
         
-        // Verificar se já existe
         const existing = await db.get(
             'SELECT id FROM user_settings WHERE user_id = ?',
             [userId]
@@ -581,7 +577,8 @@ app.post('/api/settings/:userId', async (req, res) => {
                     primary_color = ?,
                     current_plan = ?,
                     plan_renewal_date = ?,
-                    updated_at = NOW()
+                    view_mode = ?,
+                    updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = ?`,
                 [
                     settings.hideCompleted || false,
@@ -592,6 +589,7 @@ app.post('/api/settings/:userId', async (req, res) => {
                     settings.primaryColor || '#49a09d',
                     settings.currentPlan || 'pro',
                     settings.planRenewalDate || '30 de dezembro de 2025',
+                    settings.viewMode || 'lista', // ✅ ADICIONAR
                     userId
                 ]
             );
@@ -601,8 +599,8 @@ app.post('/api/settings/:userId', async (req, res) => {
             // INSERT
             const result = await db.run(
                 `INSERT INTO user_settings 
-                (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date, view_mode)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     userId,
                     settings.hideCompleted || false,
@@ -612,7 +610,8 @@ app.post('/api/settings/:userId', async (req, res) => {
                     settings.darkMode || false,
                     settings.primaryColor || '#49a09d',
                     settings.currentPlan || 'pro',
-                    settings.planRenewalDate || '30 de dezembro de 2025'
+                    settings.planRenewalDate || '30 de dezembro de 2025',
+                    settings.viewMode || 'lista' // ✅ ADICIONAR
                 ]
             );
             
@@ -647,7 +646,6 @@ app.put('/api/settings/:userId/:setting', async (req, res) => {
             });
         }
         
-        // Mapear camelCase para snake_case
         const settingMap = {
             hideCompleted: 'hide_completed',
             highlightUrgent: 'highlight_urgent',
@@ -656,7 +654,8 @@ app.put('/api/settings/:userId/:setting', async (req, res) => {
             darkMode: 'dark_mode',
             primaryColor: 'primary_color',
             currentPlan: 'current_plan',
-            planRenewalDate: 'plan_renewal_date'
+            planRenewalDate: 'plan_renewal_date',
+            viewMode: 'view_mode' // ✅ ADICIONAR
         };
         
         const dbSetting = settingMap[setting];
@@ -668,7 +667,7 @@ app.put('/api/settings/:userId/:setting', async (req, res) => {
             });
         }
         
-        const sql = `UPDATE user_settings SET ${dbSetting} = ?, updated_at = NOW() WHERE user_id = ?`;
+        const sql = `UPDATE user_settings SET ${dbSetting} = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`;
         
         const result = await db.run(sql, [value, userId]);
         
@@ -690,46 +689,6 @@ app.put('/api/settings/:userId/:setting', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Erro ao atualizar configuração'
-        });
-    }
-});
-
-// ===== DELETE - RESETAR CONFIGURAÇÕES =====
-app.delete('/api/settings/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const headerUserId = req.headers['x-user-id'];
-        
-        if (userId !== headerUserId) {
-            return res.status(403).json({
-                success: false,
-                error: 'Acesso negado'
-            });
-        }
-        
-        const result = await db.run(
-            'DELETE FROM user_settings WHERE user_id = ?',
-            [userId]
-        );
-        
-        if (result.changes > 0) {
-            console.log(`✅ Configurações resetadas para usuário ${userId}`);
-            res.json({
-                success: true,
-                message: 'Configurações resetadas'
-            });
-        } else {
-            res.status(404).json({
-                success: false,
-                error: 'Configurações não encontradas'
-            });
-        }
-        
-    } catch (err) {
-        console.error('❌ Erro ao deletar configurações:', err);
-        res.status(500).json({
-            success: false,
-            error: 'Erro ao deletar configurações'
         });
     }
 });

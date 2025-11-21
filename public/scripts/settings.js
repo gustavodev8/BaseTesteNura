@@ -16,7 +16,8 @@ const nuraSettings = {
     darkMode: false,
     primaryColor: '#49a09d',
     currentPlan: 'pro',
-    planRenewalDate: '30 de dezembro de 2025'
+    planRenewalDate: '30 de dezembro de 2025',
+    viewMode: 'lista' // ✅ ADICIONADO
 };
 
 // ===== OBTER ID DO USUÁRIO =====
@@ -177,13 +178,38 @@ function updateUIWithSettings() {
         }
     });
     
-    // Atualizar select de detalhamento
-    const detailSelect = document.querySelector('select');
-    if (detailSelect) {
-        detailSelect.value = nuraSettings.detailLevel;
-    }
+    // Atualizar selects
+    document.querySelectorAll('.setting-row').forEach(row => {
+        const select = row.querySelector('select');
+        if (!select) return;
+        
+        const label = row.querySelector('.setting-label');
+        if (!label) return;
+        
+        const text = label.textContent.toLowerCase();
+        
+        if (text.includes('detalhamento')) {
+            select.value = nuraSettings.detailLevel;
+        } else if (text.includes('exibição')) {
+            select.value = nuraSettings.viewMode || 'Lista';
+        }
+    });
     
     console.log('✅ Interface atualizada!');
+}
+
+// ===== MODO DE VISUALIZAÇÃO =====
+async function setViewMode(mode) {
+    const modeLower = mode.toLowerCase();
+    nuraSettings.viewMode = modeLower;
+    
+    await saveSettingsToDatabase();
+    showNotification(`📊 Modo de visualização: ${mode}`);
+    
+    // Atualizar visualização se estiver na página de tarefas
+    if (window.renderAllTasks) {
+        window.renderAllTasks();
+    }
 }
 
 // ===== FILTRO: OCULTAR TAREFAS CONCLUÍDAS =====
@@ -200,6 +226,12 @@ async function toggleHideCompleted(enabled) {
     document.querySelectorAll('[data-task-status="completed"]').forEach(task => {
         task.style.display = enabled ? 'none' : '';
     });
+    
+    // Ocultar coluna de concluídos no Kanban
+    const completedColumn = document.querySelector('[data-kanban-column="completed"]');
+    if (completedColumn) {
+        completedColumn.style.display = enabled ? 'none' : '';
+    }
     
     await saveSettingsToDatabase();
     showNotification(enabled ? '👁️ Tarefas concluídas ocultadas' : '👁️ Tarefas concluídas visíveis');
@@ -434,6 +466,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+    
+    // ✅ Select de modo de visualização
+    document.querySelectorAll('.setting-row').forEach(row => {
+        const select = row.querySelector('select');
+        if (!select) return;
+        
+        const label = row.querySelector('.setting-label');
+        if (!label) return;
+        
+        const text = label.textContent.toLowerCase();
+        
+        if (text.includes('exibição')) {
+            select.addEventListener('change', function() {
+                setViewMode(this.value);
+            });
+        } else if (text.includes('detalhamento')) {
+            select.addEventListener('change', function() {
+                setDetailLevel(this.value);
+            });
+        }
+    });
 });
 
 // ===== EXPORTAR FUNÇÕES =====
@@ -444,6 +497,7 @@ window.nuraSettingsFunctions = {
     toggleHighlightUrgent,
     toggleAutoSuggestions,
     setDetailLevel,
+    setViewMode, // ✅ EXPORTAR
     getPlanInfo,
     selectPlan,
     cancelPlan,

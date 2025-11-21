@@ -436,7 +436,7 @@ Com base nesta descrição: "${descricao}"
 
 Horário: ${horaInicio} às ${horaFim}
 
-Crie uma rotina organizada em português com horários específicos, emojis e intervalos.
+Crie uma rotina organizada em português com horários específicos, intervalos.
 Formato:
 🕗 08:00-09:00 → Atividade
 🕘 09:00-09:15 → Intervalo
@@ -488,6 +488,129 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         });
     }
 });
+
+// ===== SALVAR TAREFAS DA ROTINA COM PRIORIDADE INTELIGENTE =====
+async function salvarTarefasDaRotina(rotinaTexto) {
+    if (!currentUser) {
+        alert('❌ Erro: Usuário não identificado!');
+        return;
+    }
+
+    const linhas = rotinaTexto.split('\n').filter(linha => linha.trim());
+    let salvas = 0;
+    
+    for (const linha of linhas) {
+        if (linha.includes('→') || linha.match(/\d{1,2}:\d{2}/)) {
+            let texto = linha.split('→')[1] || linha;
+            texto = texto.replace(/[🔴🟡🟢🕗🕙🕛🕑🕓🕕📚💪☕🍽️📊🚀🎯]/g, '').trim();
+            
+            if (texto && texto.length > 2) {
+                // ✅ DETERMINAR PRIORIDADE INTELIGENTE
+                const priority = determinarPrioridade(texto);
+                
+                const tarefa = {
+                    title: texto.substring(0, 100),
+                    description: 'Importado da rotina IA',
+                    priority: priority, // ✅ USAR PRIORIDADE DA IA
+                    status: 'pending',
+                    user_id: currentUser.id
+                };
+
+                try {
+                    const response = await fetch(`${API_URL}/api/tasks`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(tarefa)
+                    });
+
+                    const result = await response.json();
+                    if (result.success) salvas++;
+                } catch (error) {
+                    console.error('Erro:', error);
+                }
+            }
+        }
+    }
+
+    showNotification(`✅ ${salvas} tarefas salvas com prioridades definidas!`);
+    loadAndDisplayTasksFromDatabase();
+}
+
+// ===== FUNÇÃO PARA DETERMINAR PRIORIDADE BASEADA NO CONTEÚDO =====
+function determinarPrioridade(textoTarefa) {
+    const texto = textoTarefa.toLowerCase();
+    
+    // Palavras-chave para ALTA prioridade
+    const palavrasAlta = [
+        'urgente', 'importante', 'crítico', 'prazo', 'deadline', 
+        'reunião', 'apresentação', 'entrega', 'cliente', 'projeto',
+        'trabalho', 'estudo', 'prova', 'exame', 'compromisso',
+        'pagamento', 'conta', 'vencimento', 'médico', 'saúde'
+    ];
+    
+    // Palavras-chave para BAIXA prioridade
+    const palavrasBaixa = [
+        'descanso', 'relaxar', 'lazer', 'pausa', 'intervalo',
+        'lanche', 'café', 'alongamento', 'caminhada', 'hobby',
+        'série', 'jogo', 'música', 'leitura', 'entretenimento'
+    ];
+    
+    // Verificar alta prioridade
+    for (const palavra of palavrasAlta) {
+        if (texto.includes(palavra)) {
+            return 'high';
+        }
+    }
+    
+    // Verificar baixa prioridade
+    for (const palavra of palavrasBaixa) {
+        if (texto.includes(palavra)) {
+            return 'low';
+        }
+    }
+    
+    // Caso padrão: média prioridade
+    return 'medium';
+}
+
+// ✅ FUNÇÃO PARA DETERMINAR PRIORIDADE BASEADA NO CONTEÚDO
+function determinarPrioridade(textoTarefa) {
+    const texto = textoTarefa.toLowerCase();
+    
+    // Palavras-chave para ALTA prioridade
+    const palavrasAlta = [
+        'urgente', 'importante', 'crítico', 'prazo', 'deadline', 
+        'reunião', 'apresentação', 'entrega', 'cliente', 'projeto',
+        'trabalho', 'estudo', 'prova', 'exame', 'compromisso',
+        'pagamento', 'conta', 'vencimento', 'médico', 'saúde'
+    ];
+    
+    // Palavras-chave para BAIXA prioridade
+    const palavrasBaixa = [
+        'descanso', 'relaxar', 'lazer', 'pausa', 'intervalo',
+        'lanche', 'café', 'alongamento', 'caminhada', 'hobby',
+        'série', 'jogo', 'música', 'leitura', 'entretenimento'
+    ];
+    
+    // Verificar alta prioridade
+    for (const palavra of palavrasAlta) {
+        if (texto.includes(palavra)) {
+            return 'high';
+        }
+    }
+    
+    // Verificar baixa prioridade
+    for (const palavra of palavrasBaixa) {
+        if (texto.includes(palavra)) {
+            return 'low';
+        }
+    }
+    
+    // Caso padrão: média prioridade
+    return 'medium';
+}
 
 // ===== GET - CARREGAR CONFIGURAÇÕES DO USUÁRIO =====
 app.get('/api/settings/:userId', async (req, res) => {

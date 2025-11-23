@@ -439,7 +439,18 @@ app.get('/api/users', async (req, res) => {
             users
         });
     } catch (err) {
-        console.error('
+        console.error('❌ Erro ao listar usuários:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao listar usuários'
+        });
+    }
+});
+
+// ===== API - AUTENTICAÇÃO =====
+
+// POST - Login do usuário
+app.post("/api/login", async (req, res) => {
     console.log("🔐 Tentativa de login:", req.body);
     
     const { username, password } = req.body;

@@ -7,6 +7,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('./database'); // Conexão com banco (SQLite local ou PostgreSQL produção)
 const cron = require('node-cron');
 const { enviarResumoParaTodos, enviarResumoDiario } = require('./emailService');
+const fetch = require('node-fetch'); // Para keep-alive
 
 dotenv.config(); // Carrega variáveis do .env
 
@@ -370,10 +371,75 @@ app.delete('/api/tasks/:id', async (req, res) => {
     }
 });
 
-// ===== API - AUTENTICAÇÃO =====
+// ===== API - GERENCIAMENTO DE USUÁRIOS =====
 
-// POST - Login do usuário
-app.post("/api/login", async (req, res) => {
+// PUT - Atualizar email de um usuário
+app.put('/api/users/:userId/email', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { email } = req.body;
+        const headerUserId = req.headers['x-user-id'];
+        
+        // Verifica se o usuário está atualizando seu próprio email (ou é admin)
+        if (userId !== headerUserId) {
+            return res.status(403).json({
+                success: false,
+                error: 'Acesso negado'
+            });
+        }
+        
+        if (!email || !email.includes('@')) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email inválido'
+            });
+        }
+        
+        // Verifica se o email já está em uso
+        const existingUser = await db.get(
+            'SELECT id FROM users WHERE email = ? AND id != ?',
+            [email, userId]
+        );
+        
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                error: 'Este email já está em uso'
+            });
+        }
+        
+        // Atualiza o email
+        const result = await db.run(
+            'UPDATE users SET email = ? WHERE id = ?',
+            [email, userId]
+        );
+        
+        console.log(`✅ Email do usuário ${userId} atualizado para ${email}`);
+        
+        res.json({
+            success: true,
+            message: 'Email atualizado com sucesso'
+        });
+        
+    } catch (err) {
+        console.error('❌ Erro ao atualizar email:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao atualizar email'
+        });
+    }
+});
+
+// GET - Listar todos os usuários (útil para debug)
+app.get('/api/users', async (req, res) => {
+    try {
+        const users = await db.query('SELECT id, name, email FROM users');
+        res.json({
+            success: true,
+            users
+        });
+    } catch (err) {
+        console.error('
     console.log("🔐 Tentativa de login:", req.body);
     
     const { username, password } = req.body;
@@ -622,7 +688,8 @@ app.get('/api/settings/:userId', async (req, res) => {
                 primaryColor: settings.primary_color,
                 currentPlan: settings.current_plan,
                 planRenewalDate: settings.plan_renewal_date,
-                viewMode: settings.view_mode || 'lista'
+                viewMode: settings.view_mode || 'lista',
+                emailNotifications: settings.email_notifications !== false // ✅ ADICIONADO (default true)
             };
             
             res.json({
@@ -684,6 +751,7 @@ app.post('/api/settings/:userId', async (req, res) => {
                     current_plan = ?,
                     plan_renewal_date = ?,
                     view_mode = ?,
+                    email_notifications = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = ?`,
                 [
@@ -696,6 +764,7 @@ app.post('/api/settings/:userId', async (req, res) => {
                     settings.currentPlan || 'pro',
                     settings.planRenewalDate || '30 de dezembro de 2025',
                     settings.viewMode || 'lista',
+                    settings.emailNotifications !== false, // ✅ ADICIONADO (default true)
                     userId
                 ]
             );
@@ -705,8 +774,8 @@ app.post('/api/settings/:userId', async (req, res) => {
             // Cria novas configurações
             const result = await db.run(
                 `INSERT INTO user_settings 
-                (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date, view_mode)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date, view_mode, email_notifications)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     userId,
                     settings.hideCompleted || false,
@@ -717,7 +786,8 @@ app.post('/api/settings/:userId', async (req, res) => {
                     settings.primaryColor || '#49a09d',
                     settings.currentPlan || 'pro',
                     settings.planRenewalDate || '30 de dezembro de 2025',
-                    settings.viewMode || 'lista'
+                    settings.viewMode || 'lista',
+                    settings.emailNotifications !== false // ✅ ADICIONADO (default true)
                 ]
             );
             
@@ -762,7 +832,8 @@ app.put('/api/settings/:userId/:setting', async (req, res) => {
             primaryColor: 'primary_color',
             currentPlan: 'current_plan',
             planRenewalDate: 'plan_renewal_date',
-            viewMode: 'view_mode'
+            viewMode: 'view_mode',
+            emailNotifications: 'email_notifications' // ✅ ADICIONADO
         };
         
         const dbSetting = settingMap[setting];
@@ -821,6 +892,19 @@ cron.schedule('58 7 * * *', async () => {
 console.log('⏰ Cron job configurado: Resumos diários às 07:58 (Horário de Brasília)');
 console.log('📧 Serviço de email: SendGrid');
 console.log(`📨 Email remetente: ${process.env.SENDGRID_FROM_EMAIL || 'NÃO CONFIGURADO'}`);
+
+// ===== KEEP-ALIVE - Previne servidor de "dormir" no plano free =====
+// Faz uma requisição a cada 14 minutos para manter o servidor ativo
+setInterval(() => {
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    const host = process.env.RENDER_EXTERNAL_URL || `localhost:${PORT}`;
+    
+    fetch(`${protocol}://${host}/api/status`)
+        .then(() => console.log('🔄 Keep-alive: Servidor ativo'))
+        .catch(err => console.log('⚠️ Keep-alive falhou:', err.message));
+}, 14 * 60 * 1000); // 14 minutos
+
+console.log('🔄 Keep-alive ativado: Servidor não vai dormir');
 
 // ===== INICIAR SERVIDOR =====
 app.listen(PORT, () => {

@@ -17,7 +17,8 @@ const nuraSettings = {
     primaryColor: '#49a09d',
     currentPlan: 'pro',
     planRenewalDate: '30 de dezembro de 2025',
-    viewMode: 'lista'
+    viewMode: 'lista',
+    emailNotifications: true // ✅ NOTIFICAÇÕES POR EMAIL
 };
 
 // ===== OBTER ID DO USUÁRIO =====
@@ -165,6 +166,9 @@ function updateUIWithSettings() {
             toggle.classList.toggle('active', nuraSettings.highlightUrgent);
         } else if (text.includes('sugestões')) {
             toggle.classList.toggle('active', nuraSettings.autoSuggestions);
+        } else if (text.includes('resumo diário') || text.includes('email')) {
+            // ✅ NOVO: Toggle de notificações por email
+            toggle.classList.toggle('active', nuraSettings.emailNotifications);
         }
     });
     
@@ -364,6 +368,30 @@ async function toggleAutoSuggestions(enabled) {
     showNotification(enabled ? '💡 Sugestões de IA ativadas!' : '🔕 Sugestões de IA desativadas');
 }
 
+// ===== ✅ NOVO: NOTIFICAÇÕES POR EMAIL =====
+async function toggleEmailNotifications(enabled) {
+    nuraSettings.emailNotifications = enabled;
+    
+    // Atualizar toggle visual
+    const toggle = Array.from(document.querySelectorAll('.toggle-switch')).find(t => {
+        const row = t.closest('.setting-row');
+        const text = row?.textContent.toLowerCase();
+        return text && (text.includes('resumo diário') || text.includes('email'));
+    });
+    
+    if (toggle) {
+        toggle.classList.toggle('active', enabled);
+    }
+    
+    await saveSettingsToDatabase();
+    
+    if (enabled) {
+        showNotification('📧 Resumo diário por email ATIVADO - Você receberá emails às 07:58 com suas tarefas pendentes');
+    } else {
+        showNotification('📪 Resumo diário por email DESATIVADO - Você não receberá mais emails automáticos');
+    }
+}
+
 // ===== ASSISTENTE IA: NÍVEL DE DETALHAMENTO =====
 async function setDetailLevel(level) {
     nuraSettings.detailLevel = level;
@@ -542,6 +570,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 toggleHighlightUrgent(!nuraSettings.highlightUrgent);
             } else if (text.includes('sugestões')) {
                 toggleAutoSuggestions(!nuraSettings.autoSuggestions);
+            } else if (text.includes('resumo diário') || text.includes('email')) {
+                // ✅ NOVO: Detecta o toggle de notificações por email
+                toggleEmailNotifications(!nuraSettings.emailNotifications);
             } else {
                 // Toggle genérico para outros botões
                 this.classList.toggle('active');
@@ -581,6 +612,7 @@ window.nuraSettingsFunctions = {
     toggleHideCompleted,
     toggleHighlightUrgent,
     toggleAutoSuggestions,
+    toggleEmailNotifications, // ✅ NOVA FUNÇÃO EXPORTADA
     setDetailLevel,
     setViewMode,
     getPlanInfo,

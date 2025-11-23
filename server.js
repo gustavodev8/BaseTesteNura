@@ -843,10 +843,6 @@ app.get('/api/status', (req, res) => {
     res.json({ status: 'ok' });
 });
 
-const express = require('express');
-const path = require('path');
-const app = express();
-
 // ✅ ADICIONE ESTA LINHA
 app.use(express.static(__dirname));
 

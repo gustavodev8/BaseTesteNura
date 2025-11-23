@@ -100,6 +100,14 @@ app.get('/Tela_Ajustes.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/html/Tela_Ajustes.html'));
 });
 
+// Teste de Email (página de teste)
+app.get('/teste-email', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/html/Tela_TesteEmail.html'));
+});
+app.get('/Tela_TesteEmail.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/html/Tela_TesteEmail.html'));
+});
+
 // ===== API - GERENCIAMENTO DE TAREFAS =====
 
 // GET - Listar todas as tarefas do usuário

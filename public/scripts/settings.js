@@ -17,7 +17,7 @@ const nuraSettings = {
     primaryColor: '#49a09d',
     currentPlan: 'pro',
     planRenewalDate: '30 de dezembro de 2025',
-    viewMode: 'lista' // ✅ ADICIONADO
+    viewMode: 'lista'
 };
 
 // ===== OBTER ID DO USUÁRIO =====
@@ -238,7 +238,6 @@ async function toggleHideCompleted(enabled) {
 }
 
 // ===== FILTRO: DESTACAR TAREFAS URGENTES =====
-
 async function toggleHighlightUrgent(enabled) {
     nuraSettings.highlightUrgent = enabled;
     
@@ -494,11 +493,16 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettingsFromDatabase();
 });
 
-// ===== EVENTOS DO HTML ORIGINAL =====
+// ===== EVENTOS DO HTML - SEM CLONAGEM =====
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🔧 Inicializando event listeners...');
+    
+    // Modo escuro
     const darkModeToggle = document.getElementById('darkModeToggle');
     if (darkModeToggle) {
-        darkModeToggle.addEventListener('click', function() {
+        darkModeToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             const newState = !nuraSettings.darkMode;
             toggleDarkMode(newState);
         });
@@ -506,18 +510,20 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Cores
     document.querySelectorAll('.color-option').forEach(color => {
-        color.addEventListener('click', function() {
+        color.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             const hexColor = this.getAttribute('data-color');
             setPrimaryColor(hexColor);
         });
     });
     
-    // Toggle switches
+    // Toggle switches - SEM CLONAGEM
     document.querySelectorAll('.toggle-switch').forEach(toggle => {
-        const newToggle = toggle.cloneNode(true);
-        toggle.parentNode.replaceChild(newToggle, toggle);
-        
-        newToggle.addEventListener('click', function() {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
             const row = this.closest('.setting-row');
             if (!row) return;
             
@@ -525,6 +531,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!label) return;
             
             const text = label.textContent.toLowerCase();
+            
+            console.log('🔘 Toggle clicado:', text);
             
             if (text.includes('modo escuro')) {
                 toggleDarkMode(!nuraSettings.darkMode);
@@ -534,11 +542,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 toggleHighlightUrgent(!nuraSettings.highlightUrgent);
             } else if (text.includes('sugestões')) {
                 toggleAutoSuggestions(!nuraSettings.autoSuggestions);
+            } else {
+                // Toggle genérico para outros botões
+                this.classList.toggle('active');
+                console.log('✅ Toggle genérico ativado');
             }
         });
     });
     
-    // ✅ Select de modo de visualização
+    // Selects
     document.querySelectorAll('.setting-row').forEach(row => {
         const select = row.querySelector('select');
         if (!select) return;
@@ -558,6 +570,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+    
+    console.log('✅ Event listeners configurados!');
 });
 
 // ===== EXPORTAR FUNÇÕES =====
@@ -568,7 +582,7 @@ window.nuraSettingsFunctions = {
     toggleHighlightUrgent,
     toggleAutoSuggestions,
     setDetailLevel,
-    setViewMode, // ✅ EXPORTAR
+    setViewMode,
     getPlanInfo,
     selectPlan,
     cancelPlan,

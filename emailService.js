@@ -21,7 +21,7 @@ async function enviarResumoDiario(userId, userEmail, userName) {
             "SELECT * FROM tasks WHERE user_id = ? AND status != 'completed' ORDER BY priority DESC, created_at ASC",
             [userId]
         );
-
++
         console.log(`📋 ${tasks.length} tarefas pendentes encontradas`);
 
         // Se não tiver tarefas pendentes, não envia

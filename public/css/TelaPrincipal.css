@@ -614,6 +614,7 @@ body::after {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   font-weight: 600;
   text-align: center;
@@ -624,42 +625,130 @@ body::after {
   border-radius: var(--radius);
   transition: var(--transition);
   text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s, height 0.4s;
+}
+
+.btn:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .btn:active {
-  transform: translateY(1px);
+  transform: scale(0.98);
+}
+
+.btn svg {
+  transition: var(--transition);
+  position: relative;
+  z-index: 1;
+}
+
+.btn:hover svg {
+  transform: translateX(2px);
 }
 
 .btn-primary {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
   color: var(--white);
-  border-color: var(--primary);
-  box-shadow: var(--shadow-sm);
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(20, 101, 81, 0.2);
 }
 
 .btn-primary:hover {
-  background: var(--primary-dark);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 16px rgba(20, 101, 81, 0.3);
+  transform: translateY(-2px);
 }
 
 .btn-success {
   background: var(--accent);
   color: var(--white);
-  border-color: var(--accent);
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(38, 92, 75, 0.2);
 }
 
 .btn-success:hover {
   background: var(--accent-dark);
+  box-shadow: 0 4px 12px rgba(38, 92, 75, 0.3);
 }
 
 .btn-secondary {
   background: var(--white);
   color: var(--gray-700);
   border-color: var(--gray-300);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .btn-secondary:hover {
-  background: var(--gray-100);
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+/* Botões pequenos */
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 0.875rem;
+  border-radius: 6px;
+}
+
+/* Botões outline */
+.btn-outline-success {
+  background: transparent;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+  box-shadow: none;
+}
+
+.btn-outline-success:hover {
+  background: var(--primary);
+  color: var(--white);
+  box-shadow: 0 2px 8px rgba(20, 101, 81, 0.2);
+}
+
+.btn-outline-danger {
+  background: transparent;
+  color: #dc2626;
+  border: 1.5px solid #dc2626;
+  box-shadow: none;
+}
+
+.btn-outline-danger:hover {
+  background: #dc2626;
+  color: var(--white);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+}
+
+/* Botões icon-only */
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.btn-icon:hover svg {
+  transform: scale(1.1);
 }
 
 /* ===== TAREFAS ===== */
@@ -734,53 +823,248 @@ body::after {
   justify-content: flex-end;
 }
 
-/* ===== LISTA DE TAREFAS ===== */
+/* ===== LISTA DE TAREFAS - DESIGN PROFISSIONAL ===== */
 .list-group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   position: relative;
 }
 
 .list-group-item {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(20, 101, 81, 0.08);
-  border-left: 4px solid var(--accent);
-  border-radius: var(--radius);
-  padding: 16px 16px 16px 24px;
+  border: 1px solid rgba(20, 101, 81, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   transition: var(--transition);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   position: relative;
+  overflow: hidden;
 }
 
-/* Linha de margem do caderno */
+/* Indicador de status lateral */
 .list-group-item::before {
   content: '';
   position: absolute;
-  left: 16px;
+  left: 0;
   top: 0;
   bottom: 0;
-  width: 1px;
-  background: rgba(239, 68, 68, 0.1);
+  width: 4px;
+  background: linear-gradient(180deg, var(--primary), var(--accent));
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.list-group-item:hover::before {
+  opacity: 1;
 }
 
 .list-group-item:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  border-left-color: var(--primary);
-  transform: translateX(4px);
-  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: rgba(20, 101, 81, 0.2);
+  transform: translateX(2px);
+  background: rgba(255, 255, 255, 1);
 }
 
-.list-group-item span {
+/* Container do conteúdo */
+.list-group-item > span {
   flex: 1;
   font-size: 0.9375rem;
   color: var(--dark);
-  padding-left: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
+
+/* Badge de categoria/tipo */
+.task-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(20, 101, 81, 0.08);
+  color: var(--primary);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Grupo de botões de ação */
+.list-group-item .btn-group {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+/* Botões de ação redesenhados */
+.btn-action {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+}
+
+.btn-action svg {
+  width: 18px;
+  height: 18px;
+  transition: var(--transition);
+}
+
+.btn-action-complete {
+  color: var(--primary);
+}
+
+.btn-action-complete:hover {
+  background: rgba(20, 101, 81, 0.1);
+  border-color: rgba(20, 101, 81, 0.2);
+  transform: scale(1.1);
+}
+
+.btn-action-complete:hover svg {
+  transform: scale(1.1);
+}
+
+.btn-action-delete {
+  color: #dc2626;
+}
+
+.btn-action-delete:hover {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.2);
+  transform: scale(1.1);
+}
+
+.btn-action-delete:hover svg {
+  transform: scale(1.1);
+}
+
+/* Estado de tarefa completa */
+.list-group-item.completed {
+  background: rgba(240, 253, 244, 0.9);
+  border-color: rgba(20, 101, 81, 0.15);
+}
+
+.list-group-item.completed::before {
+  opacity: 1;
+  background: linear-gradient(180deg, #10b981, #14b8a6);
+}
+
+.list-group-item.completed > span {
+  text-decoration: line-through;
+  color: var(--gray-600);
+  opacity: 0.7;
+}
+
+/* Checkbox customizado */
+.task-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--gray-300);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.task-checkbox:hover {
+  border-color: var(--primary);
+  background: rgba(20, 101, 81, 0.05);
+}
+
+.task-checkbox.checked {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-color: var(--primary);
+}
+
+.task-checkbox.checked svg {
+  color: white;
+}
+
+/* Informações extras da tarefa */
+.task-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.8125rem;
+  color: var(--gray-600);
+}
+
+.task-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.task-time svg {
+  width: 14px;
+  height: 14px;
+  color: var(--gray-500);
+}
+
+/* Prioridade */
+.task-priority {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.priority-high {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.priority-medium {
+  background: #f59e0b;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.priority-low {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+/* Animação de entrada */
+@keyframes task-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.list-group-item {
+  animation: task-slide-in 0.3s ease backwards;
+}
+
+.list-group-item:nth-child(1) { animation-delay: 0.05s; }
+.list-group-item:nth-child(2) { animation-delay: 0.1s; }
+.list-group-item:nth-child(3) { animation-delay: 0.15s; }
+.list-group-item:nth-child(4) { animation-delay: 0.2s; }
+.list-group-item:nth-child(5) { animation-delay: 0.25s; }
 
 .list-group-item .btn-group {
   display: flex;

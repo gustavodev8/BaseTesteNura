@@ -460,8 +460,35 @@ async function toggleDarkMode(enabled) {
     
     document.body.classList.toggle('dark-mode', enabled);
     
+    // Salvar no banco
     await saveSettingsToDatabase();
+    
+    // Atualizar localStorage para sincronização rápida
+    localStorage.setItem('darkMode', enabled);
+    
+    // Notificar darkMode.js
+    window.dispatchEvent(new CustomEvent('darkModeUpdated', { 
+        detail: { isDark: enabled } 
+    }));
+    
     showNotification(enabled ? '🌙 Modo escuro ativado' : '☀️ Modo claro ativado');
+}
+
+// ===== SINCRONIZAR COM DARKMMODE.JS =====
+function syncDarkMode(isDark) {
+    nuraSettings.darkMode = isDark;
+    
+    const toggle = document.getElementById('darkModeToggle');
+    if (toggle) {
+        if (isDark) {
+            toggle.classList.add('active');
+        } else {
+            toggle.classList.remove('active');
+        }
+    }
+    
+    // Salvar no banco (sem notificação para evitar loop)
+    saveSettingsToDatabase();
 }
 
 // ===== APARÊNCIA: TROCAR COR =====
@@ -521,22 +548,38 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettingsFromDatabase();
 });
 
-// ===== EVENTOS DO HTML - SEM CLONAGEM =====
+// ===== EVENTOS DO HTML - OTIMIZADO =====
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🔧 Inicializando event listeners...');
     
-    // Modo escuro
-    const darkModeToggle = document.getElementById('darkModeToggle');
+    // ===== MODO ESCURO (Específico) =====
+    const darkModeToggle = document.querySelector('#appearance #darkModeToggle');
     if (darkModeToggle) {
-        darkModeToggle.addEventListener('click', function(e) {
+        // Remover listeners antigos (evita duplicação)
+        const newToggle = darkModeToggle.cloneNode(true);
+        darkModeToggle.parentNode.replaceChild(newToggle, darkModeToggle);
+        
+        // Adicionar listener único
+        newToggle.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
+            
+            // Prevenir cliques rápidos
+            if (this.classList.contains('animating')) return;
+            this.classList.add('animating');
+            
             const newState = !nuraSettings.darkMode;
             toggleDarkMode(newState);
+            
+            // Liberar após 500ms
+            setTimeout(() => {
+                this.classList.remove('animating');
+            }, 500);
         });
+        console.log('✅ Toggle de modo escuro inicializado');
     }
     
-    // Cores
+    // ===== CORES =====
     document.querySelectorAll('.color-option').forEach(color => {
         color.addEventListener('click', function(e) {
             e.preventDefault();
@@ -546,8 +589,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Toggle switches - SEM CLONAGEM
+    // ===== OUTROS TOGGLE SWITCHES (Exceto modo escuro) =====
     document.querySelectorAll('.toggle-switch').forEach(toggle => {
+        // Pular o toggle de modo escuro (já foi configurado acima)
+        if (toggle.id === 'darkModeToggle') {
+            console.log('⏭️ Pulando toggle de modo escuro (já configurado)');
+            return;
+        }
+        
         toggle.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -562,9 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             console.log('🔘 Toggle clicado:', text);
             
-            if (text.includes('modo escuro')) {
-                toggleDarkMode(!nuraSettings.darkMode);
-            } else if (text.includes('ocultar tarefas') || text.includes('concluídas')) {
+            if (text.includes('ocultar tarefas') || text.includes('concluídas')) {
                 toggleHideCompleted(!nuraSettings.hideCompleted);
             } else if (text.includes('destacar') || text.includes('urgentes')) {
                 toggleHighlightUrgent(!nuraSettings.highlightUrgent);
@@ -612,13 +659,14 @@ window.nuraSettingsFunctions = {
     toggleHideCompleted,
     toggleHighlightUrgent,
     toggleAutoSuggestions,
-    toggleEmailNotifications, // ✅ NOVA FUNÇÃO EXPORTADA
+    toggleEmailNotifications,
     setDetailLevel,
     setViewMode,
     getPlanInfo,
     selectPlan,
     cancelPlan,
     toggleDarkMode,
+    syncDarkMode, // ✅ NOVA: Sincronizar com darkMode.js
     setPrimaryColor,
     showNotification,
     getSettings: () => ({ ...nuraSettings })

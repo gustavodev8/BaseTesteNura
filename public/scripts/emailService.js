@@ -1,7 +1,6 @@
 const sgMail = require('@sendgrid/mail');
 const db = require('./database');
-const cron = require('node-cron');
-const { enviarResumoParaTodos, enviarResumoDiario } = require('./emailService');
+
 
 // ===== CONFIGURAR SENDGRID =====
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);

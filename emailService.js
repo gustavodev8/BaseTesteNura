@@ -1,61 +1,66 @@
+// ===== SERVIÇO DE ENVIO DE EMAILS =====
 const sgMail = require('@sendgrid/mail');
 const db = require('./database');
 
-
-// ===== CONFIGURAR SENDGRID =====
+// Configurar SendGrid com a API Key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-console.log('✅ SendGrid configurado!');
-
-// ===== FUNÇÃO PARA GERAR RESUMO DIÁRIO =====
-async function gerarResumoDiario(userId) {
+/**
+ * Envia resumo diário para um usuário específico
+ * @param {number} userId - ID do usuário
+ * @param {string} userEmail - Email do usuário
+ * @param {string} userName - Nome do usuário
+ * @returns {Object} Resultado do envio
+ */
+async function enviarResumoDiario(userId, userEmail, userName) {
     try {
+        console.log(`📧 Preparando email para ${userName} (${userEmail})...`);
+
         // Buscar tarefas pendentes do usuário
         const tasks = await db.query(
-            `SELECT * FROM tasks 
-             WHERE user_id = ? 
-             AND status != 'completed' 
-             ORDER BY 
-                CASE priority 
-                    WHEN 'high' THEN 1 
-                    WHEN 'medium' THEN 2 
-                    WHEN 'low' THEN 3 
-                    ELSE 4 
-                END,
-                created_at DESC`,
+            "SELECT * FROM tasks WHERE user_id = ? AND status != 'completed' ORDER BY priority DESC, created_at ASC",
             [userId]
         );
 
+        console.log(`📋 ${tasks.length} tarefas pendentes encontradas`);
+
+        // Se não tiver tarefas pendentes, não envia
         if (tasks.length === 0) {
-            return null; // Sem tarefas pendentes
+            console.log(`ℹ️ Usuário ${userName} não tem tarefas pendentes`);
+            return {
+                sent: false,
+                reason: 'Sem tarefas pendentes',
+                taskCount: 0
+            };
         }
 
-        // Separar por prioridade
-        const highPriority = tasks.filter(t => t.priority === 'high');
-        const mediumPriority = tasks.filter(t => t.priority === 'medium');
-        const lowPriority = tasks.filter(t => t.priority === 'low');
+        // Separar tarefas por prioridade
+        const urgentes = tasks.filter(t => t.priority === 'high');
+        const medias = tasks.filter(t => t.priority === 'medium');
+        const baixas = tasks.filter(t => t.priority === 'low');
 
-        // Gerar HTML do email
-        const emailHTML = `
+        // Montar HTML do email
+        const htmlContent = `
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seu Resumo Diário - Nura</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f5f5f5;
-            padding: 20px;
             margin: 0;
+            padding: 20px;
         }
         .container {
             max-width: 600px;
             margin: 0 auto;
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .header {
             background: linear-gradient(135deg, #49a09d 0%, #5f9ea0 100%);
@@ -76,278 +81,334 @@ async function gerarResumoDiario(userId) {
         }
         .greeting {
             font-size: 18px;
-            color: #333;
             margin-bottom: 20px;
+            color: #333;
         }
         .summary {
             background: #f8f9fa;
-            padding: 15px;
+            padding: 20px;
             border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .task-section {
             margin-bottom: 25px;
         }
-        .task-section h3 {
-            font-size: 16px;
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+        .summary-label {
+            font-weight: 600;
+            color: #555;
+        }
+        .summary-value {
+            font-weight: 700;
+            color: #49a09d;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .task {
+            background: #fff;
+            border-left: 4px solid #ddd;
+            padding: 15px;
             margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        .task-section.high h3 {
-            color: #e74c3c;
-            border-color: #e74c3c;
-        }
-        .task-section.medium h3 {
-            color: #f39c12;
-            border-color: #f39c12;
-        }
-        .task-section.low h3 {
-            color: #2ecc71;
-            border-color: #2ecc71;
-        }
-        .task-item {
-            padding: 12px;
-            margin: 8px 0;
-            background: white;
-            border-radius: 6px;
-            border-left: 4px solid;
-        }
-        .task-item.high {
+        .task.urgent {
             border-left-color: #e74c3c;
-            background: #fff5f5;
+            background: #fef5f5;
         }
-        .task-item.medium {
+        .task.medium {
             border-left-color: #f39c12;
-            background: #fffaf0;
+            background: #fefaf5;
         }
-        .task-item.low {
-            border-left-color: #2ecc71;
-            background: #f0fff4;
+        .task.low {
+            border-left-color: #27ae60;
+            background: #f5fef8;
         }
         .task-title {
             font-weight: 600;
-            font-size: 15px;
+            font-size: 16px;
             color: #333;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
-        .task-description {
-            font-size: 13px;
+        .task-desc {
+            font-size: 14px;
             color: #666;
         }
         .footer {
-            text-align: center;
-            padding: 20px;
             background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
             color: #666;
-            font-size: 12px;
+            font-size: 14px;
         }
         .button {
             display: inline-block;
-            padding: 12px 30px;
             background: #49a09d;
             color: white;
-            text-decoration: none;
+            padding: 12px 30px;
             border-radius: 6px;
-            margin-top: 20px;
+            text-decoration: none;
             font-weight: 600;
+            margin-top: 20px;
         }
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-        }
-        .stat-item {
-            text-align: center;
-        }
-        .stat-number {
-            font-size: 32px;
-            font-weight: bold;
-            color: #49a09d;
-        }
-        .stat-label {
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
             font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+        .badge.urgent {
+            background: #e74c3c;
+            color: white;
+        }
+        .badge.medium {
+            background: #f39c12;
+            color: white;
+        }
+        .badge.low {
+            background: #27ae60;
+            color: white;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🌅 Bom dia!</h1>
-            <p>Seu resumo diário está pronto</p>
+            <h1>📋 Seu Resumo Diário</h1>
+            <p>Sistema de Gerenciamento de Tarefas Nura</p>
         </div>
         
         <div class="content">
-            <p class="greeting">Olá! Aqui está o resumo das suas tarefas pendentes para hoje:</p>
+            <div class="greeting">
+                Olá, <strong>${userName}</strong>! 👋
+            </div>
             
             <div class="summary">
-                <div class="stats">
-                    <div class="stat-item">
-                        <div class="stat-number">${tasks.length}</div>
-                        <div class="stat-label">Total</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" style="color: #e74c3c">${highPriority.length}</div>
-                        <div class="stat-label">Urgentes</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" style="color: #f39c12">${mediumPriority.length}</div>
-                        <div class="stat-label">Médias</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" style="color: #2ecc71">${lowPriority.length}</div>
-                        <div class="stat-label">Baixas</div>
-                    </div>
+                <div class="summary-item">
+                    <span class="summary-label">📊 Total de Tarefas Pendentes:</span>
+                    <span class="summary-value">${tasks.length}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">🔴 Urgentes:</span>
+                    <span class="summary-value">${urgentes.length}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">🟡 Médias:</span>
+                    <span class="summary-value">${medias.length}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">🟢 Baixas:</span>
+                    <span class="summary-value">${baixas.length}</span>
                 </div>
             </div>
 
-            ${highPriority.length > 0 ? `
-            <div class="task-section high">
-                <h3>🔴 Tarefas Urgentes (${highPriority.length})</h3>
-                ${highPriority.map(task => `
-                    <div class="task-item high">
-                        <div class="task-title">${task.title}</div>
-                        ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+            ${urgentes.length > 0 ? `
+            <div class="section">
+                <div class="section-title">🔴 Tarefas Urgentes</div>
+                ${urgentes.map(task => `
+                    <div class="task urgent">
+                        <div class="task-title">${task.title}<span class="badge urgent">URGENTE</span></div>
+                        ${task.description ? `<div class="task-desc">${task.description}</div>` : ''}
                     </div>
                 `).join('')}
             </div>
             ` : ''}
 
-            ${mediumPriority.length > 0 ? `
-            <div class="task-section medium">
-                <h3>🟡 Tarefas Médias (${mediumPriority.length})</h3>
-                ${mediumPriority.map(task => `
-                    <div class="task-item medium">
-                        <div class="task-title">${task.title}</div>
-                        ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+            ${medias.length > 0 ? `
+            <div class="section">
+                <div class="section-title">🟡 Tarefas Médias</div>
+                ${medias.slice(0, 5).map(task => `
+                    <div class="task medium">
+                        <div class="task-title">${task.title}<span class="badge medium">MÉDIA</span></div>
+                        ${task.description ? `<div class="task-desc">${task.description}</div>` : ''}
                     </div>
                 `).join('')}
+                ${medias.length > 5 ? `<p style="text-align: center; color: #666;">E mais ${medias.length - 5} tarefas...</p>` : ''}
             </div>
             ` : ''}
 
-            ${lowPriority.length > 0 ? `
-            <div class="task-section low">
-                <h3>🟢 Tarefas Baixa Prioridade (${lowPriority.length})</h3>
-                ${lowPriority.map(task => `
-                    <div class="task-item low">
-                        <div class="task-title">${task.title}</div>
-                        ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+            ${baixas.length > 0 ? `
+            <div class="section">
+                <div class="section-title">🟢 Tarefas de Baixa Prioridade</div>
+                ${baixas.slice(0, 3).map(task => `
+                    <div class="task low">
+                        <div class="task-title">${task.title}<span class="badge low">BAIXA</span></div>
+                        ${task.description ? `<div class="task-desc">${task.description}</div>` : ''}
                     </div>
                 `).join('')}
+                ${baixas.length > 3 ? `<p style="text-align: center; color: #666;">E mais ${baixas.length - 3} tarefas...</p>` : ''}
             </div>
             ` : ''}
 
-            <center>
-                <a href="https://basetestenura-3.onrender.com/inicial" class="button">
-                    Acessar Nura App
+            <div style="text-align: center;">
+                <a href="${process.env.APP_URL || 'http://localhost:3000'}/inicial" class="button">
+                    Acessar Sistema Nura
                 </a>
-            </center>
+            </div>
         </div>
         
         <div class="footer">
-            <p>Este é um email automático do Nura App</p>
-            <p>Para parar de receber esses emails, desative nas configurações</p>
+            <p>💡 <strong>Dica:</strong> Priorize as tarefas urgentes para manter sua produtividade em alta!</p>
+            <p style="margin-top: 15px; font-size: 12px;">
+                Este é um email automático enviado pelo sistema Nura.<br>
+                Você está recebendo porque tem tarefas pendentes no sistema.
+            </p>
         </div>
     </div>
 </body>
 </html>
         `;
 
-        return {
-            html: emailHTML,
-            taskCount: tasks.length
-        };
+        // Versão texto (fallback)
+        const textContent = `
+Olá, ${userName}!
 
-    } catch (error) {
-        console.error('❌ Erro ao gerar resumo:', error);
-        throw error;
-    }
-}
+📋 SEU RESUMO DIÁRIO - NURA
 
-// ===== FUNÇÃO PARA ENVIAR EMAIL =====
-async function enviarResumoDiario(userId, userEmail, userName) {
-    try {
-        console.log(`📧 Gerando resumo para ${userName} (${userEmail})...`);
+Total de Tarefas Pendentes: ${tasks.length}
+🔴 Urgentes: ${urgentes.length}
+🟡 Médias: ${medias.length}
+🟢 Baixas: ${baixas.length}
 
-        const resumo = await gerarResumoDiario(userId);
+${urgentes.length > 0 ? `
+🔴 TAREFAS URGENTES:
+${urgentes.map(t => `- ${t.title}`).join('\n')}
+` : ''}
 
-        if (!resumo) {
-            console.log(`✅ ${userName} não tem tarefas pendentes`);
-            return { success: true, message: 'Sem tarefas pendentes' };
-        }
+${medias.length > 0 ? `
+🟡 TAREFAS MÉDIAS:
+${medias.slice(0, 5).map(t => `- ${t.title}`).join('\n')}
+${medias.length > 5 ? `E mais ${medias.length - 5} tarefas...` : ''}
+` : ''}
 
+${baixas.length > 0 ? `
+🟢 TAREFAS DE BAIXA PRIORIDADE:
+${baixas.slice(0, 3).map(t => `- ${t.title}`).join('\n')}
+${baixas.length > 3 ? `E mais ${baixas.length - 3} tarefas...` : ''}
+` : ''}
+
+Acesse o sistema: ${process.env.APP_URL || 'http://localhost:3000'}/inicial
+
+💡 Dica: Priorize as tarefas urgentes para manter sua produtividade em alta!
+
+---
+Este é um email automático enviado pelo sistema Nura.
+        `;
+
+        // Configurar mensagem
         const msg = {
             to: userEmail,
-            from: process.env.EMAIL_FROM, // Seu email verificado no SendGrid
-            subject: `🌅 Bom dia! Você tem ${resumo.taskCount} tarefa(s) pendente(s)`,
-            html: resumo.html
+            from: {
+                email: process.env.SENDGRID_FROM_EMAIL,
+                name: process.env.SENDGRID_FROM_NAME || 'Nura - Sistema de Tarefas'
+            },
+            subject: `📋 Seu Resumo Diário - ${tasks.length} tarefa${tasks.length > 1 ? 's' : ''} pendente${tasks.length > 1 ? 's' : ''}`,
+            text: textContent,
+            html: htmlContent,
         };
 
-        const response = await sgMail.send(msg);
-
-        console.log(`✅ Email enviado para ${userName}!`);
+        // Enviar email
+        await sgMail.send(msg);
+        
+        console.log(`✅ Email enviado com sucesso para ${userName}!`);
 
         return {
-            success: true,
-            messageId: response[0].headers['x-message-id'],
-            taskCount: resumo.taskCount
+            sent: true,
+            email: userEmail,
+            taskCount: tasks.length,
+            urgent: urgentes.length,
+            medium: medias.length,
+            low: baixas.length
         };
 
     } catch (error) {
-        console.error(`❌ Erro ao enviar email para ${userEmail}:`, error);
+        console.error(`❌ Erro ao enviar email para ${userName}:`, error);
         
+        // Erros específicos do SendGrid
         if (error.response) {
-            console.error('Detalhes do erro:', error.response.body);
+            console.error('Detalhes do erro SendGrid:', error.response.body);
         }
         
         throw error;
     }
 }
 
-// ===== ENVIAR PARA TODOS OS USUÁRIOS =====
+/**
+ * Envia resumo diário para TODOS os usuários com tarefas pendentes
+ * @returns {Object} Estatísticas do envio
+ */
 async function enviarResumoParaTodos() {
     try {
-        console.log('📬 Iniciando envio de resumos diários...');
+        console.log('\n📬 ========================================');
+        console.log('📬 Iniciando envio em massa de resumos');
+        console.log('📬 ========================================\n');
 
         // Buscar todos os usuários
         const users = await db.query('SELECT id, name, email FROM users');
-
+        
         console.log(`👥 ${users.length} usuários encontrados`);
 
         let enviados = 0;
         let erros = 0;
         let semTarefas = 0;
 
+        // Enviar para cada usuário
         for (const user of users) {
             try {
                 const result = await enviarResumoDiario(user.id, user.email, user.name);
                 
-                if (result.message === 'Sem tarefas pendentes') {
-                    semTarefas++;
-                } else {
+                if (result.sent) {
                     enviados++;
+                    console.log(`✅ [${enviados}/${users.length}] Email enviado para ${user.name}`);
+                } else {
+                    semTarefas++;
+                    console.log(`ℹ️ [${enviados + semTarefas}/${users.length}] ${user.name} sem tarefas pendentes`);
                 }
-                
-                // Aguardar 1 segundo entre emails (evitar spam)
+
+                // Aguardar 1 segundo entre emails (evitar rate limit)
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                
+
             } catch (error) {
-                console.error(`❌ Falha para ${user.name}:`, error.message);
                 erros++;
+                console.error(`❌ [${enviados + erros + semTarefas}/${users.length}] Erro ao enviar para ${user.name}:`, error.message);
             }
         }
 
-        console.log(`\n📊 Resumo:`);
-        console.log(`✅ Enviados: ${enviados}`);
+        console.log('\n📊 ========================================');
+        console.log('📊 RESUMO DO ENVIO');
+        console.log('📊 ========================================');
+        console.log(`📨 Enviados: ${enviados}`);
         console.log(`➖ Sem tarefas: ${semTarefas}`);
         console.log(`❌ Erros: ${erros}`);
+        console.log(`👥 Total: ${users.length}`);
+        console.log('========================================\n');
 
-        return { enviados, semTarefas, erros, total: users.length };
+        return {
+            total: users.length,
+            enviados,
+            semTarefas,
+            erros
+        };
 
     } catch (error) {
-        console.error('❌ Erro geral:', error);
+        console.error('❌ Erro fatal ao enviar resumos:', error);
         throw error;
     }
 }

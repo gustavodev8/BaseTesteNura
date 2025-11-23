@@ -1,39 +1,41 @@
+// ===== IMPORTS E CONFIGURAÇÕES INICIAIS =====
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { GoogleGenerativeAI } = require('@google/generative-ai'); // ✅ CORRIGIDO
-const db = require('./database'); // usar o database.js
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const db = require('./database'); // Conexão com banco (SQLite local ou PostgreSQL produção)
 const cron = require('node-cron');
 const { enviarResumoParaTodos, enviarResumoDiario } = require('./emailService');
 
-
-dotenv.config();
+dotenv.config(); // Carrega variáveis do .env
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+// ===== MIDDLEWARES =====
+app.use(cors()); // Permite requisições de outros domínios
+app.use(express.json()); // Permite receber JSON no body
 
+// ===== CONFIGURAÇÃO DA IA (GEMINI) =====
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY); // ✅ CORRIGIDO
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
-// ===== INICIALIZAR BANCO =====
-db.initializeDatabase();
+// ===== INICIALIZAR BANCO DE DADOS =====
+db.initializeDatabase(); // Cria tabelas se não existirem
 
-// ===== SERVIR ARQUIVOS ESTÁTICOS =====
+// ===== SERVIR ARQUIVOS ESTÁTICOS (HTML, CSS, JS, IMAGENS) =====
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/css', express.static(path.join(__dirname, 'public/css')));
 app.use('/scripts', express.static(path.join(__dirname, 'public/scripts')));
 app.use('/imgs', express.static(path.join(__dirname, 'public/imgs')));
 
-// ===== ROTAS PRINCIPAIS =====
-
+// ===== ROTA RAIZ - REDIRECIONA PARA LOGIN =====
 app.get("/", (req, res) => {
     res.redirect('/login');
 });
 
+// ===== ROTA DE STATUS DO SISTEMA =====
 app.get("/api/status", async (req, res) => {
     try {
         const row = await db.get("SELECT COUNT(*) as count FROM tasks");
@@ -56,51 +58,51 @@ app.get("/api/status", async (req, res) => {
     }
 });
 
-// ===== ROTAS PARA PÁGINAS HTML =====
+// ===== ROTAS PARA SERVIR PÁGINAS HTML =====
 
+// Login
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/html/Tela_Login.html'));
 });
-
 app.get('/Tela_Login.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/html/Tela_Login.html'));
 });
 
+// Tela Inicial
 app.get('/inicial', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/html/Tela_Inicial.html'));
 });
-
 app.get('/Tela_Inicial.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/html/Tela_Inicial.html'));
 });
 
+// Gerenciamento de Tarefas
 app.get('/gerenciamento', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/html/Tela_Gerenciamento.html'));
 });
-
 app.get('/Tela_Gerenciamento.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/html/Tela_Gerenciamento.html'));
 });
 
+// Criar Conta
 app.get('/criar-conta', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/html/Tela_CriaConta.html'));
 });
-
 app.get('/Tela_CriaConta.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/html/Tela_CriaConta.html'));
 });
 
+// Ajustes/Configurações
 app.get('/ajustes', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/html/Tela_Ajustes.html'));
 });
-
 app.get('/Tela_Ajustes.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/html/Tela_Ajustes.html'));
 });
 
-// ===== ROTAS DA API - TAREFAS =====
+// ===== API - GERENCIAMENTO DE TAREFAS =====
 
-// GET - Buscar tarefas do usuário
+// GET - Listar todas as tarefas do usuário
 app.get('/api/tasks', async (req, res) => {
     try {
         const userId = req.query.user_id || req.headers['x-user-id'];
@@ -133,7 +135,7 @@ app.get('/api/tasks', async (req, res) => {
     }
 });
 
-// GET - Buscar tarefa específica
+// GET - Buscar uma tarefa específica
 app.get('/api/tasks/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -199,7 +201,7 @@ app.post('/api/tasks', async (req, res) => {
         let info;
         
         if (db.isPostgres) {
-            // PostgreSQL retorna o ID
+            // PostgreSQL retorna o ID diretamente
             const result = await db.query(
                 `INSERT INTO tasks (user_id, title, description, status, priority) 
                  VALUES (?, ?, ?, ?, ?) RETURNING id`,
@@ -207,6 +209,7 @@ app.post('/api/tasks', async (req, res) => {
             );
             info = { lastInsertRowid: result[0].id };
         } else {
+            // SQLite usa lastInsertRowid
             info = await db.run(
                 `INSERT INTO tasks (user_id, title, description, status, priority) 
                  VALUES (?, ?, ?, ?, ?)`,
@@ -230,7 +233,7 @@ app.post('/api/tasks', async (req, res) => {
     }
 });
 
-// PUT - Atualizar tarefa
+// PUT - Atualizar tarefa existente
 app.put('/api/tasks/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -245,6 +248,7 @@ app.put('/api/tasks/:id', async (req, res) => {
         
         console.log(`🔄 Atualizando tarefa ${id} do usuário ${user_id}`);
         
+        // Verifica se a tarefa pertence ao usuário
         const taskExists = await db.get(
             "SELECT id FROM tasks WHERE id = ? AND user_id = ?",
             [id, user_id]
@@ -257,6 +261,7 @@ app.put('/api/tasks/:id', async (req, res) => {
             });
         }
         
+        // Monta SQL dinâmico baseado nos campos enviados
         const updates = [];
         const values = [];
         
@@ -322,6 +327,7 @@ app.delete('/api/tasks/:id', async (req, res) => {
         
         console.log(`🗑️ Excluindo tarefa ${id} do usuário ${userId}...`);
         
+        // Busca o título antes de excluir (para log)
         const task = await db.get(
             "SELECT title FROM tasks WHERE id = ? AND user_id = ?",
             [id, userId]
@@ -356,8 +362,9 @@ app.delete('/api/tasks/:id', async (req, res) => {
     }
 });
 
-// ===== ROTA DE LOGIN =====
+// ===== API - AUTENTICAÇÃO =====
 
+// POST - Login do usuário
 app.post("/api/login", async (req, res) => {
     console.log("🔐 Tentativa de login:", req.body);
     
@@ -371,7 +378,7 @@ app.post("/api/login", async (req, res) => {
     }
     
     try {
-        // ✅ Buscar por name OU email (igual ao teste que funcionou!)
+        // Busca por nome OU email
         const user = await db.get(
             `SELECT id, name, email FROM users 
              WHERE (name = ? OR email = ?) AND password = ?`,
@@ -406,7 +413,9 @@ app.post("/api/login", async (req, res) => {
     }
 });
 
-// ===== ROTA DE TESTE - ENVIAR RESUMO PARA UM USUÁRIO =====
+// ===== API - ENVIO DE EMAILS =====
+
+// POST - Enviar resumo de teste para um usuário específico
 app.post('/api/enviar-resumo-teste', async (req, res) => {
     try {
         const { user_id } = req.body;
@@ -454,7 +463,7 @@ app.post('/api/enviar-resumo-teste', async (req, res) => {
     }
 });
 
-// ===== ROTA PARA ENVIAR PARA TODOS OS USUÁRIOS (TESTE) =====
+// POST - Enviar resumo para TODOS os usuários (usar com cuidado!)
 app.post('/api/enviar-resumo-todos', async (req, res) => {
     try {
         console.log('📬 Solicitação para enviar resumo para todos os usuários...');
@@ -476,8 +485,9 @@ app.post('/api/enviar-resumo-todos', async (req, res) => {
     }
 });
 
-// ===== ROTA DE IA - GERAR ROTINA =====
+// ===== API - GERAÇÃO DE ROTINA COM IA (GEMINI) =====
 
+// POST - Gerar rotina inteligente baseada em descrição
 app.post("/api/gerar-rotina", async (req, res) => {
     console.log("📥 Recebendo requisição para gerar rotina");
     console.log("📝 Body:", req.body);
@@ -504,12 +514,13 @@ app.post("/api/gerar-rotina", async (req, res) => {
         console.log("🧠 Gerando rotina com Gemini para:", descricao);
         console.log("⏰ Período:", horaInicio, "às", horaFim);
 
+        // Monta prompt para a IA
         const prompt = `
 Com base nesta descrição: "${descricao}"
 
-Entre os Horários : ${horaInicio} às ${horaFim}
+Entre os Horários: ${horaInicio} às ${horaFim}
 
-Crie uma rotina organizada em português com horários específicos, intervalos (se for necessario)
+Crie uma rotina organizada em português com horários específicos, intervalos (se for necessário)
 uma rotina focada em produtividade e bem-estar.
 
 Use emojis para destacar cada atividade.
@@ -525,10 +536,10 @@ Evite longas explicações - vá direto ao ponto com atividades claras e objetiv
 Apenas a rotina formatada, sem explicações.
 `;
 
-        // ✅ USAR GEMINI 2.0 FLASH
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        // Usa Gemini 2.5 Flash (mais rápido e eficiente)
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         
-        console.log("⏳ Aguardando resposta do Gemini 2.0 Flash...");
+        console.log("⏳ Aguardando resposta do Gemini 2.5 Flash...");
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const rotina = response.text();
@@ -539,7 +550,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         res.json({ 
             success: true, 
             rotina,
-            modeloUsado: "gemini-2.0-flash-exp",
+            modeloUsado: "gemini-2.5-flash",
             descricaoOriginal: descricao,
             periodo: `${horaInicio} - ${horaFim}`,
             timestamp: new Date().toISOString()
@@ -553,6 +564,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         
         let errorMessage = "Erro ao gerar rotina";
         
+        // Identifica tipo de erro
         if (err.message?.includes("API key")) {
             errorMessage = "API Key do Gemini inválida ou não configurada";
         } else if (err.message?.includes("quota")) {
@@ -570,61 +582,15 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     }
 });
 
-// ===== SALVAR TAREFAS DA ROTINA COM PRIORIDADE INTELIGENTE =====
-async function salvarTarefasDaRotina(rotinaTexto) {
-    if (!currentUser) {
-        alert('❌ Erro: Usuário não identificado!');
-        return;
-    }
+// ===== API - CONFIGURAÇÕES DO USUÁRIO =====
 
-    const linhas = rotinaTexto.split('\n').filter(linha => linha.trim());
-    let salvas = 0;
-    
-    for (const linha of linhas) {
-        if (linha.includes('→') || linha.match(/\d{1,2}:\d{2}/)) {
-            let texto = linha.split('→')[1] || linha;
-            texto = texto.replace(/[🔴🟡🟢🕗🕙🕛🕑🕓🕕📚💪☕🍽️📊🚀🎯]/g, '').trim();
-            
-            if (texto && texto.length > 2) {
-                // ✅ DETERMINAR PRIORIDADE INTELIGENTE
-                const priority = determinarPrioridade(texto);
-                
-                const tarefa = {
-                    title: texto.substring(0, 100),
-                    description: 'Importado da rotina IA',
-                    priority: priority, // ✅ USAR PRIORIDADE DA IA
-                    status: 'pending',
-                    user_id: currentUser.id
-                };
-
-                try {
-                    const response = await fetch(`${API_URL}/api/tasks`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(tarefa)
-                    });
-
-                    const result = await response.json();
-                    if (result.success) salvas++;
-                } catch (error) {
-                    console.error('Erro:', error);
-                }
-            }
-        }
-    }
-
-    showNotification(`✅ ${salvas} tarefas salvas com prioridades definidas!`);
-    loadAndDisplayTasksFromDatabase();
-}
-
-// ===== GET - CARREGAR CONFIGURAÇÕES DO USUÁRIO =====
+// GET - Carregar configurações do usuário
 app.get('/api/settings/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
         const headerUserId = req.headers['x-user-id'];
         
+        // Verifica se o usuário está acessando suas próprias configurações
         if (userId !== headerUserId) {
             return res.status(403).json({
                 success: false,
@@ -638,6 +604,7 @@ app.get('/api/settings/:userId', async (req, res) => {
         );
         
         if (settings) {
+            // Formata nomes das colunas para camelCase
             const formattedSettings = {
                 hideCompleted: settings.hide_completed,
                 highlightUrgent: settings.highlight_urgent,
@@ -647,7 +614,7 @@ app.get('/api/settings/:userId', async (req, res) => {
                 primaryColor: settings.primary_color,
                 currentPlan: settings.current_plan,
                 planRenewalDate: settings.plan_renewal_date,
-                viewMode: settings.view_mode || 'lista' // ✅ ADICIONAR
+                viewMode: settings.view_mode || 'lista'
             };
             
             res.json({
@@ -669,7 +636,7 @@ app.get('/api/settings/:userId', async (req, res) => {
     }
 });
 
-// ===== POST - SALVAR OU ATUALIZAR CONFIGURAÇÕES =====
+// POST - Salvar ou atualizar TODAS as configurações
 app.post('/api/settings/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
@@ -690,13 +657,14 @@ app.post('/api/settings/:userId', async (req, res) => {
             });
         }
         
+        // Verifica se já existe configuração para este usuário
         const existing = await db.get(
             'SELECT id FROM user_settings WHERE user_id = ?',
             [userId]
         );
         
         if (existing) {
-            // UPDATE
+            // Atualiza configurações existentes
             const result = await db.run(
                 `UPDATE user_settings SET 
                     hide_completed = ?,
@@ -719,14 +687,14 @@ app.post('/api/settings/:userId', async (req, res) => {
                     settings.primaryColor || '#49a09d',
                     settings.currentPlan || 'pro',
                     settings.planRenewalDate || '30 de dezembro de 2025',
-                    settings.viewMode || 'lista', // ✅ ADICIONAR
+                    settings.viewMode || 'lista',
                     userId
                 ]
             );
             
             console.log(`✅ Configurações atualizadas para usuário ${userId}`);
         } else {
-            // INSERT
+            // Cria novas configurações
             const result = await db.run(
                 `INSERT INTO user_settings 
                 (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date, view_mode)
@@ -741,7 +709,7 @@ app.post('/api/settings/:userId', async (req, res) => {
                     settings.primaryColor || '#49a09d',
                     settings.currentPlan || 'pro',
                     settings.planRenewalDate || '30 de dezembro de 2025',
-                    settings.viewMode || 'lista' // ✅ ADICIONAR
+                    settings.viewMode || 'lista'
                 ]
             );
             
@@ -762,7 +730,7 @@ app.post('/api/settings/:userId', async (req, res) => {
     }
 });
 
-// ===== PUT - ATUALIZAR CONFIGURAÇÃO ESPECÍFICA =====
+// PUT - Atualizar UMA configuração específica
 app.put('/api/settings/:userId/:setting', async (req, res) => {
     try {
         const { userId, setting } = req.params;
@@ -776,6 +744,7 @@ app.put('/api/settings/:userId/:setting', async (req, res) => {
             });
         }
         
+        // Mapeia nomes frontend (camelCase) para backend (snake_case)
         const settingMap = {
             hideCompleted: 'hide_completed',
             highlightUrgent: 'highlight_urgent',
@@ -785,7 +754,7 @@ app.put('/api/settings/:userId/:setting', async (req, res) => {
             primaryColor: 'primary_color',
             currentPlan: 'current_plan',
             planRenewalDate: 'plan_renewal_date',
-            viewMode: 'view_mode' // ✅ ADICIONAR
+            viewMode: 'view_mode'
         };
         
         const dbSetting = settingMap[setting];
@@ -823,44 +792,9 @@ app.put('/api/settings/:userId/:setting', async (req, res) => {
     }
 });
 
-const express = require('express');
-const path = require('path');
-const cors = require('cors');
-require('dotenv').config();
+// ===== CRON JOB - ENVIO AUTOMÁTICO DE EMAILS =====
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middlewares básicos
-app.use(cors());
-app.use(express.json());
-
-// ✅ SERVE ARQUIVOS ESTÁTICOS (HTML, CSS, JS)
-app.use(express.static(__dirname));
-
-// Suas rotas da API aqui...
-app.get('/api/status', (req, res) => {
-    res.json({ status: 'ok' });
-});
-
-// ✅ ADICIONE ESTA LINHA
-app.use(express.static(__dirname));
-
-// Resto do código...
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`✅ Local: http://localhost:${PORT}`);
-    console.log(`🧪 Teste: http://localhost:${PORT}/Tela_TesteEmail.html`);
-});
-
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`✅ Servidor em: http://localhost:${PORT}`);
-    console.log(`📂 Arquivos em: ${__dirname}`);
-    console.log(`🌐 Teste: http://localhost:${PORT}/Tela_TesteEmail.html`);
-});
-
-// ===== AGENDAR ENVIO DIÁRIO ÀS 07:58 =====
+// Agenda envio diário às 07:58 (horário de Brasília)
 cron.schedule('58 7 * * *', async () => {
     console.log('\n⏰ ========================================');
     console.log('⏰ Executando envio de resumos diários');
@@ -878,24 +812,43 @@ cron.schedule('58 7 * * *', async () => {
 
 console.log('⏰ Cron job configurado: Resumos diários às 07:58 (Horário de Brasília)');
 console.log('📧 Serviço de email: SendGrid');
-console.log(`📨 Email remetente: ${process.env.EMAIL_FROM || 'NÃO CONFIGURADO'}`);
+console.log(`📨 Email remetente: ${process.env.SENDGRID_FROM_EMAIL || 'NÃO CONFIGURADO'}`);
 
 // ===== INICIAR SERVIDOR =====
 app.listen(PORT, () => {
-    console.log(`\n🎉 SERVIDOR NURA FUNCIONANDO!`);
-    console.log(`📍 URL: http://localhost:${PORT}`);
+    console.log(`\n🎉 ========================================`);
+    console.log(`🎉 SERVIDOR NURA FUNCIONANDO!`);
+    console.log(`🎉 ========================================`);
+    console.log(`📍 URL Base: http://localhost:${PORT}`);
     console.log(`🔐 Login: http://localhost:${PORT}/login`);
     console.log(`🏠 Inicial: http://localhost:${PORT}/inicial`);
     console.log(`📊 Gerenciamento: http://localhost:${PORT}/gerenciamento`);
-    console.log(`🤖 Gemini: ${GEMINI_API_KEY ? "✅ Configurada" : "❌ Faltando"}`);
-    console.log(`💾 Banco: ${db.isPostgres ? "🐘 PostgreSQL (Produção)" : "💾 SQLite (Local)"}`);
+    console.log(`⚙️  Ajustes: http://localhost:${PORT}/ajustes`);
+    console.log(`\n🔧 Configurações:`);
+    console.log(`   🤖 Gemini: ${GEMINI_API_KEY ? "✅ Configurada" : "❌ Faltando"}`);
+    console.log(`   💾 Banco: ${db.isPostgres ? "🐘 PostgreSQL (Produção)" : "💾 SQLite (Local)"}`);
+    console.log(`   📧 SendGrid: ${process.env.SENDGRID_API_KEY ? "✅ Configurada" : "❌ Faltando"}`);
     console.log(`\n🔑 Login padrão: admin / admin123`);
     console.log(`\n✅ Rotas de API disponíveis:`);
-    console.log(`   GET    /api/tasks       - Listar tarefas (por usuário)`);
-    console.log(`   GET    /api/tasks/:id   - Buscar tarefa (por usuário)`);
-    console.log(`   POST   /api/tasks       - Criar tarefa (por usuário)`);
-    console.log(`   PUT    /api/tasks/:id   - Atualizar tarefa (por usuário)`);
-    console.log(`   DELETE /api/tasks/:id   - Excluir tarefa (por usuário)`);
-    console.log(`\n👥 Sistema de tarefas separado por usuário ATIVO!`);
-    console.log(`\n`);
+    console.log(`   📊 Status:`);
+    console.log(`      GET    /api/status              - Status do sistema`);
+    console.log(`   📋 Tarefas:`);
+    console.log(`      GET    /api/tasks               - Listar tarefas (por usuário)`);
+    console.log(`      GET    /api/tasks/:id           - Buscar tarefa específica`);
+    console.log(`      POST   /api/tasks               - Criar tarefa`);
+    console.log(`      PUT    /api/tasks/:id           - Atualizar tarefa`);
+    console.log(`      DELETE /api/tasks/:id           - Excluir tarefa`);
+    console.log(`   🔐 Autenticação:`);
+    console.log(`      POST   /api/login               - Login do usuário`);
+    console.log(`   🤖 IA:`);
+    console.log(`      POST   /api/gerar-rotina        - Gerar rotina com Gemini`);
+    console.log(`   📧 Email:`);
+    console.log(`      POST   /api/enviar-resumo-teste - Enviar resumo para 1 usuário`);
+    console.log(`      POST   /api/enviar-resumo-todos - Enviar resumo para todos`);
+    console.log(`   ⚙️  Configurações:`);
+    console.log(`      GET    /api/settings/:userId    - Carregar configurações`);
+    console.log(`      POST   /api/settings/:userId    - Salvar configurações`);
+    console.log(`      PUT    /api/settings/:userId/:setting - Atualizar configuração`);
+    console.log(`\n👥 Sistema multiusuário ATIVO!`);
+    console.log(`========================================\n`);
 });

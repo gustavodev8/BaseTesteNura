@@ -823,6 +823,47 @@ app.put('/api/settings/:userId/:setting', async (req, res) => {
     }
 });
 
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middlewares básicos
+app.use(cors());
+app.use(express.json());
+
+// ✅ SERVE ARQUIVOS ESTÁTICOS (HTML, CSS, JS)
+app.use(express.static(__dirname));
+
+// Suas rotas da API aqui...
+app.get('/api/status', (req, res) => {
+    res.json({ status: 'ok' });
+});
+
+const express = require('express');
+const path = require('path');
+const app = express();
+
+// ✅ ADICIONE ESTA LINHA
+app.use(express.static(__dirname));
+
+// Resto do código...
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`✅ Local: http://localhost:${PORT}`);
+    console.log(`🧪 Teste: http://localhost:${PORT}/Tela_TesteEmail.html`);
+});
+
+// Iniciar servidor
+app.listen(PORT, () => {
+    console.log(`✅ Servidor em: http://localhost:${PORT}`);
+    console.log(`📂 Arquivos em: ${__dirname}`);
+    console.log(`🌐 Teste: http://localhost:${PORT}/Tela_TesteEmail.html`);
+});
+
 // ===== AGENDAR ENVIO DIÁRIO ÀS 07:58 =====
 cron.schedule('58 7 * * *', async () => {
     console.log('\n⏰ ========================================');

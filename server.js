@@ -4,6 +4,9 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const { GoogleGenerativeAI } = require('@google/generative-ai'); // ✅ CORRIGIDO
 const db = require('./database'); // usar o database.js
+const cron = require('node-cron');
+const { enviarResumoParaTodos, enviarResumoDiario } = require('./emailService');
+
 
 dotenv.config();
 
@@ -403,6 +406,76 @@ app.post("/api/login", async (req, res) => {
     }
 });
 
+// ===== ROTA DE TESTE - ENVIAR RESUMO PARA UM USUÁRIO =====
+app.post('/api/enviar-resumo-teste', async (req, res) => {
+    try {
+        const { user_id } = req.body;
+        
+        if (!user_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'user_id é obrigatório'
+            });
+        }
+
+        const user = await db.get(
+            'SELECT id, name, email FROM users WHERE id = ?',
+            [user_id]
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'Usuário não encontrado'
+            });
+        }
+
+        console.log(`📧 Enviando resumo de teste para ${user.name} (${user.email})...`);
+
+        const result = await enviarResumoDiario(user.id, user.email, user.name);
+
+        res.json({
+            success: true,
+            message: 'Email enviado com sucesso!',
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email
+            },
+            ...result
+        });
+
+    } catch (error) {
+        console.error('❌ Erro ao enviar email:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ===== ROTA PARA ENVIAR PARA TODOS OS USUÁRIOS (TESTE) =====
+app.post('/api/enviar-resumo-todos', async (req, res) => {
+    try {
+        console.log('📬 Solicitação para enviar resumo para todos os usuários...');
+        
+        const result = await enviarResumoParaTodos();
+
+        res.json({
+            success: true,
+            message: 'Processo de envio concluído!',
+            ...result
+        });
+
+    } catch (error) {
+        console.error('❌ Erro ao enviar emails:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // ===== ROTA DE IA - GERAR ROTINA =====
 
 app.post("/api/gerar-rotina", async (req, res) => {
@@ -749,6 +822,26 @@ app.put('/api/settings/:userId/:setting', async (req, res) => {
         });
     }
 });
+
+// ===== AGENDAR ENVIO DIÁRIO ÀS 07:58 =====
+cron.schedule('58 7 * * *', async () => {
+    console.log('\n⏰ ========================================');
+    console.log('⏰ Executando envio de resumos diários');
+    console.log('⏰ Horário: 07:58 (Brasília)');
+    console.log('⏰ ========================================\n');
+    
+    try {
+        await enviarResumoParaTodos();
+    } catch (error) {
+        console.error('❌ Erro no cron job:', error);
+    }
+}, {
+    timezone: "America/Sao_Paulo"
+});
+
+console.log('⏰ Cron job configurado: Resumos diários às 07:58 (Horário de Brasília)');
+console.log('📧 Serviço de email: SendGrid');
+console.log(`📨 Email remetente: ${process.env.EMAIL_FROM || 'NÃO CONFIGURADO'}`);
 
 // ===== INICIAR SERVIDOR =====
 app.listen(PORT, () => {

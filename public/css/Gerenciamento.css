@@ -185,6 +185,38 @@ body.dark-mode .task-checkbox {
   border-color: #64748b !important;
 }
 
+/* Corrigir ícones grandes nas células */
+body.dark-mode .task-row svg:not(.task-checkbox svg) {
+  max-width: 20px !important;
+  max-height: 20px !important;
+}
+
+body.dark-mode .task-row > div > svg {
+  display: none !important;
+}
+
+body.dark-mode .task-date,
+body.dark-mode .task-row > div:nth-child(4) {
+  font-size: 0.875rem !important;
+}
+
+body.dark-mode .task-row > div:nth-child(4) svg {
+  display: none !important;
+}
+
+/* Força ocultar TODOS os SVGs em task-rows no modo escuro */
+body.dark-mode .task-row svg {
+  display: none !important;
+}
+
+/* Permitir apenas em botões */
+body.dark-mode .task-row button svg,
+body.dark-mode .task-row .btn svg {
+  display: inline-block !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
 /* Badges */
 body.dark-mode .status-progress {
   background: rgba(20, 101, 81, 0.2) !important;
@@ -986,6 +1018,27 @@ body::after {
   transform: translateX(2px);
 }
 
+/* Limitar tamanho de ícones dentro das células */
+.task-row svg:not(.task-checkbox svg) {
+  max-width: 20px;
+  max-height: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* Ocultar ícones grandes de calendário */
+.task-row > div > svg {
+  display: none;
+}
+
+/* Permitir apenas ícones pequenos inline */
+.task-row span svg {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
 .task-checkbox {
   width: 20px;
   height: 20px;
@@ -1021,6 +1074,16 @@ body::after {
   font-weight: 500;
 }
 
+/* Ocultar todos os SVGs grandes dentro das task-rows exceto ações */
+.task-row > div:not(:last-child) svg {
+  display: none !important;
+}
+
+.task-row .task-date {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
 .avatar {
   width: 32px;
   height: 32px;
@@ -1036,6 +1099,17 @@ body::after {
 }
 
 /* ===== BADGES ===== */
+.task-date {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.task-date svg,
+.task-row > div:nth-child(4) svg {
+  display: none !important;
+}
+
 .priority-badge {
   padding: 6px 12px;
   border-radius: 20px;
@@ -1650,6 +1724,19 @@ body::after {
 }
 
 /* ===== UTILITÁRIOS ===== */
+/* Força ocultar SVGs grandes em task-rows */
+.task-row svg {
+  display: none !important;
+}
+
+/* Permitir apenas SVGs em botões de ação */
+.task-row button svg,
+.task-row .btn svg {
+  display: inline-block !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
 .my-5 { margin: 48px auto; }
 .mb-3 { margin-bottom: 16px; }
 .mb-4 { margin-bottom: 24px; }

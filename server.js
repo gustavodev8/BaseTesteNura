@@ -7,6 +7,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('./database'); // Conexão com banco (SQLite local ou PostgreSQL produção)
 const cron = require('node-cron');
 const { enviarResumoParaTodos, enviarResumoDiario } = require('./emailService');
+const { inicializarBot, notificarNovaTarefaUrgente } = require('./telegramService');
 const fetch = require('node-fetch'); // Para keep-alive
 
 dotenv.config(); // Carrega variáveis do .env
@@ -24,6 +25,33 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 // ===== INICIALIZAR BANCO DE DADOS =====
 db.initializeDatabase(); // Cria tabelas se não existirem~
+
+// ===== MIGRATION: ADICIONAR CAMPO TELEGRAM =====
+(async () => {
+    try {
+        // Verifica se a coluna telegram_chat_id já existe
+        const checkColumn = await db.query(`
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'users'
+            AND column_name = 'telegram_chat_id'
+        `);
+        if (checkColumn.length === 0) {
+            console.log('🔄 Adicionando coluna telegram_chat_id na tabela users...');
+            await db.query(`
+                ALTER TABLE users
+                ADD COLUMN telegram_chat_id VARCHAR(255) UNIQUE
+            `);
+            console.log('✅ Coluna telegram_chat_id adicionada com sucesso!');
+        } else {
+            console.log('✅ Coluna telegram_chat_id já existe');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao adicionar coluna telegram_chat_id:', error.message);
+    }
+})();
+// ===== INICIALIZAR BOT DO TELEGRAM =====
+inicializarBot(); // Inicia o bot do Telegram com todos os comandos e notificações
 
 // ===== SERVIR ARQUIVOS ESTÁTICOS (HTML, CSS, JS, IMAGENS) =====
 app.use(express.static(path.join(__dirname, 'public')));
@@ -227,17 +255,24 @@ app.post('/api/tasks', async (req, res) => {
         }
         
         console.log(`✅ Tarefa criada para usuário ${user_id}:`, title);
-        
-        res.json({ 
-            success: true, 
+
+        // Se a tarefa for urgente, notifica via Telegram
+        if (priority === 'high') {
+            notificarNovaTarefaUrgente(user_id, title).catch(err => {
+                console.log('⚠️ Não foi possível enviar notificação do Telegram:', err.message);
+            });
+        }
+
+        res.json({
+            success: true,
             message: 'Tarefa criada com sucesso!',
             taskId: info.lastInsertRowid
         });
     } catch (err) {
         console.error('❌ Erro ao criar tarefa:', err);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Erro ao salvar tarefa no banco' 
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao salvar tarefa no banco'
         });
     }
 });
@@ -443,6 +478,97 @@ app.get('/api/users', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Erro ao listar usuários'
+        });
+    }
+});
+
+// PUT - Vincular Telegram ao usuário
+app.put('/api/users/:userId/telegram', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { telegram_chat_id } = req.body;
+        const headerUserId = req.headers['x-user-id'];
+
+        // Verifica se o usuário está atualizando seu próprio Telegram
+        if (userId !== headerUserId) {
+            return res.status(403).json({
+                success: false,
+                error: 'Acesso negado'
+            });
+        }
+
+        if (!telegram_chat_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'telegram_chat_id é obrigatório'
+            });
+        }
+
+        // Verifica se o chat_id já está em uso por outro usuário
+        const existingUser = await db.get(
+            'SELECT id FROM users WHERE telegram_chat_id = ? AND id != ?',
+            [telegram_chat_id, userId]
+        );
+
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                error: 'Este Telegram já está vinculado a outra conta'
+            });
+        }
+
+        // Atualiza o telegram_chat_id
+        const result = await db.run(
+            'UPDATE users SET telegram_chat_id = ? WHERE id = ?',
+            [telegram_chat_id, userId]
+        );
+
+        console.log(`✅ Telegram vinculado ao usuário ${userId}: ${telegram_chat_id}`);
+
+        res.json({
+            success: true,
+            message: 'Telegram vinculado com sucesso!'
+        });
+
+    } catch (err) {
+        console.error('❌ Erro ao vincular Telegram:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao vincular Telegram'
+        });
+    }
+});
+
+// DELETE - Desvincular Telegram do usuário
+app.delete('/api/users/:userId/telegram', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const headerUserId = req.headers['x-user-id'];
+
+        if (userId !== headerUserId) {
+            return res.status(403).json({
+                success: false,
+                error: 'Acesso negado'
+            });
+        }
+
+        const result = await db.run(
+            'UPDATE users SET telegram_chat_id = NULL WHERE id = ?',
+            [userId]
+        );
+
+        console.log(`✅ Telegram desvinculado do usuário ${userId}`);
+
+        res.json({
+            success: true,
+            message: 'Telegram desvinculado com sucesso'
+        });
+
+    } catch (err) {
+        console.error('❌ Erro ao desvincular Telegram:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao desvincular Telegram'
         });
     }
 });

@@ -769,3 +769,113 @@ body.dark-mode .plan-features {
         font-size: 0.8rem;
     }
 }
+
+/* ===== ESTILOS PARA TELEGRAM ===== */
+
+.telegram-status {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.telegram-status .status-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.telegram-status .status-info {
+    flex: 1;
+}
+
+.telegram-status .status-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 0 0 5px 0;
+    color: #333;
+}
+
+.telegram-status .status-description {
+    font-size: 0.875rem;
+    color: #666;
+    margin: 0;
+}
+
+.telegram-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.telegram-input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 0.3s ease;
+}
+
+.telegram-input:focus {
+    outline: none;
+    border-color: var(--primary-color, #49a09d);
+}
+
+.btn-telegram {
+    padding: 10px 20px;
+    background: var(--primary-color, #49a09d);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-telegram:hover {
+    background: var(--primary-color-dark, #3a807d);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-telegram.btn-unlink {
+    background: #dc3545;
+}
+
+.btn-telegram.btn-unlink:hover {
+    background: #c82333;
+}
+
+.telegram-input-row,
+.telegram-connected-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 30px;
+}
+
+@media (max-width: 768px) {
+    .telegram-input-group {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .telegram-input {
+        width: 100%;
+    }
+
+    .btn-telegram {
+        width: 100%;
+    }
+
+    .telegram-input-row,
+    .telegram-connected-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+}

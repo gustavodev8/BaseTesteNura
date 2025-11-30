@@ -650,6 +650,158 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ Event listeners configurados!');
 });
 
+// ===== GERENCIAMENTO DE TELEGRAM =====
+
+async function checkTelegramStatus() {
+    try {
+        const userId = getCurrentUserId();
+        if (!userId) return;
+
+        const response = await fetch(`${SETTINGS_API_URL}/api/users`, {
+            headers: { 'x-user-id': userId }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const currentUser = data.users.find(u => u.id == userId);
+
+            if (currentUser && currentUser.telegram_chat_id) {
+                showTelegramConnected();
+            } else {
+                showTelegramDisconnected();
+            }
+        }
+    } catch (error) {
+        console.error('❌ Erro ao verificar status do Telegram:', error);
+    }
+}
+
+function showTelegramConnected() {
+    const inputRow = document.getElementById('telegramInputRow');
+    const connectedRow = document.getElementById('telegramConnectedRow');
+    const status = document.getElementById('telegramStatus');
+
+    if (inputRow) inputRow.style.display = 'none';
+    if (connectedRow) connectedRow.style.display = 'flex';
+    if (status) {
+        status.querySelector('.status-title').textContent = '✅ Telegram Vinculado';
+        status.querySelector('.status-description').textContent = 'Você está recebendo notificações!';
+        status.style.backgroundColor = '#d4edda';
+        status.style.borderColor = '#c3e6cb';
+    }
+}
+
+function showTelegramDisconnected() {
+    const inputRow = document.getElementById('telegramInputRow');
+    const connectedRow = document.getElementById('telegramConnectedRow');
+    const status = document.getElementById('telegramStatus');
+
+    if (inputRow) inputRow.style.display = 'flex';
+    if (connectedRow) connectedRow.style.display = 'none';
+    if (status) {
+        status.querySelector('.status-title').textContent = 'Telegram não vinculado';
+        status.querySelector('.status-description').textContent = 'Conecte seu Telegram para receber notificações aleatórias durante o dia';
+        status.style.backgroundColor = '#f8f9fa';
+        status.style.borderColor = '#dee2e6';
+    }
+}
+
+async function linkTelegram() {
+    const chatIdInput = document.getElementById('telegramChatId');
+    const chatId = chatIdInput?.value.trim();
+
+    if (!chatId) {
+        showNotification('Por favor, cole o código do Telegram', 'error');
+        return;
+    }
+
+    const userId = getCurrentUserId();
+    if (!userId) {
+        showNotification('Usuário não identificado', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${SETTINGS_API_URL}/api/users/${userId}/telegram`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': userId
+            },
+            body: JSON.stringify({ telegram_chat_id: chatId })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showNotification('Telegram vinculado com sucesso!', 'success');
+            chatIdInput.value = '';
+            showTelegramConnected();
+        } else {
+            showNotification(data.error || 'Erro ao vincular Telegram', 'error');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao vincular Telegram:', error);
+        showNotification('Erro ao conectar com o servidor', 'error');
+    }
+}
+
+async function unlinkTelegram() {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+
+    if (!confirm('Tem certeza que deseja desvincular seu Telegram?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${SETTINGS_API_URL}/api/users/${userId}/telegram`, {
+            method: 'DELETE',
+            headers: { 'x-user-id': userId }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showNotification('Telegram desvinculado', 'success');
+            showTelegramDisconnected();
+        } else {
+            showNotification(data.error || 'Erro ao desvincular', 'error');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao desvincular Telegram:', error);
+        showNotification('Erro ao conectar com o servidor', 'error');
+    }
+}
+
+// Configurar event listeners do Telegram
+document.addEventListener('DOMContentLoaded', () => {
+    // Verificar status do Telegram
+    checkTelegramStatus();
+
+    // Botão de vincular
+    const saveTelegramBtn = document.getElementById('saveTelegram');
+    if (saveTelegramBtn) {
+        saveTelegramBtn.addEventListener('click', linkTelegram);
+    }
+
+    // Botão de desvincular
+    const unlinkTelegramBtn = document.getElementById('unlinkTelegram');
+    if (unlinkTelegramBtn) {
+        unlinkTelegramBtn.addEventListener('click', unlinkTelegram);
+    }
+
+    // Enter no input
+    const telegramInput = document.getElementById('telegramChatId');
+    if (telegramInput) {
+        telegramInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                linkTelegram();
+            }
+        });
+    }
+});
+
 // ===== EXPORTAR FUNÇÕES =====
 window.nuraSettingsFunctions = {
     loadSettingsFromDatabase,
@@ -667,7 +819,11 @@ window.nuraSettingsFunctions = {
     syncDarkMode,
     setPrimaryColor,
     showNotification,
-    getSettings: () => ({ ...nuraSettings })
+    getSettings: () => ({ ...nuraSettings }),
+    // Telegram
+    checkTelegramStatus,
+    linkTelegram,
+    unlinkTelegram
 };
 
 console.log('✅ settings.js carregado e pronto!');

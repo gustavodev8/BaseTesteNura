@@ -224,7 +224,7 @@
                 <!-- ========================================== -->
                 <div class="setting-group">
                     <h3 class="group-title">WhatsApp</h3>
-                    
+
                     <div class="setting-row">
                         <div class="setting-info">
                             <div class="setting-label">📱 Resumo diário por WhatsApp</div>
@@ -235,6 +235,54 @@
                                 <input type="checkbox" id="whatsapp-notifications">
                                 <span class="whatsapp-slider"></span>
                             </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- NOVA SEÇÃO: NOTIFICAÇÕES POR TELEGRAM -->
+                <!-- ========================================== -->
+                <div class="setting-group">
+                    <h3 class="group-title">Telegram</h3>
+
+                    <div class="telegram-status" id="telegramStatus">
+                        <div class="status-icon">💬</div>
+                        <div class="status-info">
+                            <p class="status-title">Telegram não vinculado</p>
+                            <p class="status-description">Conecte seu Telegram para receber notificações aleatórias durante o dia</p>
+                        </div>
+                    </div>
+
+                    <div class="setting-row telegram-input-row" id="telegramInputRow">
+                        <div class="setting-info">
+                            <div class="setting-label">🔗 Código de Vinculação</div>
+                            <div class="setting-description">
+                                1. Abra o Telegram<br>
+                                2. Busque por <strong>@SeuBotNura</strong><br>
+                                3. Digite /start e depois /vincular<br>
+                                4. Cole o código aqui e salve
+                            </div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="telegram-input-group">
+                                <input type="text" id="telegramChatId" placeholder="Cole o código aqui" class="telegram-input">
+                                <button id="saveTelegram" class="btn-telegram">Vincular</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-row telegram-connected-row" id="telegramConnectedRow" style="display: none;">
+                        <div class="setting-info">
+                            <div class="setting-label">✅ Telegram Conectado</div>
+                            <div class="setting-description">
+                                Você receberá:<br>
+                                • Notificações aleatórias (8h-20h)<br>
+                                • Alertas de tarefas urgentes<br>
+                                • Resumos personalizados
+                            </div>
+                        </div>
+                        <div class="setting-control">
+                            <button id="unlinkTelegram" class="btn-telegram btn-unlink">Desvincular</button>
                         </div>
                     </div>
                     

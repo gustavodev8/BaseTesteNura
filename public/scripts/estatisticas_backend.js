@@ -1,6 +1,6 @@
 // ==========================================
 // SISTEMA DE ESTATÍSTICAS - NURA (Backend)
-// Versão: 2.1 - Integrado com PostgreSQL
+// Versão: 2.2 - Sem logs excessivos
 // ==========================================
 
 // Usar variável global existente ou definir se não existir
@@ -40,7 +40,7 @@ async function getTasks() {
         const data = await response.json();
         
         if (data.success) {
-            console.log(`📥 ${data.tasks.length} tarefas carregadas do servidor`);
+            // ✅ REMOVIDO: console.log desnecessário
             return data.tasks;
         } else {
             console.error('❌ Erro na API:', data.error);
@@ -79,12 +79,11 @@ async function calcularEstatisticas() {
     
     // Tarefas Concluídas HOJE
     const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0); // Zera hora para comparar apenas data
+    hoje.setHours(0, 0, 0, 0);
     
     const concluidasHoje = tasks.filter(task => {
         if (task.status !== 'completed') return false;
         
-        // Verificar pela data de updated_at (quando foi marcada como concluída)
         if (task.updated_at) {
             const dataAtualizacao = new Date(task.updated_at);
             dataAtualizacao.setHours(0, 0, 0, 0);
@@ -133,8 +132,7 @@ async function atualizarEstatisticas() {
         andamentoElement.textContent = stats.tarefasEmAndamento;
     }
     
-    // Log para debug (pode remover em produção)
-    console.log('📊 Estatísticas atualizadas:', stats);
+    // ✅ REMOVIDO: console.log que aparecia a cada 5 segundos
 }
 
 /**
@@ -148,16 +146,13 @@ function inicializarEstatisticas() {
         return;
     }
     
-    console.log(`🚀 Inicializando estatísticas para ${currentUser.username}...`);
+    console.log(`✅ Sistema de estatísticas ativo para ${currentUser.username}`);
     
     // Atualizar na carga da página
     atualizarEstatisticas();
     
-    // Atualizar a cada 5 segundos (servidor tem delay)
+    // Atualizar a cada 5 segundos (SILENCIOSAMENTE)
     setInterval(atualizarEstatisticas, 5000);
-    
-    console.log('✅ Sistema de estatísticas inicializado!');
-    console.log('🔄 Atualização automática: 5 segundos');
 }
 
 /**
@@ -165,7 +160,8 @@ function inicializarEstatisticas() {
  * Útil para chamar após adicionar/remover/atualizar tarefas
  */
 function forcarAtualizacaoEstatisticas() {
-    console.log('🔄 Forçando atualização das estatísticas...');
+    // ✅ Log apenas quando forçado manualmente
+    console.log('🔄 Atualizando estatísticas...');
     atualizarEstatisticas();
 }
 
@@ -217,11 +213,9 @@ async function mostrarInfoEstatisticas() {
 // AUTO-INICIALIZAÇÃO
 // ==========================================
 
-// Auto-inicializar quando o DOM estiver pronto
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', inicializarEstatisticas);
 } else {
-    // DOM já carregado
     inicializarEstatisticas();
 }
 
@@ -229,30 +223,7 @@ if (document.readyState === 'loading') {
 // EXPORTAR FUNÇÕES PARA USO GLOBAL
 // ==========================================
 
-// Disponibilizar funções globalmente
 window.calcularEstatisticas = calcularEstatisticas;
 window.atualizarEstatisticas = atualizarEstatisticas;
 window.forcarAtualizacaoEstatisticas = forcarAtualizacaoEstatisticas;
 window.mostrarInfoEstatisticas = mostrarInfoEstatisticas;
-
-// ==========================================
-// INTEGRAÇÃO COM SINCRO_TELAS.JS
-// ==========================================
-
-/**
- * Esta função deve ser chamada nas seguintes situações:
- * 
- * 1. Após salvar nova tarefa (sincro_telas.js - linha ~89)
- *    forcarAtualizacaoEstatisticas();
- * 
- * 2. Após excluir tarefa (sincro_telas.js - função deleteTaskFromHome)
- *    forcarAtualizacaoEstatisticas();
- * 
- * 3. Após alterar status (sincro_telas.js - funções toggleTaskFromHome e changeTaskStatus)
- *    forcarAtualizacaoEstatisticas();
- */
-
-console.log('📊 Sistema de Estatísticas NURA (Backend) carregado!');
-console.log('💡 Digite mostrarInfoEstatisticas() no console para ver detalhes');
-console.log('🔄 Atualização automática: a cada 5 segundos');
-console.log('🌐 Conectado ao servidor:', STATS_API_URL);

@@ -1,4 +1,4 @@
-/* ===== MODO ESCURO - FIX COMPLETO ===== */
+/* ===== MODO ESCURO - ATUALIZADO (SEM ÍCONES NOS CAMPOS DE HORÁRIO) ===== */
 /* Adicione este arquivo DEPOIS do TelaPrincipal.css */
 
 /* Garantir que TODOS os elementos usem as variáveis */
@@ -56,6 +56,11 @@ body.dark-mode .hero h1 {
 
 body.dark-mode .hero p {
   color: rgba(241, 245, 249, 0.85) !important;
+}
+
+body.dark-mode .hero-badge {
+  background: rgba(30, 41, 59, 0.7) !important;
+  color: #cbd5e1 !important;
 }
 
 body.dark-mode .stat-card {
@@ -117,11 +122,13 @@ body.dark-mode .list-group-item:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
-body.dark-mode .list-group-item span {
+body.dark-mode .list-group-item span,
+body.dark-mode .task-title {
   color: #f1f5f9 !important;
 }
 
-body.dark-mode .task-badge {
+body.dark-mode .task-badge,
+body.dark-mode .task-tag {
   background: rgba(20, 101, 81, 0.2) !important;
   color: #14b8a6 !important;
 }
@@ -132,6 +139,16 @@ body.dark-mode .task-info {
 
 body.dark-mode .task-checkbox {
   border-color: #64748b !important;
+  background: rgba(15, 23, 42, 0.5) !important;
+}
+
+body.dark-mode .task-action-btn {
+  color: #64748b !important;
+}
+
+body.dark-mode .task-action-btn:hover {
+  background: rgba(51, 65, 85, 0.5) !important;
+  color: #cbd5e1 !important;
 }
 
 /* Empty State */
@@ -153,37 +170,111 @@ body.dark-mode .empty-state svg {
 }
 
 /* Assistente IA */
-body.dark-mode .assistente-ia-card {
-  background: linear-gradient(135deg, #146551 0%, #265C4B 100%) !important;
+body.dark-mode .assistente-ia-card,
+body.dark-mode .ai-assistant-card {
+  background: rgba(30, 41, 59, 0.85) !important;
+  border-color: rgba(20, 101, 81, 0.3) !important;
 }
 
-body.dark-mode .assistente-content {
+body.dark-mode .ai-header,
+body.dark-mode .ai-assistant-header {
+  background: rgba(20, 101, 81, 0.2) !important;
+  border-bottom-color: rgba(20, 101, 81, 0.3) !important;
+}
+
+body.dark-mode .ai-title,
+body.dark-mode .ai-assistant-title {
+  color: #f1f5f9 !important;
+}
+
+body.dark-mode .ai-subtitle,
+body.dark-mode .ai-assistant-subtitle {
+  color: #cbd5e1 !important;
+}
+
+body.dark-mode .ai-badge,
+body.dark-mode .ai-assistant-status {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(20, 101, 81, 0.3) !important;
+  color: #cbd5e1 !important;
+}
+
+body.dark-mode .assistente-content,
+body.dark-mode .ai-assistant-body {
   background: rgba(15, 23, 42, 0.3) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
-body.dark-mode .ai-textarea {
+body.dark-mode .ai-label,
+body.dark-mode .ai-field-label {
+  color: #cbd5e1 !important;
+}
+
+body.dark-mode .ai-textarea,
+body.dark-mode .ai-field-textarea {
   background: rgba(15, 23, 42, 0.5) !important;
   color: #f1f5f9 !important;
   border-color: rgba(20, 101, 81, 0.3) !important;
 }
 
-body.dark-mode .ai-textarea::placeholder {
+body.dark-mode .ai-textarea::placeholder,
+body.dark-mode .ai-field-textarea::placeholder {
   color: #64748b !important;
 }
 
-body.dark-mode .ai-textarea:focus {
+body.dark-mode .ai-textarea:focus,
+body.dark-mode .ai-field-textarea:focus {
   background: rgba(15, 23, 42, 0.7) !important;
+  border-color: #146551 !important;
+}
+
+/* ===== CAMPOS DE HORÁRIO - DARK MODE (SEM ÍCONES) ===== */
+body.dark-mode .ai-time-label,
+body.dark-mode .time-label {
+  color: #94a3b8 !important;
 }
 
 body.dark-mode .ai-time-input {
   background: rgba(15, 23, 42, 0.5) !important;
-  color: #f1f5f9 !important;
   border-color: rgba(20, 101, 81, 0.3) !important;
+  color: #f1f5f9 !important;
+}
+
+body.dark-mode .ai-time-input:hover {
+  border-color: rgba(20, 101, 81, 0.5) !important;
 }
 
 body.dark-mode .ai-time-input:focus {
   background: rgba(15, 23, 42, 0.7) !important;
+  border-color: #146551 !important;
+}
+
+/* Ícone removido */
+body.dark-mode .ai-time-icon {
+  display: none !important;
+}
+
+body.dark-mode .ai-time-separator {
+  color: #64748b !important;
+}
+
+body.dark-mode .ai-time-separator svg {
+  color: #64748b !important;
+}
+
+body.dark-mode .time-inputs-wrapper {
+  background: rgba(15, 23, 42, 0.3) !important;
+  border-color: rgba(20, 101, 81, 0.3) !important;
+}
+
+body.dark-mode .time-separator {
+  color: #64748b !important;
+}
+
+/* Resultado IA */
+body.dark-mode .ai-result {
+  background: rgba(15, 23, 42, 0.5) !important;
+  border-color: rgba(20, 101, 81, 0.3) !important;
+  color: #f1f5f9 !important;
 }
 
 /* Feature Cards */

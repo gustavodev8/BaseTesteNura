@@ -8,6 +8,7 @@ const db = require('./database'); // Conexão com banco (SQLite local ou Postgre
 const cron = require('node-cron');
 const { enviarResumoParaTodos, enviarResumoDiario } = require('./emailService');
 const fetch = require('node-fetch'); // Para keep-alive
+const whatsappService = require('./whatsappService');
 
 dotenv.config(); // Carrega variáveis do .env
 
@@ -24,6 +25,11 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 // ===== INICIALIZAR BANCO DE DADOS =====
 db.initializeDatabase(); // Cria tabelas se não existirem
+
+// ===== INICIALIZAR WHATSAPP =====
+whatsappService.iniciarWhatsApp().catch(err => {
+    console.error('❌ Erro ao iniciar WhatsApp:', err);
+});
 
 // ===== SERVIR ARQUIVOS ESTÁTICOS (HTML, CSS, JS, IMAGENS) =====
 app.use(express.static(path.join(__dirname, 'public')));
@@ -47,6 +53,7 @@ app.get("/api/status", async (req, res) => {
             gemini: GEMINI_API_KEY ? "✅ Configurada" : "❌ Faltando API Key",
             tarefas: row ? row.count : 0,
             database: db.isPostgres ? "🐘 PostgreSQL" : "💾 SQLite",
+            whatsapp: whatsappService.estaConectado() ? "✅ Conectado" : "❌ Desconectado",
             timestamp: new Date().toISOString()
         });
     } catch (err) {
@@ -570,6 +577,155 @@ app.post('/api/enviar-resumo-todos', async (req, res) => {
     }
 });
 
+// ===== API - WHATSAPP =====
+
+// GET - Status da conexão WhatsApp
+app.get('/api/whatsapp/status', (req, res) => {
+    try {
+        const status = whatsappService.obterStatus();
+        res.json({
+            success: true,
+            conectado: status.conectado,
+            cliente: status.cliente
+        });
+    } catch (error) {
+        console.error('❌ Erro ao obter status:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// POST - Enviar mensagem de teste
+app.post('/api/whatsapp/teste', async (req, res) => {
+    try {
+        const { numero, mensagem } = req.body;
+        
+        if (!numero || !mensagem) {
+            return res.status(400).json({
+                success: false,
+                error: 'Número e mensagem são obrigatórios'
+            });
+        }
+        
+        if (!whatsappService.estaConectado()) {
+            return res.status(503).json({
+                success: false,
+                error: 'WhatsApp não está conectado. Escaneie o QR Code primeiro.'
+            });
+        }
+        
+        await whatsappService.enviarMensagem(numero, mensagem);
+        
+        res.json({
+            success: true,
+            message: 'Mensagem enviada com sucesso!'
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro ao enviar mensagem de teste:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// POST - Enviar resumo de teste para um usuário
+app.post('/api/whatsapp/enviar-resumo-teste', async (req, res) => {
+    try {
+        const { user_id } = req.body;
+        
+        if (!user_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'user_id é obrigatório'
+            });
+        }
+        
+        if (!whatsappService.estaConectado()) {
+            return res.status(503).json({
+                success: false,
+                error: 'WhatsApp não está conectado.'
+            });
+        }
+        
+        // Buscar dados do usuário
+        const user = await db.get(
+            'SELECT u.id, u.name, s.whatsapp_number FROM users u INNER JOIN user_settings s ON u.id = s.user_id WHERE u.id = ?',
+            [user_id]
+        );
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'Usuário não encontrado'
+            });
+        }
+        
+        if (!user.whatsapp_number) {
+            return res.status(400).json({
+                success: false,
+                error: 'Usuário não tem número de WhatsApp cadastrado'
+            });
+        }
+        
+        console.log(`📱 Enviando resumo de teste para ${user.name}...`);
+        
+        const result = await whatsappService.enviarResumoDiarioWhatsApp(
+            user.id,
+            user.whatsapp_number,
+            user.name
+        );
+        
+        res.json({
+            success: true,
+            message: 'Resumo enviado!',
+            tarefasEnviadas: result.tarefasEnviadas || 0,
+            numeroDestino: result.numeroDestino || user.whatsapp_number
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// POST - Enviar resumo para TODOS os usuários
+app.post('/api/whatsapp/enviar-resumo-todos', async (req, res) => {
+    try {
+        console.log('📱 Solicitação para enviar resumo para todos (WhatsApp)...');
+        
+        if (!whatsappService.estaConectado()) {
+            return res.status(503).json({
+                success: false,
+                error: 'WhatsApp não está conectado.'
+            });
+        }
+        
+        const result = await whatsappService.enviarResumoParaTodosWhatsApp();
+        
+        res.json({
+            success: result.success,
+            totalUsuarios: result.totalUsuarios || 0,
+            enviados: result.enviados || 0,
+            erros: result.erros || 0,
+            message: `${result.enviados || 0} mensagens enviadas com sucesso`
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // ===== API - GERAÇÃO DE ROTINA COM IA (GEMINI) =====
 
 // POST - Gerar rotina inteligente baseada em descrição
@@ -700,7 +856,9 @@ app.get('/api/settings/:userId', async (req, res) => {
                 currentPlan: settings.current_plan,
                 planRenewalDate: settings.plan_renewal_date,
                 viewMode: settings.view_mode || 'lista',
-                emailNotifications: settings.email_notifications !== false // ✅ ADICIONADO (default true)
+                emailNotifications: settings.email_notifications !== false,
+                whatsappNotifications: settings.whatsapp_notifications !== false,
+                whatsappNumber: settings.whatsapp_number || ''
             };
             
             res.json({
@@ -763,6 +921,8 @@ app.post('/api/settings/:userId', async (req, res) => {
                     plan_renewal_date = ?,
                     view_mode = ?,
                     email_notifications = ?,
+                    whatsapp_notifications = ?,
+                    whatsapp_number = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = ?`,
                 [
@@ -775,7 +935,9 @@ app.post('/api/settings/:userId', async (req, res) => {
                     settings.currentPlan || 'pro',
                     settings.planRenewalDate || '30 de dezembro de 2025',
                     settings.viewMode || 'lista',
-                    settings.emailNotifications !== false, // ✅ ADICIONADO (default true)
+                    settings.emailNotifications !== false,
+                    settings.whatsappNotifications !== false,
+                    settings.whatsappNumber || '',
                     userId
                 ]
             );
@@ -785,8 +947,8 @@ app.post('/api/settings/:userId', async (req, res) => {
             // Cria novas configurações
             const result = await db.run(
                 `INSERT INTO user_settings 
-                (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date, view_mode, email_notifications)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date, view_mode, email_notifications, whatsapp_notifications, whatsapp_number)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     userId,
                     settings.hideCompleted || false,
@@ -798,7 +960,9 @@ app.post('/api/settings/:userId', async (req, res) => {
                     settings.currentPlan || 'pro',
                     settings.planRenewalDate || '30 de dezembro de 2025',
                     settings.viewMode || 'lista',
-                    settings.emailNotifications !== false // ✅ ADICIONADO (default true)
+                    settings.emailNotifications !== false,
+                    settings.whatsappNotifications !== false,
+                    settings.whatsappNumber || ''
                 ]
             );
             
@@ -844,7 +1008,9 @@ app.put('/api/settings/:userId/:setting', async (req, res) => {
             currentPlan: 'current_plan',
             planRenewalDate: 'plan_renewal_date',
             viewMode: 'view_mode',
-            emailNotifications: 'email_notifications' // ✅ ADICIONADO
+            emailNotifications: 'email_notifications',
+            whatsappNotifications: 'whatsapp_notifications',
+            whatsappNumber: 'whatsapp_number'
         };
         
         const dbSetting = settingMap[setting];
@@ -882,7 +1048,7 @@ app.put('/api/settings/:userId/:setting', async (req, res) => {
     }
 });
 
-// ===== CRON JOB - ENVIO AUTOMÁTICO DE EMAILS =====
+// ===== CRON JOB - ENVIO AUTOMÁTICO DE EMAILS E WHATSAPP =====
 
 // Agenda envio diário às 07:58 (horário de Brasília)
 cron.schedule('58 7 * * *', async () => {
@@ -892,7 +1058,20 @@ cron.schedule('58 7 * * *', async () => {
     console.log('⏰ ========================================\n');
     
     try {
+        // Enviar emails
+        console.log('📧 Enviando emails...');
         await enviarResumoParaTodos();
+        
+        // Enviar WhatsApp (se conectado)
+        if (whatsappService.estaConectado()) {
+            console.log('\n📱 Enviando WhatsApp...');
+            await whatsappService.enviarResumoParaTodosWhatsApp();
+        } else {
+            console.log('\n⚠️ WhatsApp não conectado, pulando envio.');
+        }
+        
+        console.log('\n✅ Envio de resumos concluído!');
+        
     } catch (error) {
         console.error('❌ Erro no cron job:', error);
     }
@@ -903,6 +1082,7 @@ cron.schedule('58 7 * * *', async () => {
 console.log('⏰ Cron job configurado: Resumos diários às 07:58 (Horário de Brasília)');
 console.log('📧 Serviço de email: SendGrid');
 console.log(`📨 Email remetente: ${process.env.SENDGRID_FROM_EMAIL || 'NÃO CONFIGURADO'}`);
+console.log('📱 Serviço de WhatsApp: WPPCONNECT');
 
 // ===== KEEP-ALIVE - Previne servidor de "dormir" no plano free =====
 // Faz uma requisição a cada 14 minutos para manter o servidor ativo
@@ -931,6 +1111,7 @@ app.listen(PORT, () => {
     console.log(`   🤖 Gemini: ${GEMINI_API_KEY ? "✅ Configurada" : "❌ Faltando"}`);
     console.log(`   💾 Banco: ${db.isPostgres ? "🐘 PostgreSQL (Produção)" : "💾 SQLite (Local)"}`);
     console.log(`   📧 SendGrid: ${process.env.SENDGRID_API_KEY ? "✅ Configurada" : "❌ Faltando"}`);
+    console.log(`   📱 WhatsApp: ${whatsappService.estaConectado() ? "✅ Conectado" : "❌ Desconectado (escaneie QR Code)"}`);
     console.log(`\n🔑 Login padrão: admin / admin123`);
     console.log(`\n✅ Rotas de API disponíveis:`);
     console.log(`   📊 Status:`);
@@ -948,6 +1129,11 @@ app.listen(PORT, () => {
     console.log(`   📧 Email:`);
     console.log(`      POST   /api/enviar-resumo-teste - Enviar resumo para 1 usuário`);
     console.log(`      POST   /api/enviar-resumo-todos - Enviar resumo para todos`);
+    console.log(`   📱 WhatsApp:`);
+    console.log(`      GET    /api/whatsapp/status     - Status da conexão`);
+    console.log(`      POST   /api/whatsapp/teste      - Enviar mensagem de teste`);
+    console.log(`      POST   /api/whatsapp/enviar-resumo-teste - Enviar resumo para 1 usuário`);
+    console.log(`      POST   /api/whatsapp/enviar-resumo-todos - Enviar resumo para todos`);
     console.log(`   ⚙️  Configurações:`);
     console.log(`      GET    /api/settings/:userId    - Carregar configurações`);
     console.log(`      POST   /api/settings/:userId    - Salvar configurações`);

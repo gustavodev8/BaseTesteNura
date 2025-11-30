@@ -18,7 +18,9 @@ const nuraSettings = {
     currentPlan: 'pro',
     planRenewalDate: '30 de dezembro de 2025',
     viewMode: 'lista',
-    emailNotifications: true // ✅ NOTIFICAÇÕES POR EMAIL
+    emailNotifications: true,
+    whatsappNotifications: false,
+    whatsappNumber: ''
 };
 
 // ===== OBTER ID DO USUÁRIO =====
@@ -35,6 +37,20 @@ function getCurrentUserId() {
         }
     }
     return currentUserId;
+}
+
+// ===== OBTER USUÁRIO COMPLETO =====
+function getCurrentUser() {
+    try {
+        const userStr = localStorage.getItem('nura_user');
+        if (!userStr) return null;
+        
+        const user = JSON.parse(userStr);
+        return user && user.id ? user : null;
+    } catch (error) {
+        console.error('❌ Erro ao buscar usuário:', error);
+        return null;
+    }
 }
 
 // ===== CARREGAR CONFIGURAÇÕES DO BANCO =====
@@ -167,10 +183,21 @@ function updateUIWithSettings() {
         } else if (text.includes('sugestões')) {
             toggle.classList.toggle('active', nuraSettings.autoSuggestions);
         } else if (text.includes('resumo diário') || text.includes('email')) {
-            // ✅ NOVO: Toggle de notificações por email
             toggle.classList.toggle('active', nuraSettings.emailNotifications);
         }
     });
+    
+    // Atualizar toggle de WhatsApp
+    const whatsappToggle = document.getElementById('whatsapp-notifications');
+    if (whatsappToggle) {
+        whatsappToggle.checked = nuraSettings.whatsappNotifications;
+    }
+    
+    // Atualizar campo de número de WhatsApp
+    const whatsappInput = document.getElementById('whatsapp-number');
+    if (whatsappInput) {
+        whatsappInput.value = nuraSettings.whatsappNumber || '';
+    }
     
     // Atualizar cor ativa
     document.querySelectorAll('.color-option').forEach(color => {
@@ -368,7 +395,7 @@ async function toggleAutoSuggestions(enabled) {
     showNotification(enabled ? '💡 Sugestões de IA ativadas!' : '🔕 Sugestões de IA desativadas');
 }
 
-// ===== ✅ NOVO: NOTIFICAÇÕES POR EMAIL =====
+// ===== NOTIFICAÇÕES POR EMAIL =====
 async function toggleEmailNotifications(enabled) {
     nuraSettings.emailNotifications = enabled;
     
@@ -389,6 +416,77 @@ async function toggleEmailNotifications(enabled) {
         showNotification('📧 Resumo diário por email ATIVADO - Você receberá emails às 07:58 com suas tarefas pendentes');
     } else {
         showNotification('📪 Resumo diário por email DESATIVADO - Você não receberá mais emails automáticos');
+    }
+}
+
+// ===== NOTIFICAÇÕES POR WHATSAPP =====
+async function toggleWhatsappNotifications(enabled) {
+    nuraSettings.whatsappNotifications = enabled;
+    
+    // Verificar se tem número cadastrado
+    if (enabled && !nuraSettings.whatsappNumber) {
+        showNotification('⚠️ Por favor, cadastre seu número de WhatsApp primeiro!');
+        
+        // Desativar toggle
+        const toggle = document.getElementById('whatsapp-notifications');
+        if (toggle) toggle.checked = false;
+        
+        nuraSettings.whatsappNotifications = false;
+        return;
+    }
+    
+    await saveSettingsToDatabase();
+    
+    if (enabled) {
+        showNotification('📱 Notificações por WhatsApp ATIVADAS - Você receberá mensagens às 07:58 com suas tarefas pendentes');
+    } else {
+        showNotification('📴 Notificações por WhatsApp DESATIVADAS');
+    }
+}
+
+// ===== TESTAR ENVIO DE WHATSAPP =====
+async function testarEnvioWhatsApp() {
+    try {
+        const currentUser = getCurrentUser();
+        
+        if (!currentUser) {
+            showNotification('❌ Usuário não identificado!');
+            return;
+        }
+        
+        if (!nuraSettings.whatsappNumber) {
+            showNotification('⚠️ Cadastre seu número de WhatsApp primeiro!');
+            return;
+        }
+        
+        if (!confirm('📱 Deseja enviar uma mensagem de teste para seu WhatsApp?')) {
+            return;
+        }
+        
+        showNotification('📱 Enviando mensagem de teste...');
+        
+        const response = await fetch(`${SETTINGS_API_URL}/api/whatsapp/enviar-resumo-teste`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': currentUser.id
+            },
+            body: JSON.stringify({
+                user_id: currentUser.id
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('✅ Mensagem enviada! Verifique seu WhatsApp.');
+        } else {
+            showNotification('❌ Erro: ' + (result.error || 'Não foi possível enviar'));
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro:', error);
+        showNotification('❌ Erro ao enviar mensagem de teste');
     }
 }
 
@@ -618,7 +716,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (text.includes('sugestões')) {
                 toggleAutoSuggestions(!nuraSettings.autoSuggestions);
             } else if (text.includes('resumo diário') || text.includes('email')) {
-                // ✅ NOVO: Detecta o toggle de notificações por email
                 toggleEmailNotifications(!nuraSettings.emailNotifications);
             } else {
                 // Toggle genérico para outros botões
@@ -627,6 +724,43 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+    
+    // ===== TOGGLE DE WHATSAPP =====
+    const whatsappToggle = document.getElementById('whatsapp-notifications');
+    if (whatsappToggle) {
+        whatsappToggle.addEventListener('change', async (e) => {
+            await toggleWhatsappNotifications(e.target.checked);
+        });
+        console.log('✅ Toggle WhatsApp configurado');
+    }
+    
+    // ===== CAMPO DE NÚMERO DE WHATSAPP =====
+    const whatsappInput = document.getElementById('whatsapp-number');
+    if (whatsappInput) {
+        whatsappInput.addEventListener('blur', async () => {
+            const numero = whatsappInput.value.trim();
+            
+            // Validar formato (apenas números)
+            if (numero && !/^\d+$/.test(numero)) {
+                showNotification('⚠️ Digite apenas números! Exemplo: 5511999887766');
+                return;
+            }
+            
+            // Verificar tamanho mínimo
+            if (numero && numero.length < 12) {
+                showNotification('⚠️ Número muito curto! Use o formato: 5511999887766');
+                return;
+            }
+            
+            nuraSettings.whatsappNumber = numero;
+            await saveSettingsToDatabase();
+            
+            if (numero) {
+                showNotification('✅ Número de WhatsApp salvo!');
+            }
+        });
+        console.log('✅ Campo WhatsApp configurado');
+    }
     
     // Selects
     document.querySelectorAll('.setting-row').forEach(row => {
@@ -660,16 +794,21 @@ window.nuraSettingsFunctions = {
     toggleHighlightUrgent,
     toggleAutoSuggestions,
     toggleEmailNotifications,
+    toggleWhatsappNotifications,
+    testarEnvioWhatsApp,
     setDetailLevel,
     setViewMode,
     getPlanInfo,
     selectPlan,
     cancelPlan,
     toggleDarkMode,
-    syncDarkMode, // ✅ NOVA: Sincronizar com darkMode.js
+    syncDarkMode,
     setPrimaryColor,
     showNotification,
     getSettings: () => ({ ...nuraSettings })
 };
 
-console.log('✅ settings.js carregado e pronto!');
+// Exportar função de teste globalmente
+window.testarEnvioWhatsApp = testarEnvioWhatsApp;
+
+console.log('✅ settings.js carregado e pronto com suporte WhatsApp!');

@@ -251,6 +251,180 @@ body.dark-mode .toggle-switch.active {
     background-color: #49a09d;
 }
 
+/* ===== WHATSAPP TOGGLE (CHECKBOX STYLE) ===== */
+.whatsapp-toggle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+    cursor: pointer;
+}
+
+.whatsapp-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.whatsapp-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ddd;
+    border-radius: 26px;
+    transition: background-color 0.3s ease;
+}
+
+.whatsapp-slider::before {
+    content: '';
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.whatsapp-toggle input:checked + .whatsapp-slider {
+    background-color: #25D366;
+}
+
+.whatsapp-toggle input:checked + .whatsapp-slider::before {
+    transform: translateX(24px);
+    box-shadow: 0 2px 6px rgba(37, 211, 102, 0.4);
+}
+
+.whatsapp-toggle:hover .whatsapp-slider {
+    opacity: 0.9;
+}
+
+body.dark-mode .whatsapp-slider {
+    background-color: #444;
+}
+
+body.dark-mode .whatsapp-toggle input:checked + .whatsapp-slider {
+    background-color: #25D366;
+}
+
+/* ===== WHATSAPP INPUT ===== */
+.whatsapp-input {
+    width: 100%;
+    max-width: 320px;
+    padding: 10px 14px;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: 'Courier New', monospace;
+    transition: all 0.2s;
+}
+
+.whatsapp-input:focus {
+    outline: none;
+    border-color: #25D366;
+    box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.1);
+}
+
+body.dark-mode .whatsapp-input {
+    background: #2a2a2a;
+    color: #e0e0e0;
+    border-color: #333;
+}
+
+body.dark-mode .whatsapp-input:focus {
+    border-color: #25D366;
+}
+
+/* ===== WHATSAPP BUTTON ===== */
+.btn-whatsapp {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-whatsapp:hover {
+    background: #20BA5A;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.btn-whatsapp:active {
+    transform: translateY(0);
+}
+
+body.dark-mode .btn-whatsapp {
+    background: #25D366;
+}
+
+body.dark-mode .btn-whatsapp:hover {
+    background: #20BA5A;
+}
+
+/* ===== WHATSAPP INFO BOX ===== */
+.whatsapp-info {
+    background: #e8f5e9;
+    border: 1px solid #c8e6c9;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+    font-size: 0.875rem;
+    color: #2e7d32;
+}
+
+.whatsapp-info svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.whatsapp-info strong {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.whatsapp-info ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+}
+
+.whatsapp-info li {
+    margin: 4px 0;
+    line-height: 1.5;
+}
+
+.whatsapp-info code {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+body.dark-mode .whatsapp-info {
+    background: rgba(37, 211, 102, 0.1);
+    border-color: rgba(37, 211, 102, 0.3);
+    color: #81c784;
+}
+
+body.dark-mode .whatsapp-info code {
+    background: rgba(255, 255, 255, 0.1);
+}
+
 select, input[type="text"], input[type="email"], input[type="password"], input[type="time"] {
     padding: 8px 12px;
     border: 1px solid #e5e5e5;
@@ -571,5 +745,27 @@ body.dark-mode .plan-features {
     
     .toggle-switch.active::after {
         transform: translateX(21px);
+    }
+    
+    .whatsapp-toggle {
+        width: 45px;
+        height: 24px;
+    }
+    
+    .whatsapp-slider::before {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .whatsapp-toggle input:checked + .whatsapp-slider::before {
+        transform: translateX(21px);
+    }
+    
+    .whatsapp-input {
+        max-width: 100%;
+    }
+    
+    .whatsapp-info {
+        font-size: 0.8rem;
     }
 }

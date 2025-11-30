@@ -218,6 +218,68 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- ========================================== -->
+                <!-- NOVA SEÇÃO: NOTIFICAÇÕES POR WHATSAPP -->
+                <!-- ========================================== -->
+                <div class="setting-group">
+                    <h3 class="group-title">WhatsApp</h3>
+                    
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">📱 Resumo diário por WhatsApp</div>
+                            <div class="setting-description">Receba suas tarefas pendentes às 07:58</div>
+                        </div>
+                        <div class="setting-control">
+                            <label class="whatsapp-toggle">
+                                <input type="checkbox" id="whatsapp-notifications">
+                                <span class="whatsapp-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label class="form-label">📞 Número de WhatsApp</label>
+                        <div class="setting-description" style="margin-bottom: 8px;">
+                            Formato: 5511999887766 (código do país + DDD + número)
+                        </div>
+                        <input 
+                            type="tel" 
+                            id="whatsapp-number" 
+                            class="form-input whatsapp-input"
+                            placeholder="5511999887766"
+                            maxlength="13"
+                            pattern="[0-9]*"
+                        >
+                    </div>
+                    
+                    <div class="button-group" style="margin-top: 16px;">
+                        <button class="btn btn-whatsapp" onclick="testarEnvioWhatsApp()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 2L11 13"></path>
+                                <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
+                            </svg>
+                            Enviar Mensagem de Teste
+                        </button>
+                    </div>
+                    
+                    <div class="whatsapp-info">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        <div>
+                            <strong>Importante:</strong>
+                            <ul>
+                                <li>Digite apenas números, sem espaços ou caracteres especiais</li>
+                                <li>Inclua o código do país (55 para Brasil)</li>
+                                <li>Exemplo: <code>5511999887766</code></li>
+                                <li>Mensagens enviadas automaticamente às 07:58 (horário de Brasília)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </section>
             
             <!-- Planos -->

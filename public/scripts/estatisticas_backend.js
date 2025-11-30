@@ -1,9 +1,10 @@
 // ==========================================
 // SISTEMA DE ESTATÍSTICAS - NURA (Backend)
-// Versão: 2.0 - Integrado com PostgreSQL
+// Versão: 2.1 - Integrado com PostgreSQL
 // ==========================================
 
-const API_URL = 'https://basetestenura-3.onrender.com';
+// Usar variável global existente ou definir se não existir
+const STATS_API_URL = window.API_URL || 'https://basetestenura-3.onrender.com';
 
 /**
  * Busca o usuário logado do sistema de autenticação
@@ -35,7 +36,7 @@ async function getTasks() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/api/tasks?user_id=${currentUser.id}`);
+        const response = await fetch(`${STATS_API_URL}/api/tasks?user_id=${currentUser.id}`);
         const data = await response.json();
         
         if (data.success) {
@@ -254,4 +255,4 @@ window.mostrarInfoEstatisticas = mostrarInfoEstatisticas;
 console.log('📊 Sistema de Estatísticas NURA (Backend) carregado!');
 console.log('💡 Digite mostrarInfoEstatisticas() no console para ver detalhes');
 console.log('🔄 Atualização automática: a cada 5 segundos');
-console.log('🌐 Conectado ao servidor:', API_URL);
+console.log('🌐 Conectado ao servidor:', STATS_API_URL);

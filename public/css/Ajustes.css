@@ -835,59 +835,84 @@ body.dark-mode .plan-features {
   /* Grupos de configurações */
 
   .setting-group {
-    margin-bottom: 25px;
-
-    border-radius: 12px;
-
-    background: #f8f9fa;
-
-    padding: 15px;
+    margin-bottom: 30px;
   }
 
   .group-title {
-    font-size: 1rem;
+    font-size: 1.1rem;
+
+    font-weight: 700;
+
+    margin-bottom: 15px;
+
+    padding-bottom: 10px;
+
+    border-bottom: 2px solid #e0e0e0;
+
+    color: #333;
+  }
+  /* Linhas de configuração - Layout Linear */
+
+  .setting-row {
+    flex-direction: row;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 18px;
+
+    background: white;
+
+    border-radius: 12px;
 
     margin-bottom: 12px;
 
-    padding-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
-    border-bottom: 2px solid #dee2e6;
-  }
-
-  /* Linhas de configuração */
-
-  .setting-row {
-    flex-direction: column;
-
-    gap: 12px;
-
-    padding: 15px 0;
-
-    align-items: flex-start !important;
+    border: 1px solid #f0f0f0;
   }
 
   .setting-info {
-    width: 100%;
+    flex: 1;
+
+    min-width: 0;
   }
 
   .setting-label {
     font-size: 0.95rem;
 
-    margin-bottom: 5px;
+    font-weight: 600;
+
+    margin-bottom: 4px;
+
+    color: #333;
+
+    display: block;
   }
 
   .setting-description {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
 
     line-height: 1.4;
+
+    color: #666;
+
+    margin: 0;
+
+    display: block;
   }
 
   .setting-control {
-    width: 100%;
+    flex-shrink: 0;
 
     display: flex;
 
-    justify-content: flex-end;
+    align-items: center;
+
+    justify-content: center;
   }
 
   /* Toggle switches */
@@ -911,25 +936,48 @@ body.dark-mode .plan-features {
   /* Selects */
 
   .setting-control select {
-    width: 100%;
+    min-width: 120px;
 
-    padding: 10px;
+    padding: 8px 12px;
 
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+
+    border: 2px solid #e0e0e0;
+
+    border-radius: 8px;
+
+    background: white;
+
+    color: #333;
+
+    font-weight: 500;
   }
-
   /* Grid de cores */
 
   .color-grid {
     grid-template-columns: repeat(3, 1fr);
 
-    gap: 12px;
+    gap: 10px;
+
+    margin-top: 10px;
   }
 
   .color-option {
     width: 100%;
 
-    height: 50px;
+    height: 55px;
+
+    border-radius: 12px;
+
+    border: 3px solid transparent;
+
+    transition: all 0.3s ease;
+  }
+
+  .color-option.active {
+    border-color: #333;
+
+    transform: scale(1.05);
   }
 
   /* Planos */
@@ -985,23 +1033,31 @@ body.dark-mode .plan-features {
   /* Inputs de tempo */
 
   .time-range {
-    flex-direction: column;
+    flex-direction: row;
 
-    gap: 10px;
+    gap: 8px;
 
-    width: 100%;
+    align-items: center;
   }
 
   .time-range input[type="time"] {
-    width: 100%;
+    flex: 1;
 
-    padding: 10px;
+    padding: 8px 12px;
 
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+
+    border: 2px solid #e0e0e0;
+
+    border-radius: 8px;
+
+    background: white;
   }
 
   .time-separator {
-    display: none;
+    color: #999;
+
+    font-weight: 600;
   }
 }
 
@@ -1128,23 +1184,29 @@ body.dark-mode .plan-features {
 
 @media (max-width: 768px) {
   .telegram-status {
-    padding: 12px;
+    padding: 15px;
 
     gap: 12px;
+
+    border-radius: 12px;
+
+    margin-bottom: 15px;
   }
 
   .telegram-status .status-icon {
-    font-size: 2rem;
+    font-size: 2.2rem;
   }
 
   .telegram-status .status-title {
-    font-size: 0.95rem;
+    font-size: 1rem;
+
+    font-weight: 600;
   }
 
   .telegram-status .status-description {
     font-size: 0.85rem;
 
-    line-height: 1.4;
+    line-height: 1.5;
   }
 
   .telegram-input-group {
@@ -1152,75 +1214,93 @@ body.dark-mode .plan-features {
 
     width: 100%;
 
-    gap: 12px;
+    gap: 10px;
   }
 
   .telegram-input {
     width: 100%;
 
-    padding: 12px 15px;
+    padding: 14px 16px;
 
     font-size: 0.95rem;
 
-    border-radius: 8px;
+    border-radius: 10px;
+
+    border: 2px solid #dee2e6;
+
+    transition: border-color 0.3s ease;
+  }
+
+  .telegram-input:focus {
+    border-color: var(--primary-color, #49a09d);
+
+    outline: none;
   }
 
   .btn-telegram {
     width: 100%;
 
-    padding: 12px 20px;
+    padding: 14px 24px;
 
     font-size: 0.95rem;
 
-    border-radius: 8px;
+    border-radius: 10px;
 
     font-weight: 600;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    transition: all 0.3s ease;
+  }
+
+  .btn-telegram:active {
+    transform: scale(0.98);
   }
 
   .telegram-input-row,
   .telegram-connected-row {
     flex-direction: column;
 
-    gap: 15px;
+    gap: 12px;
 
     background: white;
 
-    padding: 15px;
+    padding: 18px;
 
     border-radius: 12px;
 
     margin-top: 10px;
+
+    border: 1px solid #f0f0f0;
+
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
 
   .telegram-input-row .setting-info,
   .telegram-connected-row .setting-info {
-    margin-bottom: 0;
+    margin-bottom: 8px;
   }
 
   .telegram-input-row .setting-label,
   .telegram-connected-row .setting-label {
-    font-size: 0.95rem;
+    font-size: 1rem;
 
-    font-weight: 600;
+    font-weight: 700;
 
     margin-bottom: 8px;
+
+    color: #333;
   }
 
   .telegram-input-row .setting-description,
   .telegram-connected-row .setting-description {
     font-size: 0.85rem;
 
-    line-height: 1.5;
+    line-height: 1.6;
 
-    color: #666;
-  }
-
-  .telegram-input-row .setting-control,
-  .telegram-connected-row .setting-control {
     width: 100%;
   }
 }
-
 @media (max-width: 480px) {
   .telegram-status {
     padding: 10px;

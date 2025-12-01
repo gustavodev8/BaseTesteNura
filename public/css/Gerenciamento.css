@@ -1852,7 +1852,7 @@ body::after {
     padding: 0 16px;
   }
 
-  /* Navbar - Menu horizontal sticky */
+  /* Navbar - Corrigido e compacto */
 
   .navbar {
     position: sticky;
@@ -1861,33 +1861,41 @@ body::after {
 
     z-index: 1000;
 
-    padding: 10px 0;
+    padding: 8px 0;
   }
 
   .navbar .container {
     padding: 0 12px;
+
+    flex-wrap: nowrap;
+
+    gap: 12px;
   }
 
   .navbar-brand {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
+
+    flex-shrink: 0;
   }
 
   .navbar-brand::before {
-    width: 32px;
+    width: 28px;
 
-    height: 32px;
+    height: 28px;
 
-    font-size: 1.125rem;
+    font-size: 1rem;
   }
 
-  /* Menu horizontal com scroll */
+  /* Navbar-nav agora fica visível em linha */
 
   .navbar-nav {
+    position: static;
+
     display: flex;
 
     flex-direction: row;
 
-    gap: 6px;
+    gap: 4px;
 
     overflow-x: auto;
 
@@ -1897,9 +1905,19 @@ body::after {
 
     scrollbar-width: none;
 
-    padding: 8px 0;
+    padding: 0;
 
     margin: 0;
+
+    background: transparent;
+
+    box-shadow: none;
+
+    border: none;
+
+    min-width: 0;
+
+    flex: 1;
   }
 
   .navbar-nav::-webkit-scrollbar {
@@ -1911,19 +1929,19 @@ body::after {
   }
 
   .nav-link {
-    padding: 10px 16px;
+    padding: 8px 12px;
 
     white-space: nowrap;
 
-    border-radius: 20px;
+    border-radius: 8px;
 
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
 
   .nav-link svg {
-    width: 16px;
+    width: 14px;
 
-    height: 16px;
+    height: 14px;
   }
 
   .navbar-toggler {
@@ -1931,195 +1949,314 @@ body::after {
   }
 
   .navbar-right {
-    gap: 6px;
+    gap: 4px;
+
+    flex-shrink: 0;
   }
 
   .btn-nav {
-    width: 36px;
+    width: 32px;
 
-    height: 36px;
+    height: 32px;
   }
 
-  /* Hero - Compacto */
+  .btn-nav svg {
+    width: 16px;
+
+    height: 16px;
+  }
+
+  /* Hero - Mais compacto */
 
   .hero {
-    padding: 32px 20px;
 
-    margin: 16px auto;
+    padding: 24px 16px;
+
+    margin: 12px auto;
+
   }
+
+ 
 
   .hero h1 {
-    font-size: 1.75rem;
 
-    margin-bottom: 12px;
+    font-size: 1.5rem;
+
+    margin-bottom: 8px;
+
   }
+
+ 
 
   .hero p {
-    font-size: 1rem;
+
+    font-size: 0.875rem;
+
   }
 
-  /* Header da seção */
+ 
+
+  /* Header da seção - Compacto */
 
   .d-flex.justify-content-between {
-    flex-direction: column;
-
-    gap: 16px;
-
-    padding: 20px 16px;
-
-    margin-bottom: 16px;
-  }
-
-  .d-flex.justify-content-between h2 {
-    font-size: 1.5rem;
-  }
-
-  .header-actions {
-    width: 100%;
 
     flex-direction: column;
-
-    gap: 10px;
-  }
-
-  .header-actions .btn {
-    width: 100%;
-
-    justify-content: center;
-  }
-
-  /* Toolbar - Layout vertical mobile */
-
-  .toolbar {
-    flex-direction: column;
-
-    padding: 16px;
 
     gap: 12px;
+
+    padding: 16px 12px;
+
+    margin-bottom: 12px;
+
   }
 
-  .view-tabs {
+ 
+
+  .d-flex.justify-content-between h2 {
+
+    font-size: 1.25rem;
+
+  }
+
+ 
+
+  .header-actions {
+
     width: 100%;
+
+    display: flex;
+
+    flex-direction: row;
+
+    gap: 8px;
+
+  }
+
+ 
+
+  .header-actions .btn {
+
+    flex: 1;
+
+    padding: 10px 12px;
+
+    font-size: 0.8125rem;
+
+  }
+
+ 
+
+  /* Toolbar - Mais compacto */
+
+  .toolbar {
+
+    flex-direction: row;
+
+    flex-wrap: wrap;
+
+    padding: 12px;
+
+    gap: 10px;
+
+  }
+
+ 
+
+  .view-tabs {
+
+    flex: 1;
+
+    min-width: 200px;
 
     overflow-x: auto;
 
     -webkit-overflow-scrolling: touch;
 
     scrollbar-width: none;
+
   }
+
+ 
 
   .view-tabs::-webkit-scrollbar {
+
     display: none;
+
   }
+
+ 
 
   .view-tab {
-    padding: 10px 16px;
 
-    font-size: 0.8125rem;
+    padding: 8px 14px;
+
+    font-size: 0.75rem;
 
     white-space: nowrap;
+
   }
+
+ 
 
   .toolbar-actions {
-    width: 100%;
 
-    gap: 8px;
+    display: flex;
+
+    gap: 6px;
+
   }
+
+ 
 
   .toolbar-actions .btn {
-    flex: 1;
 
-    padding: 10px 12px;
+    padding: 8px 10px;
 
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
+
   }
 
-  /* Task Groups - Cards individuais mobile */
+ 
+
+  /* Task Groups - Muito mais compactos */
 
   .task-group {
-    margin-bottom: 16px;
 
-    border-radius: 12px;
+    margin-bottom: 12px;
+
+    border-radius: 10px;
+
   }
+
+ 
 
   .group-header {
-    padding: 16px;
+
+    padding: 12px;
+
+    gap: 10px;
+
   }
+
+ 
 
   .group-status {
-    font-size: 0.6875rem;
 
-    padding: 6px 12px;
+    font-size: 0.625rem;
+
+    padding: 5px 10px;
+
   }
 
-  /* Tabela - NOVO LAYOUT CARD PARA MOBILE */
+ 
+
+  .group-count {
+
+    font-size: 0.75rem;
+
+    padding: 4px 10px;
+
+  }
+
+ 
+
+  /* Tabela - Layout minimalista e compacto */
 
   .task-table {
+
     padding: 0;
+
   }
+
+ 
 
   .table-header {
+
     display: none;
+
   }
 
+ 
+
   .task-row {
+
     display: flex;
 
     flex-direction: column;
 
-    gap: 12px;
+    gap: 8px;
 
-    padding: 16px;
+    padding: 12px;
 
     border-bottom: 1px solid rgba(20, 101, 81, 0.08);
 
     border-radius: 0;
 
     background: transparent;
+
   }
+
+ 
 
   .task-row:last-child {
+
     border-bottom: none;
+
   }
 
+ 
+
   .task-row:hover {
+
     background: rgba(248, 250, 249, 0.5);
 
     transform: none;
+
   }
 
-  /* Layout horizontal para cada campo */
+ 
+
+  /* Layout horizontal compacto para cada campo */
 
   .task-row > div {
+
     display: flex;
 
     justify-content: space-between;
 
     align-items: center;
 
-    gap: 12px;
+    gap: 10px;
 
-    padding: 10px 0;
+    padding: 0;
+
   }
 
-  /* Checkbox + Nome juntos no topo */
+ 
+
+  /* Checkbox + Nome no topo - sem muita margem */
 
   .task-row > div:first-child {
+
     order: 1;
 
     border-bottom: 1px solid rgba(20, 101, 81, 0.05);
 
-    padding-bottom: 12px;
+    padding-bottom: 8px;
 
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+
   }
 
-  /* Labels antes dos valores */
+ 
+
+  /* Labels compactos antes dos valores */
 
   .task-row > div:not(:first-child)::before {
+
     content: attr(data-label);
 
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
 
     font-weight: 600;
 
@@ -2128,228 +2265,428 @@ body::after {
     text-transform: uppercase;
 
     letter-spacing: 0.3px;
+
+    flex-shrink: 0;
+
   }
+
+ 
 
   /* Responsável */
 
   .task-row > div:nth-child(3)::before {
-    content: "Responsável";
+
+    content: 'Resp.';
+
   }
+
+ 
 
   /* Data */
 
   .task-row > div:nth-child(4)::before {
-    content: "Vencimento";
+
+    content: 'Venc.';
+
   }
+
+ 
 
   /* Prioridade */
 
   .task-row > div:nth-child(5)::before {
-    content: "Prioridade";
+
+    content: 'Prior.';
+
   }
+
+ 
 
   /* Status */
 
   .task-row > div:nth-child(6)::before {
-    content: "Status";
+
+    content: 'Status';
+
   }
+
+ 
 
   /* Ações */
 
   .task-row > div:nth-child(7) {
+
     justify-content: center;
 
-    padding-top: 12px;
+    padding-top: 8px;
 
-    margin-top: 8px;
+    margin-top: 6px;
 
     border-top: 1px solid rgba(20, 101, 81, 0.05);
+
   }
+
+ 
 
   .task-row > div:nth-child(7)::before {
+
     display: none;
+
   }
 
-  /* Nome da tarefa */
+ 
+
+  /* Nome da tarefa - compacto */
 
   .task-name {
-    font-size: 1rem;
+
+    font-size: 0.9375rem;
 
     font-weight: 600;
+
+    line-height: 1.3;
+
   }
 
-  /* Badges e controles - touch friendly */
+ 
+
+  /* Badges menores e compactos */
 
   .priority-badge,
+
   .status-badge {
-    font-size: 0.6875rem;
+
+    font-size: 0.625rem;
+
+    padding: 4px 8px;
+
+    white-space: nowrap;
+
+  }
+
+ 
+
+  .avatar {
+
+    width: 24px;
+
+    height: 24px;
+
+    font-size: 0.625rem;
+
+  }
+
+ 
+
+  /* Botões de ação - compactos */
+
+  .task-row button {
 
     padding: 6px 10px;
 
-    white-space: nowrap;
+    min-height: 32px;
+
+    font-size: 0.75rem;
+
   }
 
-  .avatar {
-    width: 28px;
+ 
 
-    height: 28px;
-
-    font-size: 0.6875rem;
-  }
-
-  /* Botões de ação */
-
-  .task-row button {
-    padding: 8px 12px;
-
-    min-height: 36px;
-  }
-
-  /* Add task */
+  /* Add task - compacto */
 
   .add-task {
-    padding: 16px;
 
-    font-size: 0.875rem;
+    padding: 12px;
+
+    font-size: 0.8125rem;
 
     border-top: 1px dashed rgba(20, 101, 81, 0.15);
-  }
 
-  /* Cards de recursos */
+  }
+ /* Cards de recursos - compactos */
 
   .row {
+
     grid-template-columns: 1fr;
 
-    gap: 16px;
+    gap: 12px;
+
   }
+
+ 
 
   .card {
-    border-radius: 12px;
+
+    border-radius: 10px;
+
   }
+
+ 
+
+  .card img {
+
+    height: 120px;
+
+  }
+
+ 
 
   .card-body {
-    padding: 16px;
+
+    padding: 14px;
+
   }
+
+ 
 
   .card-title {
-    font-size: 1rem;
+
+    font-size: 0.9375rem;
+
+    margin-bottom: 6px;
+
   }
+
+ 
 
   .card-text {
-    font-size: 0.875rem;
+
+    font-size: 0.8125rem;
+
   }
 
-  /* Botões gerais - full width */
+ 
+
+  /* Botões gerais - em linha quando possível */
 
   .content-area > .btn {
+
     width: 100%;
 
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 
     margin-right: 0;
+
+    padding: 10px 16px;
+
+    font-size: 0.8125rem;
+
   }
 
-  /* Espaçamento seções */
+ 
+
+  /* Espaçamento seções - reduzido */
 
   .my-5 {
-    margin: 32px auto;
+
+    margin: 24px auto;
+
   }
+
+ 
 
   /* Modal adaptado */
 
   .modal-content {
+
     min-width: auto;
 
     width: 90%;
 
-    padding: 24px 20px;
+    padding: 20px 16px;
+
   }
+
+ 
 
   .modal-content h3 {
-    font-size: 1.25rem;
+
+    font-size: 1.125rem;
+
   }
+
+ 
 
   .modal-content h3::before {
-    width: 36px;
 
-    height: 36px;
+    width: 32px;
+
+    height: 32px;
+
   }
+
+ 
 
   .modal-content p {
+
     margin-left: 0;
 
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+
+    font-size: 0.875rem;
+
   }
+
+ 
 
   .modal-input {
-    padding: 14px 16px;
 
-    font-size: 0.9375rem;
+    padding: 12px 14px;
+
+    font-size: 0.875rem;
+
   }
+
+ 
 
   .modal-buttons .btn {
-    padding: 14px 20px;
 
-    font-size: 0.9375rem;
+    padding: 12px 18px;
+
+    font-size: 0.875rem;
+
   }
+
+ 
 
   .priority-options,
+
   .status-options {
+
     grid-template-columns: 1fr;
 
-    gap: 10px;
+    gap: 8px;
+
   }
 
+ 
+
   .priority-option,
+
   .status-option {
-    padding: 16px 14px;
+
+    padding: 14px 12px;
+
   }
+
+ 
 
   /* Notificação */
 
   .notification {
+
     right: 12px;
 
     left: 12px;
 
     top: 12px;
 
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
 
-    padding: 14px 20px;
+    padding: 12px 16px;
+
   }
+
 }
+
+ 
 
 /* Mobile pequeno - 480px */
 
 @media (max-width: 480px) {
-  .hero h1 {
-    font-size: 1.5rem;
-  }
-
-  .hero p {
-    font-size: 0.9375rem;
-  }
 
   .navbar-brand {
-    font-size: 1.125rem;
+
+    font-size: 1rem;
+
   }
 
-  .d-flex.justify-content-between h2 {
-    font-size: 1.25rem;
+ 
+
+  .navbar-brand::before {
+
+    width: 24px;
+
+    height: 24px;
+
   }
 
-  .view-tab {
-    padding: 8px 14px;
+ 
+
+  .nav-link {
+
+    padding: 6px 10px;
 
     font-size: 0.75rem;
+
   }
+
+ 
+
+  .btn-nav {
+
+    width: 28px;
+
+    height: 28px;
+
+  }
+
+ 
+
+  .hero h1 {
+
+    font-size: 1.25rem;
+
+  }
+
+ 
+
+  .hero p {
+
+    font-size: 0.8125rem;
+
+  }
+
+ 
+
+  .d-flex.justify-content-between h2 {
+
+    font-size: 1.125rem;
+
+  }
+
+ 
+
+  .view-tab {
+
+    padding: 6px 12px;
+
+    font-size: 0.6875rem;
+
+  }
+
+ 
 
   .task-row {
-    padding: 14px;
+
+    padding: 10px;
+
   }
 
+ 
+
   .task-name {
-    font-size: 0.9375rem;
+
+    font-size: 0.875rem;
+
   }
+
+ 
+
+  .task-row > div:not(:first-child)::before {
+
+    font-size: 0.625rem;
+
+  }
+
 }

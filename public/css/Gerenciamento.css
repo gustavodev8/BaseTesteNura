@@ -1848,147 +1848,113 @@ body::after {
 @media (max-width: 768px) {
   /* Container com padding reduzido */
 
+  /* Container com padding consistente */
+
   .container {
+
     padding: 0 16px;
+
   }
 
-  /* Navbar - Corrigido e compacto */
+ 
+
+  /* Navbar - Simples e limpo */
 
   .navbar {
+
     position: sticky;
 
     top: 0;
 
     z-index: 1000;
 
-    padding: 8px 0;
+    padding: 10px 0;
+
   }
+
+ 
 
   .navbar .container {
-    padding: 0 12px;
 
-    flex-wrap: nowrap;
+    display: grid;
+
+    grid-template-columns: auto 1fr auto;
+
+    align-items: center;
 
     gap: 12px;
+
+    padding: 0 12px;
+
   }
+
+ 
 
   .navbar-brand {
-    font-size: 1.125rem;
 
-    flex-shrink: 0;
+    font-size: 1.25rem;
+
   }
+
+ 
 
   .navbar-brand::before {
-    width: 28px;
 
-    height: 28px;
-
-    font-size: 1rem;
-  }
-
-  /* Navbar-nav agora fica visível em linha */
-
-  .navbar-nav {
-    position: static;
-
-    display: flex;
-
-    flex-direction: row;
-
-    gap: 4px;
-
-    overflow-x: auto;
-
-    overflow-y: hidden;
-
-    -webkit-overflow-scrolling: touch;
-
-    scrollbar-width: none;
-
-    padding: 0;
-
-    margin: 0;
-
-    background: transparent;
-
-    box-shadow: none;
-
-    border: none;
-
-    min-width: 0;
-
-    flex: 1;
-  }
-
-  .navbar-nav::-webkit-scrollbar {
-    display: none;
-  }
-
-  .nav-item {
-    flex-shrink: 0;
-  }
-
-  .nav-link {
-    padding: 8px 12px;
-
-    white-space: nowrap;
-
-    border-radius: 8px;
-
-    font-size: 0.8125rem;
-  }
-
-  .nav-link svg {
-    width: 14px;
-
-    height: 14px;
-  }
-
-  .navbar-toggler {
-    display: none;
-  }
-
-  .navbar-right {
-    gap: 4px;
-
-    flex-shrink: 0;
-  }
-
-  .btn-nav {
     width: 32px;
 
     height: 32px;
-  }
 
-  .btn-nav svg {
-    width: 16px;
-
-    height: 16px;
-  }
-
-  /* Hero - Mais compacto */
-
-  .hero {
-
-    padding: 24px 16px;
-
-    margin: 12px auto;
+    font-size: 1rem;
 
   }
 
  
 
-  .hero h1 {
+  /* Menu escondido em mobile - apenas hamburguer */
 
-    font-size: 1.5rem;
+  .navbar-nav {
 
-    margin-bottom: 8px;
+    display: none;
 
   }
 
  
 
-  .hero p {
+  .navbar-nav.show {
+
+    display: flex;
+
+    flex-direction: column;
+
+    position: absolute;
+
+    top: 60px;
+
+    left: 12px;
+
+    right: 12px;
+
+    background: var(--bg-secondary);
+
+    border-radius: 12px;
+
+    padding: 12px;
+
+    gap: 6px;
+
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+    border: 1px solid var(--border-color);
+
+  }
+
+ 
+
+  .nav-link {
+
+    padding: 12px 16px;
+
+    border-radius: 8px;
 
     font-size: 0.875rem;
 
@@ -1996,17 +1962,101 @@ body::after {
 
  
 
-  /* Header da seção - Compacto */
+  .nav-link svg {
+
+    width: 16px;
+
+    height: 16px;
+
+  }
+
+ 
+
+  .navbar-toggler {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 36px;
+
+    height: 36px;
+
+    border-radius: 8px;
+
+    background: var(--gray-100);
+
+  }
+
+ 
+
+  .navbar-right {
+
+    display: flex;
+
+    gap: 6px;
+
+  }
+
+ 
+
+  .btn-nav {
+
+    width: 36px;
+
+    height: 36px;
+
+    width: 16px;
+
+    height: 16px;
+
+  }
+
+ /* Hero - Compacto e harmonioso */
+
+  .hero {
+
+    padding: 28px 20px;
+
+    margin: 16px auto;
+
+  }
+
+ 
+
+  .hero h1 {
+
+    font-size: 1.625rem;
+
+    margin-bottom: 10px;
+
+  }
+
+ 
+
+  .hero p {
+
+    font-size: 0.9375rem;
+
+    line-height: 1.5;
+
+  }
+
+ 
+
+  /* Header da seção - Limpo e alinhado */
 
   .d-flex.justify-content-between {
 
     flex-direction: column;
 
-    gap: 12px;
+    gap: 16px;
 
-    padding: 16px 12px;
+    padding: 20px 16px;
 
-    margin-bottom: 12px;
+    margin-bottom: 16px;
 
   }
 
@@ -2014,7 +2064,7 @@ body::after {
 
   .d-flex.justify-content-between h2 {
 
-    font-size: 1.25rem;
+    font-size: 1.375rem;
 
   }
 
@@ -2024,37 +2074,9 @@ body::after {
 
     width: 100%;
 
-    display: flex;
+    display: grid;
 
-    flex-direction: row;
-
-    gap: 8px;
-
-  }
-
- 
-
-  .header-actions .btn {
-
-    flex: 1;
-
-    padding: 10px 12px;
-
-    font-size: 0.8125rem;
-
-  }
-
- 
-
-  /* Toolbar - Mais compacto */
-
-  .toolbar {
-
-    flex-direction: row;
-
-    flex-wrap: wrap;
-
-    padding: 12px;
+    grid-template-columns: 1fr 1fr;
 
     gap: 10px;
 
@@ -2062,11 +2084,37 @@ body::after {
 
  
 
+  .header-actions .btn {
+
+    padding: 12px;
+
+    font-size: 0.875rem;
+
+  }
+
+ 
+
+  /* Toolbar - Simplificado */
+
+  .toolbar {
+
+    flex-direction: column;
+
+    padding: 16px;
+
+    gap: 12px;
+
+  }
+
+ 
+
   .view-tabs {
 
-    flex: 1;
+    width: 100%;
 
-    min-width: 200px;
+    display: flex;
+
+    gap: 6px;
 
     overflow-x: auto;
 
@@ -2088,11 +2136,13 @@ body::after {
 
   .view-tab {
 
-    padding: 8px 14px;
+    padding: 10px 18px;
 
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
 
     white-space: nowrap;
+
+    flex-shrink: 0;
 
   }
 
@@ -2100,9 +2150,13 @@ body::after {
 
   .toolbar-actions {
 
-    display: flex;
+    width: 100%;
 
-    gap: 6px;
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 8px;
 
   }
 
@@ -2110,21 +2164,21 @@ body::after {
 
   .toolbar-actions .btn {
 
-    padding: 8px 10px;
+    padding: 10px;
 
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
 
   }
 
  
 
-  /* Task Groups - Muito mais compactos */
+  /* Task Groups - Cards limpos */
 
   .task-group {
 
-    margin-bottom: 12px;
+    margin-bottom: 16px;
 
-    border-radius: 10px;
+    border-radius: 12px;
 
   }
 
@@ -2132,9 +2186,9 @@ body::after {
 
   .group-header {
 
-    padding: 12px;
+    padding: 14px 16px;
 
-    gap: 10px;
+    gap: 12px;
 
   }
 
@@ -2142,9 +2196,9 @@ body::after {
 
   .group-status {
 
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
 
-    padding: 5px 10px;
+    padding: 6px 12px;
 
   }
 
@@ -2152,15 +2206,17 @@ body::after {
 
   .group-count {
 
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
 
-    padding: 4px 10px;
+    padding: 5px 12px;
+
+    min-width: 36px;
 
   }
 
  
 
-  /* Tabela - Layout minimalista e compacto */
+  /* Tabela - Cards individuais MUITO limpos */
 
   .task-table {
 
@@ -2178,29 +2234,23 @@ body::after {
 
  
 
+  /* Cada tarefa é um card branco independente */
+
   .task-row {
 
-    display: flex;
+    display: block;
 
-    flex-direction: column;
+    padding: 16px;
 
-    gap: 8px;
+    margin: 12px;
 
-    padding: 12px;
+    background: white;
 
-    border-bottom: 1px solid rgba(20, 101, 81, 0.08);
+    border-radius: 12px;
 
-    border-radius: 0;
+    border: 1px solid rgba(20, 101, 81, 0.08);
 
-    background: transparent;
-
-  }
-
- 
-
-  .task-row:last-child {
-
-    border-bottom: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
   }
 
@@ -2208,7 +2258,9 @@ body::after {
 
   .task-row:hover {
 
-    background: rgba(248, 250, 249, 0.5);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    border-color: rgba(20, 101, 81, 0.15);
 
     transform: none;
 
@@ -2216,47 +2268,89 @@ body::after {
 
  
 
-  /* Layout horizontal compacto para cada campo */
+  /* Nome da tarefa - Destaque no topo */
 
-  .task-row > div {
+  .task-row > div:nth-child(2) {
 
-    display: flex;
+    margin-bottom: 14px;
 
-    justify-content: space-between;
+    padding-bottom: 14px;
 
-    align-items: center;
-
-    gap: 10px;
-
-    padding: 0;
+    border-bottom: 1px solid rgba(20, 101, 81, 0.08);
 
   }
 
  
 
-  /* Checkbox + Nome no topo - sem muita margem */
+  .task-name {
+
+    font-size: 1rem;
+
+    font-weight: 600;
+
+    line-height: 1.4;
+
+    color: var(--text-primary);
+
+  }
+
+ 
+
+  /* Checkbox */
 
   .task-row > div:first-child {
 
-    order: 1;
+    float: left;
 
-    border-bottom: 1px solid rgba(20, 101, 81, 0.05);
+    margin-right: 12px;
 
-    padding-bottom: 8px;
-
-    margin-bottom: 6px;
+    margin-top: 2px;
 
   }
 
  
 
-  /* Labels compactos antes dos valores */
+  /* Todos os outros campos - Grid limpo */
 
-  .task-row > div:not(:first-child)::before {
+  .task-row > div:nth-child(n+3):nth-child(-n+6) {
+
+    display: grid;
+
+    grid-template-columns: 80px 1fr;
+
+    gap: 12px;
+
+    align-items: center;
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid rgba(20, 101, 81, 0.05);
+
+  }
+
+ 
+
+  .task-row > div:last-of-type {
+
+    border-bottom: none;
+
+  }
+
+ 
+
+  /* Labels fixos e alinhados */
+
+  .task-row > div:nth-child(3)::before,
+
+  .task-row > div:nth-child(4)::before,
+
+  .task-row > div:nth-child(5)::before,
+
+  .task-row > div:nth-child(6)::before {
 
     content: attr(data-label);
 
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
 
     font-weight: 600;
 
@@ -2266,43 +2360,33 @@ body::after {
 
     letter-spacing: 0.3px;
 
-    flex-shrink: 0;
-
   }
 
  
-
-  /* Responsável */
 
   .task-row > div:nth-child(3)::before {
 
-    content: 'Resp.';
+    content: 'Responsável';
 
   }
 
  
-
-  /* Data */
 
   .task-row > div:nth-child(4)::before {
 
-    content: 'Venc.';
+    content: 'Vencimento';
 
   }
 
  
-
-  /* Prioridade */
 
   .task-row > div:nth-child(5)::before {
 
-    content: 'Prior.';
+    content: 'Prioridade';
 
   }
 
  
-
-  /* Status */
 
   .task-row > div:nth-child(6)::before {
 
@@ -2312,17 +2396,21 @@ body::after {
 
  
 
-  /* Ações */
+  /* Botões de ação - Centralizados */
 
   .task-row > div:nth-child(7) {
 
+    display: flex;
+
     justify-content: center;
 
-    padding-top: 8px;
+    gap: 8px;
 
-    margin-top: 6px;
+    margin-top: 14px;
 
-    border-top: 1px solid rgba(20, 101, 81, 0.05);
+    padding-top: 14px;
+
+    border-top: 1px solid rgba(20, 101, 81, 0.08);
 
   }
 
@@ -2336,29 +2424,15 @@ body::after {
 
  
 
-  /* Nome da tarefa - compacto */
-
-  .task-name {
-
-    font-size: 0.9375rem;
-
-    font-weight: 600;
-
-    line-height: 1.3;
-
-  }
-
- 
-
-  /* Badges menores e compactos */
+  /* Badges - Bem dimensionados */
 
   .priority-badge,
 
   .status-badge {
 
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
 
-    padding: 4px 8px;
+    padding: 5px 10px;
 
     white-space: nowrap;
 
@@ -2368,39 +2442,39 @@ body::after {
 
   .avatar {
 
-    width: 24px;
+    width: 28px;
 
-    height: 24px;
+    height: 28px;
 
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
 
   }
 
  
 
-  /* Botões de ação - compactos */
+  /* Botões de ação */
 
   .task-row button {
 
-    padding: 6px 10px;
+    padding: 8px 12px;
 
-    min-height: 32px;
+    min-height: 36px;
 
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
 
   }
 
  
 
-  /* Add task - compacto */
+  /* Add task */
 
   .add-task {
 
-    padding: 12px;
+    padding: 14px 16px;
 
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
 
-    border-top: 1px dashed rgba(20, 101, 81, 0.15);
+    margin: 0 12px;
 
   }
  /* Cards de recursos - compactos */

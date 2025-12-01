@@ -468,7 +468,7 @@ app.put('/api/users/:userId/email', async (req, res) => {
 // GET - Listar todos os usuários (útil para debug)
 app.get('/api/users', async (req, res) => {
     try {
-        const users = await db.query('SELECT id, name, email FROM users');
+        const users = await db.query('SELECT id, name, email, telegram_chat_id FROM users');
         res.json({
             success: true,
             users

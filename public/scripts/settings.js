@@ -541,16 +541,13 @@ function showNotification(message) {
     }, 3000);
 }
 
-// ===== INICIALIZAR - CARREGAR CONFIGURAÇÕES =====
+// ===== EVENTOS DO HTML - CONSOLIDADO =====
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('⚙️ Carregando sistema de configurações...');
-    loadSettingsFromDatabase();
-});
-
-// ===== EVENTOS DO HTML - OTIMIZADO =====
-document.addEventListener('DOMContentLoaded', () => {
     console.log('🔧 Inicializando event listeners...');
-    
+    // Carregar configurações do banco
+    loadSettingsFromDatabase();
     // ===== MODO ESCURO (Específico) =====
     const darkModeToggle = document.querySelector('#appearance #darkModeToggle');
     if (darkModeToggle) {
@@ -649,6 +646,29 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log('✅ Event listeners configurados!');
 });
+
+    // ===== TELEGRAM - Verificar status e configurar botões =====
+    checkTelegramStatus();
+    // Botão de vincular
+    const saveTelegramBtn = document.getElementById('saveTelegram');
+    if (saveTelegramBtn) {
+        saveTelegramBtn.addEventListener('click', linkTelegram);
+    }
+
+    // Botão de desvincular
+    const unlinkTelegramBtn = document.getElementById('unlinkTelegram');
+    if (unlinkTelegramBtn) {
+        unlinkTelegramBtn.addEventListener('click', unlinkTelegram);
+    }
+    // Enter no input
+    const telegramInput = document.getElementById('telegramChatId');
+    if (telegramInput) {
+        telegramInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                linkTelegram();
+            }
+        });
+    }
 
 // ===== GERENCIAMENTO DE TELEGRAM =====
 
@@ -773,34 +793,6 @@ async function unlinkTelegram() {
         showNotification('Erro ao conectar com o servidor', 'error');
     }
 }
-
-// Configurar event listeners do Telegram
-document.addEventListener('DOMContentLoaded', () => {
-    // Verificar status do Telegram
-    checkTelegramStatus();
-
-    // Botão de vincular
-    const saveTelegramBtn = document.getElementById('saveTelegram');
-    if (saveTelegramBtn) {
-        saveTelegramBtn.addEventListener('click', linkTelegram);
-    }
-
-    // Botão de desvincular
-    const unlinkTelegramBtn = document.getElementById('unlinkTelegram');
-    if (unlinkTelegramBtn) {
-        unlinkTelegramBtn.addEventListener('click', unlinkTelegram);
-    }
-
-    // Enter no input
-    const telegramInput = document.getElementById('telegramChatId');
-    if (telegramInput) {
-        telegramInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                linkTelegram();
-            }
-        });
-    }
-});
 
 // ===== EXPORTAR FUNÇÕES =====
 window.nuraSettingsFunctions = {

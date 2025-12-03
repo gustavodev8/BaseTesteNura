@@ -587,28 +587,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // ===== OUTROS TOGGLE SWITCHES (Exceto modo escuro) =====
+    // ===== OUTROS TOGGLE SWITCHES (Exceto modo escuro e IA) =====
     document.querySelectorAll('.toggle-switch').forEach(toggle => {
         // Pular o toggle de modo escuro (já foi configurado acima)
         if (toggle.id === 'darkModeToggle') {
             console.log('⏭️ Pulando toggle de modo escuro (já configurado)');
             return;
         }
-        
+
+        // Pular toggles de IA (gerenciados pelo aiSettings.js)
+        if (toggle.id === 'aiDescriptionsToggle' || toggle.id === 'aiOptimizationToggle') {
+            console.log('⏭️ Pulando toggle de IA (gerenciado por aiSettings.js)');
+            return;
+        }
+
         toggle.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             const row = this.closest('.setting-row');
             if (!row) return;
-            
+
             const label = row.querySelector('.setting-label');
             if (!label) return;
-            
+
             const text = label.textContent.toLowerCase();
-            
+
             console.log('🔘 Toggle clicado:', text);
-            
+
             if (text.includes('ocultar tarefas') || text.includes('concluídas')) {
                 toggleHideCompleted(!nuraSettings.hideCompleted);
             } else if (text.includes('destacar') || text.includes('urgentes')) {

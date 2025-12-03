@@ -7,7 +7,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('./database'); // Conexão com banco (SQLite local ou PostgreSQL produção)
 const cron = require('node-cron');
 const { enviarResumoParaTodos, enviarResumoDiario } = require('./emailService');
-const { inicializarBot, notificarNovaTarefaUrgente } = require('./telegramService');
+const { inicializarBot, notificarNovaTarefaUrgente, getBot, getToken } = require('./telegramService');
 const fetch = require('node-fetch'); // Para keep-alive
 
 dotenv.config(); // Carrega variáveis do .env
@@ -36,12 +36,15 @@ db.initializeDatabase(); // Cria tabelas se não existirem~
             WHERE table_name = 'users'
             AND column_name = 'telegram_chat_id'
         `);
+
         if (checkColumn.length === 0) {
             console.log('🔄 Adicionando coluna telegram_chat_id na tabela users...');
+
             await db.query(`
                 ALTER TABLE users
                 ADD COLUMN telegram_chat_id VARCHAR(255) UNIQUE
             `);
+
             console.log('✅ Coluna telegram_chat_id adicionada com sucesso!');
         } else {
             console.log('✅ Coluna telegram_chat_id já existe');
@@ -50,6 +53,7 @@ db.initializeDatabase(); // Cria tabelas se não existirem~
         console.error('❌ Erro ao adicionar coluna telegram_chat_id:', error.message);
     }
 })();
+
 // ===== INICIALIZAR BOT DO TELEGRAM =====
 inicializarBot(); // Inicia o bot do Telegram com todos os comandos e notificações
 
@@ -573,6 +577,16 @@ app.delete('/api/users/:userId/telegram', async (req, res) => {
     }
 });
 
+// ===== WEBHOOK DO TELEGRAM =====
+// Rota para receber updates do Telegram (produção)
+app.post(`/telegram-webhook/${process.env.TELEGRAM_BOT_TOKEN}`, (req, res) => {
+    const bot = getBot();
+    if (bot) {
+        bot.processUpdate(req.body);
+    }
+    res.sendStatus(200);
+});
+
 // ===== API - AUTENTICAÇÃO =====
 
 // POST - Login do usuário
@@ -789,6 +803,87 @@ Apenas a rotina formatada, sem explicações.
             error: errorMessage,
             details: err.message,
             timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// ===== API - GERAR DESCRIÇÃO AUTOMÁTICA POR IA =====
+app.post('/api/ai/generate-description', async (req, res) => {
+    try {
+        const { taskTitle, detailLevel = 'medio' } = req.body;
+
+        if (!taskTitle || taskTitle.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                error: 'Título da tarefa é obrigatório'
+            });
+        }
+
+        console.log(`🤖 Gerando descrição IA para tarefa: "${taskTitle}" (Nível: ${detailLevel})`);
+
+        // Define o nível de detalhamento
+        let detailPrompt = '';
+        switch(detailLevel) {
+            case 'baixo':
+                detailPrompt = 'Crie uma descrição MUITO BREVE (máximo 20 palavras) e direta.';
+                break;
+            case 'medio':
+                detailPrompt = 'Crie uma descrição equilibrada (30-50 palavras) com contexto relevante.';
+                break;
+            case 'alto':
+                detailPrompt = 'Crie uma descrição DETALHADA (60-100 palavras) com passos, contexto e objetivos.';
+                break;
+            default:
+                detailPrompt = 'Crie uma descrição equilibrada (30-50 palavras) com contexto relevante.';
+        }
+
+        const prompt = `Você é um assistente de produtividade inteligente.
+
+Tarefa: "${taskTitle}"
+
+${detailPrompt}
+
+A descrição deve:
+- Explicar brevemente o que envolve essa tarefa
+- Mencionar o objetivo ou resultado esperado
+- Se aplicável, sugerir passos básicos ou considerações
+- Ser profissional e clara
+- Não usar emojis ou formatação especial
+
+Responda APENAS com a descrição, sem introduções ou explicações adicionais.`;
+
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+        console.log("⏳ Aguardando resposta do Gemini...");
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const description = response.text().trim();
+
+        console.log("✅ Descrição gerada com sucesso!");
+
+        res.json({
+            success: true,
+            description,
+            taskTitle,
+            detailLevel,
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (err) {
+        console.error("💥 ERRO ao gerar descrição:", err.message);
+
+        let errorMessage = "Erro ao gerar descrição automática";
+
+        if (err.message?.includes("API key")) {
+            errorMessage = "API Key do Gemini inválida";
+        } else if (err.message?.includes("quota")) {
+            errorMessage = "Limite de requisições excedido";
+        }
+
+        res.status(500).json({
+            success: false,
+            error: errorMessage,
+            details: err.message
         });
     }
 });

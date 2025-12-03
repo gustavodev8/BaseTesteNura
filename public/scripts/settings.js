@@ -541,13 +541,15 @@ function showNotification(message) {
     }, 3000);
 }
 
+// ===== INICIALIZAR - CARREGAR CONFIGURAÇÕES =====
 // ===== EVENTOS DO HTML - CONSOLIDADO =====
-
 document.addEventListener('DOMContentLoaded', () => {
     console.log('⚙️ Carregando sistema de configurações...');
     console.log('🔧 Inicializando event listeners...');
+
     // Carregar configurações do banco
     loadSettingsFromDatabase();
+    
     // ===== MODO ESCURO (Específico) =====
     const darkModeToggle = document.querySelector('#appearance #darkModeToggle');
     if (darkModeToggle) {
@@ -644,11 +646,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    console.log('✅ Event listeners configurados!');
-});
-
     // ===== TELEGRAM - Verificar status e configurar botões =====
     checkTelegramStatus();
+
     // Botão de vincular
     const saveTelegramBtn = document.getElementById('saveTelegram');
     if (saveTelegramBtn) {
@@ -660,6 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (unlinkTelegramBtn) {
         unlinkTelegramBtn.addEventListener('click', unlinkTelegram);
     }
+
     // Enter no input
     const telegramInput = document.getElementById('telegramChatId');
     if (telegramInput) {
@@ -669,6 +670,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    console.log('✅ Event listeners configurados!');
+});
 
 // ===== GERENCIAMENTO DE TELEGRAM =====
 

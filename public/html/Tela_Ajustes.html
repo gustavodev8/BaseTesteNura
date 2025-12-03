@@ -138,44 +138,43 @@
             <section class="section" id="ai">
                 <h2 class="section-title">Assistente IA</h2>
                 <p class="section-subtitle">Configure o comportamento da inteligência artificial</p>
-                
+
+                <div class="setting-group">
+                    <h3 class="group-title">Sugestões automáticas</h3>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Descrições por IA</div>
+                            <div class="setting-description">A IA adiciona descrições automáticas às tarefas criadas</div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="toggle-switch active" id="aiDescriptionsToggle"></div>
+                        </div>
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Nível de detalhamento</div>
+                            <div class="setting-description">Quanto de informação a IA deve adicionar nas descrições</div>
+                        </div>
+                        <div class="setting-control">
+                            <select id="aiDetailLevel">
+                                <option value="baixo">Baixo - Breve e direto</option>
+                                <option value="medio" selected>Médio - Equilibrado</option>
+                                <option value="alto">Alto - Detalhado e completo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="setting-group">
                     <h3 class="group-title">Geração de rotinas</h3>
                     <div class="setting-row">
                         <div class="setting-info">
-                            <div class="setting-label">Sugestões automáticas</div>
-                            <div class="setting-description">A IA sugere melhorias</div>
+                            <div class="setting-label">Sugestões de otimização</div>
+                            <div class="setting-description">A IA sugere melhorias na organização de tarefas</div>
                         </div>
                         <div class="setting-control">
-                            <div class="toggle-switch active"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-row">
-                        <div class="setting-info">
-                            <div class="setting-label">Nível de detalhamento</div>
-                            <div class="setting-description">Informações das rotinas</div>
-                        </div>
-                        <div class="setting-control">
-                            <select>
-                                <option>Básico</option>
-                                <option selected>Médio</option>
-                                <option>Detalhado</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-row">
-                        <div class="setting-info">
-                            <div class="setting-label">Horário padrão</div>
-                            <div class="setting-description">Período para geração</div>
-                        </div>
-                        <div class="setting-control">
-                            <div class="time-range">
-                                <input type="time" value="08:00">
-                                <span class="time-separator">—</span>
-                                <input type="time" value="18:00">
-                            </div>
+                            <div class="toggle-switch active" id="aiOptimizationToggle"></div>
                         </div>
                     </div>
                 </div>
@@ -461,6 +460,7 @@
         // ===== OS TOGGLES E CORES SÃO GERENCIADOS PELO settings.js =====
         // Não adicionar listeners aqui para evitar conflito
     </script>
+    <script src="../scripts/aiSettings.js"></script>
     <script src="../scripts/settings.js"></script>
 </body>
 </html>

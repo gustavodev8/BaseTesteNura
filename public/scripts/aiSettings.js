@@ -1,6 +1,10 @@
 // ===== CONFIGURAÇÕES DE IA =====
 // Gerencia as preferências de IA do usuário
 
+const AI_SETTINGS_API_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : 'https://basetestenura-3.onrender.com';
+
 // Configurações padrão
 let aiSettings = {
     descriptionsEnabled: true,
@@ -8,22 +12,148 @@ let aiSettings = {
     optimizationEnabled: true
 };
 
-// Carregar configurações do localStorage
-function loadAISettings() {
+// Obter ID do usuário atual
+function getCurrentUserId() {
+    const userData = localStorage.getItem('nura_user');
+    if (userData) {
+        try {
+            return JSON.parse(userData).id;
+        } catch (e) {
+            console.error('❌ Erro ao obter usuário:', e);
+            return null;
+        }
+    }
+    return null;
+}
+
+// Carregar configurações do banco de dados
+async function loadAISettings() {
+    const userId = getCurrentUserId();
+
+    if (!userId) {
+        console.warn('⚠️ Usuário não identificado, usando localStorage');
+        return loadAISettingsFromLocalStorage();
+    }
+
+    try {
+        const response = await fetch(`${AI_SETTINGS_API_URL}/api/settings/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': userId
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+
+            if (data.success && data.settings) {
+                // Mapear configurações do banco para o formato local
+                aiSettings = {
+                    descriptionsEnabled: data.settings.aiDescriptionsEnabled !== false,
+                    detailLevel: data.settings.aiDetailLevel || 'medio',
+                    optimizationEnabled: data.settings.aiOptimizationEnabled !== false
+                };
+                console.log('✅ Configurações de IA carregadas do banco:', aiSettings);
+                return aiSettings;
+            }
+        } else if (response.status === 404) {
+            console.log('📝 Criando configurações de IA padrão no banco...');
+            await saveAISettings();
+            return aiSettings;
+        }
+    } catch (error) {
+        console.error('❌ Erro ao carregar configurações de IA do banco:', error);
+    }
+
+    // Fallback para localStorage
+    return loadAISettingsFromLocalStorage();
+}
+
+// Carregar do localStorage (fallback)
+function loadAISettingsFromLocalStorage() {
     const saved = localStorage.getItem('aiSettings');
     if (saved) {
         try {
             aiSettings = JSON.parse(saved);
         } catch (e) {
-            console.error('Erro ao carregar configurações de IA:', e);
+            console.error('Erro ao carregar configurações de IA do localStorage:', e);
         }
     }
     return aiSettings;
 }
 
-// Salvar configurações no localStorage
-function saveAISettings() {
-    localStorage.setItem('aiSettings', JSON.stringify(aiSettings));
+// Salvar configurações no banco de dados
+async function saveAISettings() {
+    const userId = getCurrentUserId();
+
+    if (!userId) {
+        console.warn('⚠️ Usuário não identificado, salvando no localStorage');
+        localStorage.setItem('aiSettings', JSON.stringify(aiSettings));
+        return false;
+    }
+
+    try {
+        // Primeiro, carregar todas as configurações atuais
+        const currentResponse = await fetch(`${AI_SETTINGS_API_URL}/api/settings/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': userId
+            }
+        });
+
+        let allSettings = {
+            aiDescriptionsEnabled: aiSettings.descriptionsEnabled,
+            aiDetailLevel: aiSettings.detailLevel,
+            aiOptimizationEnabled: aiSettings.optimizationEnabled
+        };
+
+        // Se já existem configurações, preservar os outros campos
+        if (currentResponse.ok) {
+            const currentData = await currentResponse.json();
+            if (currentData.success && currentData.settings) {
+                allSettings = {
+                    ...currentData.settings,
+                    aiDescriptionsEnabled: aiSettings.descriptionsEnabled,
+                    aiDetailLevel: aiSettings.detailLevel,
+                    aiOptimizationEnabled: aiSettings.optimizationEnabled
+                };
+            }
+        }
+
+        // Salvar todas as configurações
+        const response = await fetch(`${AI_SETTINGS_API_URL}/api/settings/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': userId
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                settings: allSettings
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                console.log('✅ Configurações de IA salvas no banco');
+                // Também salvar no localStorage como backup
+                localStorage.setItem('aiSettings', JSON.stringify(aiSettings));
+                return true;
+            }
+        }
+
+        console.error('❌ Erro ao salvar configurações de IA');
+        return false;
+
+    } catch (error) {
+        console.error('❌ Erro ao salvar configurações de IA:', error);
+        // Fallback para localStorage
+        localStorage.setItem('aiSettings', JSON.stringify(aiSettings));
+        return false;
+    }
 }
 
 // Gerar descrição automática para uma tarefa
@@ -64,7 +194,7 @@ async function generateTaskDescription(taskTitle) {
 }
 
 // Inicializar configurações na tela de ajustes
-function initAISettingsPage() {
+async function initAISettingsPage() {
     const descriptionsToggle = document.getElementById('aiDescriptionsToggle');
     const detailLevelSelect = document.getElementById('aiDetailLevel');
     const optimizationToggle = document.getElementById('aiOptimizationToggle');
@@ -73,8 +203,8 @@ function initAISettingsPage() {
         return; // Não está na página de ajustes
     }
 
-    // Carregar configurações salvas
-    loadAISettings();
+    // Carregar configurações salvas (assíncrono)
+    await loadAISettings();
 
     // Aplicar estado inicial
     if (aiSettings.descriptionsEnabled) {
@@ -92,20 +222,20 @@ function initAISettingsPage() {
     }
 
     // Event listeners
-    descriptionsToggle.addEventListener('click', () => {
+    descriptionsToggle.addEventListener('click', async () => {
         descriptionsToggle.classList.toggle('active');
         aiSettings.descriptionsEnabled = descriptionsToggle.classList.contains('active');
-        saveAISettings();
+        await saveAISettings();
         showNotification(
             aiSettings.descriptionsEnabled
-                ? 'Descrições automáticas ativadas'
-                : 'Descrições automáticas desativadas'
+                ? '🤖 Descrições automáticas ativadas'
+                : '🔕 Descrições automáticas desativadas'
         );
     });
 
-    detailLevelSelect.addEventListener('change', () => {
+    detailLevelSelect.addEventListener('change', async () => {
         aiSettings.detailLevel = detailLevelSelect.value;
-        saveAISettings();
+        await saveAISettings();
 
         const levelNames = {
             'baixo': 'Baixo',
@@ -113,17 +243,17 @@ function initAISettingsPage() {
             'alto': 'Alto'
         };
 
-        showNotification(`Nível de detalhamento: ${levelNames[aiSettings.detailLevel]}`);
+        showNotification(`📊 Nível de detalhamento: ${levelNames[aiSettings.detailLevel]}`);
     });
 
-    optimizationToggle.addEventListener('click', () => {
+    optimizationToggle.addEventListener('click', async () => {
         optimizationToggle.classList.toggle('active');
         aiSettings.optimizationEnabled = optimizationToggle.classList.contains('active');
-        saveAISettings();
+        await saveAISettings();
         showNotification(
             aiSettings.optimizationEnabled
-                ? 'Sugestões de otimização ativadas'
-                : 'Sugestões de otimização desativadas'
+                ? '💡 Sugestões de otimização ativadas'
+                : '🔕 Sugestões de otimização desativadas'
         );
     });
 }

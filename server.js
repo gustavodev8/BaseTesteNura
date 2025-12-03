@@ -921,7 +921,10 @@ app.get('/api/settings/:userId', async (req, res) => {
                 currentPlan: settings.current_plan,
                 planRenewalDate: settings.plan_renewal_date,
                 viewMode: settings.view_mode || 'lista',
-                emailNotifications: settings.email_notifications !== false // ✅ ADICIONADO (default true)
+                emailNotifications: settings.email_notifications !== false,
+                aiDescriptionsEnabled: settings.ai_descriptions_enabled !== false,
+                aiDetailLevel: settings.ai_detail_level || 'medio',
+                aiOptimizationEnabled: settings.ai_optimization_enabled !== false
             };
             
             res.json({
@@ -973,7 +976,7 @@ app.post('/api/settings/:userId', async (req, res) => {
         if (existing) {
             // Atualiza configurações existentes
             const result = await db.run(
-                `UPDATE user_settings SET 
+                `UPDATE user_settings SET
                     hide_completed = ?,
                     highlight_urgent = ?,
                     auto_suggestions = ?,
@@ -984,6 +987,9 @@ app.post('/api/settings/:userId', async (req, res) => {
                     plan_renewal_date = ?,
                     view_mode = ?,
                     email_notifications = ?,
+                    ai_descriptions_enabled = ?,
+                    ai_detail_level = ?,
+                    ai_optimization_enabled = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = ?`,
                 [
@@ -996,7 +1002,10 @@ app.post('/api/settings/:userId', async (req, res) => {
                     settings.currentPlan || 'pro',
                     settings.planRenewalDate || '30 de dezembro de 2025',
                     settings.viewMode || 'lista',
-                    settings.emailNotifications !== false, // ✅ ADICIONADO (default true)
+                    settings.emailNotifications !== false,
+                    settings.aiDescriptionsEnabled !== false,
+                    settings.aiDetailLevel || 'medio',
+                    settings.aiOptimizationEnabled !== false,
                     userId
                 ]
             );
@@ -1005,9 +1014,9 @@ app.post('/api/settings/:userId', async (req, res) => {
         } else {
             // Cria novas configurações
             const result = await db.run(
-                `INSERT INTO user_settings 
-                (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date, view_mode, email_notifications)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT INTO user_settings
+                (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date, view_mode, email_notifications, ai_descriptions_enabled, ai_detail_level, ai_optimization_enabled)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     userId,
                     settings.hideCompleted || false,
@@ -1019,7 +1028,10 @@ app.post('/api/settings/:userId', async (req, res) => {
                     settings.currentPlan || 'pro',
                     settings.planRenewalDate || '30 de dezembro de 2025',
                     settings.viewMode || 'lista',
-                    settings.emailNotifications !== false // ✅ ADICIONADO (default true)
+                    settings.emailNotifications !== false,
+                    settings.aiDescriptionsEnabled !== false,
+                    settings.aiDetailLevel || 'medio',
+                    settings.aiOptimizationEnabled !== false
                 ]
             );
             

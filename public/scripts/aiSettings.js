@@ -94,7 +94,7 @@ async function saveAISettings() {
     }
 
     try {
-        // Primeiro, carregar todas as configurações atuais
+        // Carregar configurações atuais do banco
         const currentResponse = await fetch(`${AI_SETTINGS_API_URL}/api/settings/${userId}`, {
             method: 'GET',
             headers: {
@@ -104,17 +104,30 @@ async function saveAISettings() {
         });
 
         let allSettings = {
+            // Valores padrão caso não exista configuração
+            hideCompleted: false,
+            highlightUrgent: true,
+            autoSuggestions: true,
+            detailLevel: 'Médio',
+            darkMode: false,
+            primaryColor: '#49a09d',
+            currentPlan: 'pro',
+            planRenewalDate: '30 de dezembro de 2025',
+            viewMode: 'lista',
+            emailNotifications: true,
+            // Configurações de IA
             aiDescriptionsEnabled: aiSettings.descriptionsEnabled,
             aiDetailLevel: aiSettings.detailLevel,
             aiOptimizationEnabled: aiSettings.optimizationEnabled
         };
 
-        // Se já existem configurações, preservar os outros campos
+        // Se já existem configurações, mesclar com as existentes
         if (currentResponse.ok) {
             const currentData = await currentResponse.json();
             if (currentData.success && currentData.settings) {
                 allSettings = {
                     ...currentData.settings,
+                    // Sobrescrever apenas os campos de IA
                     aiDescriptionsEnabled: aiSettings.descriptionsEnabled,
                     aiDetailLevel: aiSettings.detailLevel,
                     aiOptimizationEnabled: aiSettings.optimizationEnabled
@@ -122,7 +135,7 @@ async function saveAISettings() {
             }
         }
 
-        // Salvar todas as configurações
+        // Salvar no banco
         const response = await fetch(`${AI_SETTINGS_API_URL}/api/settings/${userId}`, {
             method: 'POST',
             headers: {
@@ -139,18 +152,17 @@ async function saveAISettings() {
             const data = await response.json();
             if (data.success) {
                 console.log('✅ Configurações de IA salvas no banco');
-                // Também salvar no localStorage como backup
                 localStorage.setItem('aiSettings', JSON.stringify(aiSettings));
                 return true;
             }
         }
 
-        console.error('❌ Erro ao salvar configurações de IA');
+        const errorData = await response.json();
+        console.error('❌ Erro ao salvar configurações de IA:', errorData);
         return false;
 
     } catch (error) {
         console.error('❌ Erro ao salvar configurações de IA:', error);
-        // Fallback para localStorage
         localStorage.setItem('aiSettings', JSON.stringify(aiSettings));
         return false;
     }

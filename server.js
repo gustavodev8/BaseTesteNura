@@ -54,56 +54,6 @@ db.initializeDatabase(); // Cria tabelas se não existirem~
     }
 })();
 
-// ===== MIGRATION: ADICIONAR CAMPOS DE IA =====
-(async () => {
-    try {
-        // Verifica se as colunas de IA já existem
-        const checkAIColumns = await db.query(`
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_name = 'user_settings'
-            AND column_name IN ('ai_descriptions_enabled', 'ai_detail_level', 'ai_optimization_enabled')
-        `);
-
-        if (checkAIColumns.length < 3) {
-            console.log('🔄 Adicionando colunas de IA na tabela user_settings...');
-
-            // Adicionar ai_descriptions_enabled
-            if (!checkAIColumns.find(c => c.column_name === 'ai_descriptions_enabled')) {
-                await db.query(`
-                    ALTER TABLE user_settings
-                    ADD COLUMN ai_descriptions_enabled BOOLEAN DEFAULT TRUE
-                `);
-                console.log('✅ Coluna ai_descriptions_enabled adicionada');
-            }
-
-            // Adicionar ai_detail_level
-            if (!checkAIColumns.find(c => c.column_name === 'ai_detail_level')) {
-                await db.query(`
-                    ALTER TABLE user_settings
-                    ADD COLUMN ai_detail_level VARCHAR(50) DEFAULT 'medio'
-                `);
-                console.log('✅ Coluna ai_detail_level adicionada');
-            }
-
-            // Adicionar ai_optimization_enabled
-            if (!checkAIColumns.find(c => c.column_name === 'ai_optimization_enabled')) {
-                await db.query(`
-                    ALTER TABLE user_settings
-                    ADD COLUMN ai_optimization_enabled BOOLEAN DEFAULT TRUE
-                `);
-                console.log('✅ Coluna ai_optimization_enabled adicionada');
-            }
-
-            console.log('✅ Todas as colunas de IA foram adicionadas com sucesso!');
-        } else {
-            console.log('✅ Colunas de IA já existem');
-        }
-    } catch (error) {
-        console.error('❌ Erro ao adicionar colunas de IA:', error.message);
-    }
-})();
-
 // ===== INICIALIZAR BOT DO TELEGRAM =====
 inicializarBot(); // Inicia o bot do Telegram com todos os comandos e notificações
 

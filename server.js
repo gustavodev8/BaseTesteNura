@@ -54,6 +54,56 @@ db.initializeDatabase(); // Cria tabelas se não existirem~
     }
 })();
 
+// ===== MIGRATION: ADICIONAR CAMPOS DE IA =====
+(async () => {
+    try {
+        // Verifica se as colunas de IA já existem
+        const checkAIColumns = await db.query(`
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'user_settings'
+            AND column_name IN ('ai_descriptions_enabled', 'ai_detail_level', 'ai_optimization_enabled')
+        `);
+
+        if (checkAIColumns.length < 3) {
+            console.log('🔄 Adicionando colunas de IA na tabela user_settings...');
+
+            // Adicionar ai_descriptions_enabled
+            if (!checkAIColumns.find(c => c.column_name === 'ai_descriptions_enabled')) {
+                await db.query(`
+                    ALTER TABLE user_settings
+                    ADD COLUMN ai_descriptions_enabled BOOLEAN DEFAULT TRUE
+                `);
+                console.log('✅ Coluna ai_descriptions_enabled adicionada');
+            }
+
+            // Adicionar ai_detail_level
+            if (!checkAIColumns.find(c => c.column_name === 'ai_detail_level')) {
+                await db.query(`
+                    ALTER TABLE user_settings
+                    ADD COLUMN ai_detail_level VARCHAR(50) DEFAULT 'medio'
+                `);
+                console.log('✅ Coluna ai_detail_level adicionada');
+            }
+
+            // Adicionar ai_optimization_enabled
+            if (!checkAIColumns.find(c => c.column_name === 'ai_optimization_enabled')) {
+                await db.query(`
+                    ALTER TABLE user_settings
+                    ADD COLUMN ai_optimization_enabled BOOLEAN DEFAULT TRUE
+                `);
+                console.log('✅ Coluna ai_optimization_enabled adicionada');
+            }
+
+            console.log('✅ Todas as colunas de IA foram adicionadas com sucesso!');
+        } else {
+            console.log('✅ Colunas de IA já existem');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao adicionar colunas de IA:', error.message);
+    }
+})();
+
 // ===== INICIALIZAR BOT DO TELEGRAM =====
 inicializarBot(); // Inicia o bot do Telegram com todos os comandos e notificações
 
@@ -952,29 +1002,35 @@ app.post('/api/settings/:userId', async (req, res) => {
         const { userId } = req.params;
         const { settings } = req.body;
         const headerUserId = req.headers['x-user-id'];
-        
+
+        console.log('📥 POST /api/settings/' + userId);
+        console.log('Settings recebidos:', JSON.stringify(settings, null, 2));
+
         if (userId !== headerUserId) {
             return res.status(403).json({
                 success: false,
                 error: 'Acesso negado'
             });
         }
-        
+
         if (!settings || typeof settings !== 'object') {
             return res.status(400).json({
                 success: false,
                 error: 'Configurações inválidas'
             });
         }
-        
+
         // Verifica se já existe configuração para este usuário
         const existing = await db.get(
             'SELECT id FROM user_settings WHERE user_id = ?',
             [userId]
         );
+
+        console.log('Registro existente:', existing ? 'Sim' : 'Não');
         
         if (existing) {
             // Atualiza configurações existentes
+            // Converter booleanos para 0 ou 1 para SQLite
             const result = await db.run(
                 `UPDATE user_settings SET
                     hide_completed = ?,
@@ -993,48 +1049,49 @@ app.post('/api/settings/:userId', async (req, res) => {
                     updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = ?`,
                 [
-                    settings.hideCompleted || false,
-                    settings.highlightUrgent !== false,
-                    settings.autoSuggestions !== false,
+                    settings.hideCompleted ? 1 : 0,
+                    settings.highlightUrgent !== false ? 1 : 0,
+                    settings.autoSuggestions !== false ? 1 : 0,
                     settings.detailLevel || 'Médio',
-                    settings.darkMode || false,
+                    settings.darkMode ? 1 : 0,
                     settings.primaryColor || '#49a09d',
                     settings.currentPlan || 'pro',
                     settings.planRenewalDate || '30 de dezembro de 2025',
                     settings.viewMode || 'lista',
-                    settings.emailNotifications !== false,
-                    settings.aiDescriptionsEnabled !== false,
+                    settings.emailNotifications !== false ? 1 : 0,
+                    settings.aiDescriptionsEnabled !== false ? 1 : 0,
                     settings.aiDetailLevel || 'medio',
-                    settings.aiOptimizationEnabled !== false,
+                    settings.aiOptimizationEnabled !== false ? 1 : 0,
                     userId
                 ]
             );
-            
+
             console.log(`✅ Configurações atualizadas para usuário ${userId}`);
         } else {
             // Cria novas configurações
+            // Converter booleanos para 0 ou 1 para SQLite
             const result = await db.run(
                 `INSERT INTO user_settings
                 (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date, view_mode, email_notifications, ai_descriptions_enabled, ai_detail_level, ai_optimization_enabled)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     userId,
-                    settings.hideCompleted || false,
-                    settings.highlightUrgent !== false,
-                    settings.autoSuggestions !== false,
+                    settings.hideCompleted ? 1 : 0,
+                    settings.highlightUrgent !== false ? 1 : 0,
+                    settings.autoSuggestions !== false ? 1 : 0,
                     settings.detailLevel || 'Médio',
-                    settings.darkMode || false,
+                    settings.darkMode ? 1 : 0,
                     settings.primaryColor || '#49a09d',
                     settings.currentPlan || 'pro',
                     settings.planRenewalDate || '30 de dezembro de 2025',
                     settings.viewMode || 'lista',
-                    settings.emailNotifications !== false,
-                    settings.aiDescriptionsEnabled !== false,
+                    settings.emailNotifications !== false ? 1 : 0,
+                    settings.aiDescriptionsEnabled !== false ? 1 : 0,
                     settings.aiDetailLevel || 'medio',
-                    settings.aiOptimizationEnabled !== false
+                    settings.aiOptimizationEnabled !== false ? 1 : 0
                 ]
             );
-            
+
             console.log(`✅ Configurações criadas para usuário ${userId}`);
         }
         
@@ -1045,9 +1102,12 @@ app.post('/api/settings/:userId', async (req, res) => {
         
     } catch (err) {
         console.error('❌ Erro ao salvar configurações:', err);
+        console.error('Detalhes do erro:', err.message);
+        console.error('Stack:', err.stack);
         res.status(500).json({
             success: false,
-            error: 'Erro ao salvar configurações'
+            error: 'Erro ao salvar configurações',
+            details: err.message
         });
     }
 });

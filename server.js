@@ -7,6 +7,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('./database'); // Conexão com banco (SQLite local ou PostgreSQL produção)
 const cron = require('node-cron');
 const { enviarResumoParaTodos, enviarResumoDiario } = require('./emailService');
+const { inicializarBot, notificarNovaTarefaUrgente, getBot, getToken } = require('./telegramService');
 const fetch = require('node-fetch'); // Para keep-alive
 
 dotenv.config(); // Carrega variáveis do .env
@@ -24,6 +25,87 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 // ===== INICIALIZAR BANCO DE DADOS =====
 db.initializeDatabase(); // Cria tabelas se não existirem~
+
+// ===== MIGRATION: ADICIONAR CAMPO TELEGRAM =====
+(async () => {
+    try {
+        // Verifica se a coluna telegram_chat_id já existe
+        const checkColumn = await db.query(`
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'users'
+            AND column_name = 'telegram_chat_id'
+        `);
+
+        if (checkColumn.length === 0) {
+            console.log('🔄 Adicionando coluna telegram_chat_id na tabela users...');
+
+            await db.query(`
+                ALTER TABLE users
+                ADD COLUMN telegram_chat_id VARCHAR(255) UNIQUE
+            `);
+
+            console.log('✅ Coluna telegram_chat_id adicionada com sucesso!');
+        } else {
+            console.log('✅ Coluna telegram_chat_id já existe');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao adicionar coluna telegram_chat_id:', error.message);
+    }
+})();
+
+// ===== MIGRATION: ADICIONAR CAMPOS DE IA =====
+(async () => {
+    try {
+        // Verifica se as colunas de IA já existem
+        const checkAIColumns = await db.query(`
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'user_settings'
+            AND column_name IN ('ai_descriptions_enabled', 'ai_detail_level', 'ai_optimization_enabled')
+        `);
+
+        if (checkAIColumns.length < 3) {
+            console.log('🔄 Adicionando colunas de IA na tabela user_settings...');
+
+            // Adicionar ai_descriptions_enabled
+            if (!checkAIColumns.find(c => c.column_name === 'ai_descriptions_enabled')) {
+                await db.query(`
+                    ALTER TABLE user_settings
+                    ADD COLUMN ai_descriptions_enabled BOOLEAN DEFAULT TRUE
+                `);
+                console.log('✅ Coluna ai_descriptions_enabled adicionada');
+            }
+
+            // Adicionar ai_detail_level
+            if (!checkAIColumns.find(c => c.column_name === 'ai_detail_level')) {
+                await db.query(`
+                    ALTER TABLE user_settings
+                    ADD COLUMN ai_detail_level VARCHAR(50) DEFAULT 'medio'
+                `);
+                console.log('✅ Coluna ai_detail_level adicionada');
+            }
+
+            // Adicionar ai_optimization_enabled
+            if (!checkAIColumns.find(c => c.column_name === 'ai_optimization_enabled')) {
+                await db.query(`
+                    ALTER TABLE user_settings
+                    ADD COLUMN ai_optimization_enabled BOOLEAN DEFAULT TRUE
+                `);
+                console.log('✅ Coluna ai_optimization_enabled adicionada');
+            }
+
+            console.log('✅ Todas as colunas de IA foram adicionadas com sucesso!');
+        } else {
+            console.log('✅ Colunas de IA já existem');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao adicionar colunas de IA:', error.message);
+    }
+})();
+
+// ===== INICIALIZAR BOT DO TELEGRAM =====
+inicializarBot(); // Inicia o bot do Telegram com todos os comandos e notificações
 
 // ===== SERVIR ARQUIVOS ESTÁTICOS (HTML, CSS, JS, IMAGENS) =====
 app.use(express.static(path.join(__dirname, 'public')));
@@ -227,17 +309,24 @@ app.post('/api/tasks', async (req, res) => {
         }
         
         console.log(`✅ Tarefa criada para usuário ${user_id}:`, title);
-        
-        res.json({ 
-            success: true, 
+
+        // Se a tarefa for urgente, notifica via Telegram
+        if (priority === 'high') {
+            notificarNovaTarefaUrgente(user_id, title).catch(err => {
+                console.log('⚠️ Não foi possível enviar notificação do Telegram:', err.message);
+            });
+        }
+
+        res.json({
+            success: true,
             message: 'Tarefa criada com sucesso!',
             taskId: info.lastInsertRowid
         });
     } catch (err) {
         console.error('❌ Erro ao criar tarefa:', err);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Erro ao salvar tarefa no banco' 
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao salvar tarefa no banco'
         });
     }
 });
@@ -433,7 +522,7 @@ app.put('/api/users/:userId/email', async (req, res) => {
 // GET - Listar todos os usuários (útil para debug)
 app.get('/api/users', async (req, res) => {
     try {
-        const users = await db.query('SELECT id, name, email FROM users');
+        const users = await db.query('SELECT id, name, email, telegram_chat_id FROM users');
         res.json({
             success: true,
             users
@@ -445,6 +534,107 @@ app.get('/api/users', async (req, res) => {
             error: 'Erro ao listar usuários'
         });
     }
+});
+
+// PUT - Vincular Telegram ao usuário
+app.put('/api/users/:userId/telegram', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { telegram_chat_id } = req.body;
+        const headerUserId = req.headers['x-user-id'];
+
+        // Verifica se o usuário está atualizando seu próprio Telegram
+        if (userId !== headerUserId) {
+            return res.status(403).json({
+                success: false,
+                error: 'Acesso negado'
+            });
+        }
+
+        if (!telegram_chat_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'telegram_chat_id é obrigatório'
+            });
+        }
+
+        // Verifica se o chat_id já está em uso por outro usuário
+        const existingUser = await db.get(
+            'SELECT id FROM users WHERE telegram_chat_id = ? AND id != ?',
+            [telegram_chat_id, userId]
+        );
+
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                error: 'Este Telegram já está vinculado a outra conta'
+            });
+        }
+
+        // Atualiza o telegram_chat_id
+        const result = await db.run(
+            'UPDATE users SET telegram_chat_id = ? WHERE id = ?',
+            [telegram_chat_id, userId]
+        );
+
+        console.log(`✅ Telegram vinculado ao usuário ${userId}: ${telegram_chat_id}`);
+
+        res.json({
+            success: true,
+            message: 'Telegram vinculado com sucesso!'
+        });
+
+    } catch (err) {
+        console.error('❌ Erro ao vincular Telegram:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao vincular Telegram'
+        });
+    }
+});
+
+// DELETE - Desvincular Telegram do usuário
+app.delete('/api/users/:userId/telegram', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const headerUserId = req.headers['x-user-id'];
+
+        if (userId !== headerUserId) {
+            return res.status(403).json({
+                success: false,
+                error: 'Acesso negado'
+            });
+        }
+
+        const result = await db.run(
+            'UPDATE users SET telegram_chat_id = NULL WHERE id = ?',
+            [userId]
+        );
+
+        console.log(`✅ Telegram desvinculado do usuário ${userId}`);
+
+        res.json({
+            success: true,
+            message: 'Telegram desvinculado com sucesso'
+        });
+
+    } catch (err) {
+        console.error('❌ Erro ao desvincular Telegram:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao desvincular Telegram'
+        });
+    }
+});
+
+// ===== WEBHOOK DO TELEGRAM =====
+// Rota para receber updates do Telegram (produção)
+app.post(`/telegram-webhook/${process.env.TELEGRAM_BOT_TOKEN}`, (req, res) => {
+    const bot = getBot();
+    if (bot) {
+        bot.processUpdate(req.body);
+    }
+    res.sendStatus(200);
 });
 
 // ===== API - AUTENTICAÇÃO =====
@@ -667,6 +857,87 @@ Apenas a rotina formatada, sem explicações.
     }
 });
 
+// ===== API - GERAR DESCRIÇÃO AUTOMÁTICA POR IA =====
+app.post('/api/ai/generate-description', async (req, res) => {
+    try {
+        const { taskTitle, detailLevel = 'medio' } = req.body;
+
+        if (!taskTitle || taskTitle.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                error: 'Título da tarefa é obrigatório'
+            });
+        }
+
+        console.log(`🤖 Gerando descrição IA para tarefa: "${taskTitle}" (Nível: ${detailLevel})`);
+
+        // Define o nível de detalhamento
+        let detailPrompt = '';
+        switch(detailLevel) {
+            case 'baixo':
+                detailPrompt = 'Crie uma descrição MUITO BREVE (máximo 20 palavras) e direta.';
+                break;
+            case 'medio':
+                detailPrompt = 'Crie uma descrição equilibrada (30-50 palavras) com contexto relevante.';
+                break;
+            case 'alto':
+                detailPrompt = 'Crie uma descrição DETALHADA (60-100 palavras) com passos, contexto e objetivos.';
+                break;
+            default:
+                detailPrompt = 'Crie uma descrição equilibrada (30-50 palavras) com contexto relevante.';
+        }
+
+        const prompt = `Você é um assistente de produtividade inteligente.
+
+Tarefa: "${taskTitle}"
+
+${detailPrompt}
+
+A descrição deve:
+- Explicar brevemente o que envolve essa tarefa
+- Mencionar o objetivo ou resultado esperado
+- Se aplicável, sugerir passos básicos ou considerações
+- Ser profissional e clara
+- Não usar emojis ou formatação especial
+
+Responda APENAS com a descrição, sem introduções ou explicações adicionais.`;
+
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+        console.log("⏳ Aguardando resposta do Gemini...");
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const description = response.text().trim();
+
+        console.log("✅ Descrição gerada com sucesso!");
+
+        res.json({
+            success: true,
+            description,
+            taskTitle,
+            detailLevel,
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (err) {
+        console.error("💥 ERRO ao gerar descrição:", err.message);
+
+        let errorMessage = "Erro ao gerar descrição automática";
+
+        if (err.message?.includes("API key")) {
+            errorMessage = "API Key do Gemini inválida";
+        } else if (err.message?.includes("quota")) {
+            errorMessage = "Limite de requisições excedido";
+        }
+
+        res.status(500).json({
+            success: false,
+            error: errorMessage,
+            details: err.message
+        });
+    }
+});
+
 // ===== API - CONFIGURAÇÕES DO USUÁRIO =====
 
 // GET - Carregar configurações do usuário
@@ -700,7 +971,10 @@ app.get('/api/settings/:userId', async (req, res) => {
                 currentPlan: settings.current_plan,
                 planRenewalDate: settings.plan_renewal_date,
                 viewMode: settings.view_mode || 'lista',
-                emailNotifications: settings.email_notifications !== false // ✅ ADICIONADO (default true)
+                emailNotifications: settings.email_notifications !== false,
+                aiDescriptionsEnabled: settings.ai_descriptions_enabled !== false,
+                aiDetailLevel: settings.ai_detail_level || 'medio',
+                aiOptimizationEnabled: settings.ai_optimization_enabled !== false
             };
             
             res.json({
@@ -728,31 +1002,37 @@ app.post('/api/settings/:userId', async (req, res) => {
         const { userId } = req.params;
         const { settings } = req.body;
         const headerUserId = req.headers['x-user-id'];
-        
+
+        console.log('📥 POST /api/settings/' + userId);
+        console.log('Settings recebidos:', JSON.stringify(settings, null, 2));
+
         if (userId !== headerUserId) {
             return res.status(403).json({
                 success: false,
                 error: 'Acesso negado'
             });
         }
-        
+
         if (!settings || typeof settings !== 'object') {
             return res.status(400).json({
                 success: false,
                 error: 'Configurações inválidas'
             });
         }
-        
+
         // Verifica se já existe configuração para este usuário
         const existing = await db.get(
             'SELECT id FROM user_settings WHERE user_id = ?',
             [userId]
         );
+
+        console.log('Registro existente:', existing ? 'Sim' : 'Não');
         
         if (existing) {
             // Atualiza configurações existentes
+            // Converter booleanos para 0 ou 1 para SQLite
             const result = await db.run(
-                `UPDATE user_settings SET 
+                `UPDATE user_settings SET
                     hide_completed = ?,
                     highlight_urgent = ?,
                     auto_suggestions = ?,
@@ -763,45 +1043,55 @@ app.post('/api/settings/:userId', async (req, res) => {
                     plan_renewal_date = ?,
                     view_mode = ?,
                     email_notifications = ?,
+                    ai_descriptions_enabled = ?,
+                    ai_detail_level = ?,
+                    ai_optimization_enabled = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = ?`,
                 [
-                    settings.hideCompleted || false,
-                    settings.highlightUrgent !== false,
-                    settings.autoSuggestions !== false,
+                    settings.hideCompleted ? 1 : 0,
+                    settings.highlightUrgent !== false ? 1 : 0,
+                    settings.autoSuggestions !== false ? 1 : 0,
                     settings.detailLevel || 'Médio',
-                    settings.darkMode || false,
+                    settings.darkMode ? 1 : 0,
                     settings.primaryColor || '#49a09d',
                     settings.currentPlan || 'pro',
                     settings.planRenewalDate || '30 de dezembro de 2025',
                     settings.viewMode || 'lista',
-                    settings.emailNotifications !== false, // ✅ ADICIONADO (default true)
+                    settings.emailNotifications !== false ? 1 : 0,
+                    settings.aiDescriptionsEnabled !== false ? 1 : 0,
+                    settings.aiDetailLevel || 'medio',
+                    settings.aiOptimizationEnabled !== false ? 1 : 0,
                     userId
                 ]
             );
-            
+
             console.log(`✅ Configurações atualizadas para usuário ${userId}`);
         } else {
             // Cria novas configurações
+            // Converter booleanos para 0 ou 1 para SQLite
             const result = await db.run(
-                `INSERT INTO user_settings 
-                (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date, view_mode, email_notifications)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT INTO user_settings
+                (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date, view_mode, email_notifications, ai_descriptions_enabled, ai_detail_level, ai_optimization_enabled)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     userId,
-                    settings.hideCompleted || false,
-                    settings.highlightUrgent !== false,
-                    settings.autoSuggestions !== false,
+                    settings.hideCompleted ? 1 : 0,
+                    settings.highlightUrgent !== false ? 1 : 0,
+                    settings.autoSuggestions !== false ? 1 : 0,
                     settings.detailLevel || 'Médio',
-                    settings.darkMode || false,
+                    settings.darkMode ? 1 : 0,
                     settings.primaryColor || '#49a09d',
                     settings.currentPlan || 'pro',
                     settings.planRenewalDate || '30 de dezembro de 2025',
                     settings.viewMode || 'lista',
-                    settings.emailNotifications !== false // ✅ ADICIONADO (default true)
+                    settings.emailNotifications !== false ? 1 : 0,
+                    settings.aiDescriptionsEnabled !== false ? 1 : 0,
+                    settings.aiDetailLevel || 'medio',
+                    settings.aiOptimizationEnabled !== false ? 1 : 0
                 ]
             );
-            
+
             console.log(`✅ Configurações criadas para usuário ${userId}`);
         }
         
@@ -812,9 +1102,12 @@ app.post('/api/settings/:userId', async (req, res) => {
         
     } catch (err) {
         console.error('❌ Erro ao salvar configurações:', err);
+        console.error('Detalhes do erro:', err.message);
+        console.error('Stack:', err.stack);
         res.status(500).json({
             success: false,
-            error: 'Erro ao salvar configurações'
+            error: 'Erro ao salvar configurações',
+            details: err.message
         });
     }
 });

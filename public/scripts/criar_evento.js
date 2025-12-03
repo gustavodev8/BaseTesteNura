@@ -666,37 +666,57 @@ async function saveTask() {
     showNotification('❌ Você precisa estar logado');
     return;
   }
-  
+
   try {
+    // Verificar se deve gerar descrição automática
+    let description = currentEditingTask.description || '';
+
+    // Se não há descrição e a IA está habilitada, gerar automaticamente
+    if (!description && window.aiSettings) {
+      const aiConfig = window.aiSettings.get();
+
+      if (aiConfig.descriptionsEnabled) {
+        showNotification('🤖 Gerando descrição com IA...');
+
+        const aiDescription = await window.aiSettings.generateDescription(currentEditingTask.name);
+
+        if (aiDescription) {
+          description = aiDescription;
+          currentEditingTask.description = aiDescription;
+          showNotification('✅ Descrição gerada pela IA!');
+        }
+      }
+    }
+
     const taskToSave = {
       title: currentEditingTask.name,
-      description: currentEditingTask.description || '',
+      description: description,
       user_id: currentUser.id,
       status: currentEditingTask.status,
       priority: currentEditingTask.priority,
       dueDate: currentEditingTask.dueDate
     };
-    
+
     console.log('💾 Salvando tarefa:', taskToSave);
     console.log('👤 Usuário:', currentUser.nome);
-    
+
     const taskId = await saveTaskToDatabase(taskToSave);
-    
+
     if (taskId) {
       currentEditingTask.id = taskId;
       currentEditingTask.title = currentEditingTask.name;
       tasks.push(currentEditingTask);
-      
+
       renderTask(currentEditingTask);
       updateTaskCounts();
-      
+
       showNotification('✅ Tarefa salva no banco!');
     } else {
       showNotification('❌ Erro ao salvar tarefa');
     }
-    
+
     currentEditingTask = null;
-    
+
   } catch (error) {
     console.error('❌ Erro ao salvar tarefa:', error);
     showNotification('❌ Erro ao salvar tarefa');

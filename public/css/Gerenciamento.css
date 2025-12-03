@@ -1757,15 +1757,504 @@ body::after {
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* ===== RESPONSIVO ===== */
+/* ===== RESPONSIVO PROFISSIONAL - MOBILE ===== */
 @media (max-width: 768px) {
-  .hero h1 { font-size: 2rem; }
-  .toolbar { flex-direction: column; }
-  .table-header, .task-row {
-    grid-template-columns: 40px 1fr 80px;
+  /* Container com padding consistente */
+  .container {
+    padding: 0 16px;
   }
-  .table-header div:nth-child(n+4),
-  .task-row > div:nth-child(n+4) {
+
+  /* Navbar - Simples e limpo */
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    padding: 10px 0;
+  }
+
+  .navbar .container {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 0 12px;
+  }
+
+  .navbar-brand {
+    font-size: 1.25rem;
+  }
+
+  .navbar-brand::before {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  /* Menu escondido em mobile - apenas hamburguer */
+  .navbar-nav {
     display: none;
+  }
+
+  .navbar-nav.show {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 60px;
+    left: 12px;
+    right: 12px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 12px;
+    gap: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border-color);
+  }
+
+  .nav-link {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+  }
+
+  .nav-link svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .navbar-toggler {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--gray-100);
+  }
+
+  .navbar-right {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-nav {
+    width: 36px;
+    height: 36px;
+  }
+
+  .btn-nav svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Hero - Compacto e harmonioso */
+  .hero {
+    padding: 28px 20px;
+    margin: 16px auto;
+  }
+
+  .hero h1 {
+    font-size: 1.625rem;
+    margin-bottom: 10px;
+  }
+
+  .hero p {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  /* Header da seção - Limpo e alinhado */
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 16px;
+    margin-bottom: 16px;
+  }
+
+  .d-flex.justify-content-between h2 {
+    font-size: 1.375rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .header-actions .btn {
+    padding: 12px;
+    font-size: 0.875rem;
+  }
+
+  /* Toolbar - Simplificado */
+  .toolbar {
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .view-tabs {
+    width: 100%;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .view-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .view-tab {
+    padding: 10px 18px;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .toolbar-actions .btn {
+    padding: 10px;
+    font-size: 0.8125rem;
+  }
+
+  /* Task Groups - Cards limpos */
+  .task-group {
+    margin-bottom: 16px;
+    border-radius: 12px;
+  }
+
+  .group-header {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .group-status {
+    font-size: 0.6875rem;
+    padding: 6px 12px;
+  }
+
+  .group-count {
+    font-size: 0.8125rem;
+    padding: 5px 12px;
+    min-width: 36px;
+  }
+
+  /* Tabela - Cards individuais MUITO limpos */
+  .task-table {
+    padding: 0;
+  }
+
+  .table-header {
+    display: none;
+  }
+
+  /* Cada tarefa é um card branco independente */
+  .task-row {
+    display: block;
+    padding: 16px;
+    margin: 12px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid rgba(20, 101, 81, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  body.dark-mode .task-row {
+    background: rgba(30, 41, 59, 0.85);
+    border-color: rgba(20, 101, 81, 0.3);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
+  }
+
+  .task-row:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: rgba(20, 101, 81, 0.15);
+    transform: none;
+  }
+
+  body.dark-mode .task-row:hover {
+    background: rgba(30, 41, 59, 0.95);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    border-color: rgba(20, 101, 81, 0.4);
+  }
+
+  /* Nome da tarefa - Destaque no topo */
+  .task-row > div:nth-child(2) {
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(20, 101, 81, 0.08);
+  }
+
+  body.dark-mode .task-row > div:nth-child(2) {
+    border-bottom-color: rgba(20, 101, 81, 0.3);
+  }
+
+  .task-name {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-primary);
+  }
+
+  body.dark-mode .task-name {
+    color: #f1f5f9;
+  }
+
+  /* Checkbox */
+  .task-row > div:first-child {
+    float: left;
+    margin-right: 12px;
+    margin-top: 2px;
+  }
+
+  /* Todos os outros campos - Grid limpo */
+  .task-row > div:nth-child(n+3):nth-child(-n+6) {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(20, 101, 81, 0.05);
+  }
+
+  body.dark-mode .task-row > div:nth-child(n+3):nth-child(-n+6) {
+    border-bottom-color: rgba(20, 101, 81, 0.3);
+  }
+
+  .task-row > div:last-of-type {
+    border-bottom: none;
+  }
+
+  /* Labels fixos e alinhados */
+  .task-row > div:nth-child(3)::before,
+  .task-row > div:nth-child(4)::before,
+  .task-row > div:nth-child(5)::before,
+  .task-row > div:nth-child(6)::before {
+    content: attr(data-label);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  body.dark-mode .task-row > div:nth-child(3)::before,
+  body.dark-mode .task-row > div:nth-child(4)::before,
+  body.dark-mode .task-row > div:nth-child(5)::before,
+  body.dark-mode .task-row > div:nth-child(6)::before {
+    color: #cbd5e1;
+  }
+
+  .task-row > div:nth-child(3)::before {
+    content: 'Responsável';
+  }
+
+  .task-row > div:nth-child(4)::before {
+    content: 'Vencimento';
+  }
+
+  .task-row > div:nth-child(5)::before {
+    content: 'Prioridade';
+  }
+
+  .task-row > div:nth-child(6)::before {
+    content: 'Status';
+  }
+
+  /* Botões de ação - Centralizados */
+  .task-row > div:nth-child(7) {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(20, 101, 81, 0.08);
+  }
+
+  body.dark-mode .task-row > div:nth-child(7) {
+    border-top-color: rgba(20, 101, 81, 0.3);
+  }
+
+  .task-row > div:nth-child(7)::before {
+    display: none;
+  }
+
+  /* Badges - Bem dimensionados */
+  .priority-badge,
+  .status-badge {
+    font-size: 0.6875rem;
+    padding: 5px 10px;
+    white-space: nowrap;
+  }
+
+  .avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.6875rem;
+  }
+
+  /* Botões de ação */
+  .task-row button {
+    padding: 8px 12px;
+    min-height: 36px;
+    font-size: 0.8125rem;
+  }
+
+  /* Add task */
+  .add-task {
+    padding: 14px 16px;
+    font-size: 0.875rem;
+    margin: 0 12px;
+  }
+
+  /* Cards de recursos - compactos */
+  .row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .card {
+    border-radius: 10px;
+  }
+
+  .card img {
+    height: 120px;
+  }
+
+  .card-body {
+    padding: 14px;
+  }
+
+  .card-title {
+    font-size: 0.9375rem;
+    margin-bottom: 6px;
+  }
+
+  .card-text {
+    font-size: 0.8125rem;
+  }
+
+  /* Botões gerais - em linha quando possível */
+  .content-area > .btn {
+    width: 100%;
+    margin-bottom: 8px;
+    margin-right: 0;
+    padding: 10px 16px;
+    font-size: 0.8125rem;
+  }
+
+  /* Espaçamento seções - reduzido */
+  .my-5 {
+    margin: 24px auto;
+  }
+
+  /* Modal adaptado */
+  .modal-content {
+    min-width: auto;
+    width: 90%;
+    padding: 20px 16px;
+  }
+
+  .modal-content h3 {
+    font-size: 1.125rem;
+  }
+
+  .modal-content h3::before {
+    width: 32px;
+    height: 32px;
+  }
+
+  .modal-content p {
+    margin-left: 0;
+    margin-bottom: 16px;
+    font-size: 0.875rem;
+  }
+
+  .modal-input {
+    padding: 12px 14px;
+    font-size: 0.875rem;
+  }
+
+  .modal-buttons .btn {
+    padding: 12px 18px;
+    font-size: 0.875rem;
+  }
+
+  .priority-options,
+  .status-options {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .priority-option,
+  .status-option {
+    padding: 14px 12px;
+  }
+
+  /* Notificação */
+  .notification {
+    right: 12px;
+    left: 12px;
+    top: 12px;
+    font-size: 0.8125rem;
+    padding: 12px 16px;
+  }
+}
+
+/* Mobile pequeno - 480px */
+@media (max-width: 480px) {
+  .navbar-brand {
+    font-size: 1rem;
+  }
+
+  .navbar-brand::before {
+    width: 24px;
+    height: 24px;
+  }
+
+  .nav-link {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+
+  .btn-nav {
+    width: 28px;
+    height: 28px;
+  }
+
+  .hero h1 {
+    font-size: 1.25rem;
+  }
+
+  .hero p {
+    font-size: 0.8125rem;
+  }
+
+  .d-flex.justify-content-between h2 {
+    font-size: 1.125rem;
+  }
+
+  .view-tab {
+    padding: 6px 12px;
+    font-size: 0.6875rem;
+  }
+
+  .task-row {
+    padding: 10px;
+  }
+
+  .task-name {
+    font-size: 0.875rem;
+  }
+
+  .task-row > div:not(:first-child)::before {
+    font-size: 0.625rem;
   }
 }

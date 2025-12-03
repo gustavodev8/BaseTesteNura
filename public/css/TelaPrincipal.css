@@ -181,6 +181,25 @@ body {
   opacity: 0.9;
 }
 
+/* Menu hamburguer - escondido no desktop */
+.navbar-toggler {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.navbar-toggler span {
+  width: 24px;
+  height: 2px;
+  background: var(--gray-700);
+  border-radius: 2px;
+  transition: var(--transition);
+}
+
 /* ===== HERO - CLEAN MINIMAL (OPÇÃO 4) ===== */
 .hero {
   background: var(--white);
@@ -1409,29 +1428,67 @@ footer {
     margin: 0;
   }
 
+  /* Navbar Mobile */
+  .navbar .container {
+    gap: 16px;
+  }
+
   .navbar-toggler {
-    display: block;
-    background: var(--gray-100);
-    border: none;
-    padding: 8px 12px;
-    border-radius: var(--radius);
-    cursor: pointer;
+    display: flex;
+    order: 2;
+  }
+
+  .navbar-left {
+    order: 1;
+    flex: 1;
+  }
+
+  .navbar-right {
+    order: 3;
   }
 
   .navbar-nav {
     display: none;
     flex-direction: column;
     position: absolute;
-    top: 60px;
-    right: 24px;
+    top: 70px;
+    left: 16px;
+    right: 16px;
     background: var(--white);
     border: 1px solid var(--gray-200);
     border-radius: var(--radius-lg);
-    padding: 8px;
-    min-width: 200px;
+    padding: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    z-index: 999;
   }
 
   .navbar-nav.show {
     display: flex;
+  }
+
+  .navbar-nav .nav-link {
+    width: 100%;
+    padding: 12px 16px;
+    justify-content: flex-start;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.125rem;
+  }
+
+  .navbar-brand span {
+    font-size: 1.25rem;
+  }
+
+  .btn-nav {
+    width: 36px;
+    height: 36px;
+  }
+
+  .btn-nav svg {
+    width: 16px;
+    height: 16px;
   }
 }

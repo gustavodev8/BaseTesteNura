@@ -138,44 +138,43 @@
             <section class="section" id="ai">
                 <h2 class="section-title">Assistente IA</h2>
                 <p class="section-subtitle">Configure o comportamento da inteligência artificial</p>
-                
+
+                <div class="setting-group">
+                    <h3 class="group-title">Sugestões automáticas</h3>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Descrições por IA</div>
+                            <div class="setting-description">A IA adiciona descrições automáticas às tarefas criadas</div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="toggle-switch active" id="aiDescriptionsToggle"></div>
+                        </div>
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">Nível de detalhamento</div>
+                            <div class="setting-description">Quanto de informação a IA deve adicionar nas descrições</div>
+                        </div>
+                        <div class="setting-control">
+                            <select id="aiDetailLevel">
+                                <option value="baixo">Baixo - Breve e direto</option>
+                                <option value="medio" selected>Médio - Equilibrado</option>
+                                <option value="alto">Alto - Detalhado e completo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="setting-group">
                     <h3 class="group-title">Geração de rotinas</h3>
                     <div class="setting-row">
                         <div class="setting-info">
-                            <div class="setting-label">Sugestões automáticas</div>
-                            <div class="setting-description">A IA sugere melhorias</div>
+                            <div class="setting-label">Sugestões de otimização</div>
+                            <div class="setting-description">A IA sugere melhorias na organização de tarefas</div>
                         </div>
                         <div class="setting-control">
-                            <div class="toggle-switch active"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-row">
-                        <div class="setting-info">
-                            <div class="setting-label">Nível de detalhamento</div>
-                            <div class="setting-description">Informações das rotinas</div>
-                        </div>
-                        <div class="setting-control">
-                            <select>
-                                <option>Básico</option>
-                                <option selected>Médio</option>
-                                <option>Detalhado</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-row">
-                        <div class="setting-info">
-                            <div class="setting-label">Horário padrão</div>
-                            <div class="setting-description">Período para geração</div>
-                        </div>
-                        <div class="setting-control">
-                            <div class="time-range">
-                                <input type="time" value="08:00">
-                                <span class="time-separator">—</span>
-                                <input type="time" value="18:00">
-                            </div>
+                            <div class="toggle-switch active" id="aiOptimizationToggle"></div>
                         </div>
                     </div>
                 </div>
@@ -224,7 +223,7 @@
                 <!-- ========================================== -->
                 <div class="setting-group">
                     <h3 class="group-title">WhatsApp</h3>
-                    
+
                     <div class="setting-row">
                         <div class="setting-info">
                             <div class="setting-label">📱 Resumo diário por WhatsApp</div>
@@ -235,6 +234,54 @@
                                 <input type="checkbox" id="whatsapp-notifications">
                                 <span class="whatsapp-slider"></span>
                             </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- NOVA SEÇÃO: NOTIFICAÇÕES POR TELEGRAM -->
+                <!-- ========================================== -->
+                <div class="setting-group">
+                    <h3 class="group-title">Telegram</h3>
+
+                    <div class="telegram-status" id="telegramStatus">
+                        <div class="status-icon">💬</div>
+                        <div class="status-info">
+                            <p class="status-title">Telegram não vinculado</p>
+                            <p class="status-description">Conecte seu Telegram para receber notificações aleatórias durante o dia</p>
+                        </div>
+                    </div>
+
+                    <div class="setting-row telegram-input-row" id="telegramInputRow">
+                        <div class="setting-info">
+                            <div class="setting-label">🔗 Código de Vinculação</div>
+                            <div class="setting-description">
+                                1. Abra o Telegram<br>
+                                2. Busque por <strong>@SeuBotNura</strong><br>
+                                3. Digite /start e depois /vincular<br>
+                                4. Cole o código aqui e salve
+                            </div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="telegram-input-group">
+                                <input type="text" id="telegramChatId" placeholder="Cole o código aqui" class="telegram-input">
+                                <button id="saveTelegram" class="btn-telegram">Vincular</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-row telegram-connected-row" id="telegramConnectedRow" style="display: none;">
+                        <div class="setting-info">
+                            <div class="setting-label">✅ Telegram Conectado</div>
+                            <div class="setting-description">
+                                Você receberá:<br>
+                                • Notificações aleatórias (8h-20h)<br>
+                                • Alertas de tarefas urgentes<br>
+                                • Resumos personalizados
+                            </div>
+                        </div>
+                        <div class="setting-control">
+                            <button id="unlinkTelegram" class="btn-telegram btn-unlink">Desvincular</button>
                         </div>
                     </div>
                     
@@ -413,6 +460,7 @@
         // ===== OS TOGGLES E CORES SÃO GERENCIADOS PELO settings.js =====
         // Não adicionar listeners aqui para evitar conflito
     </script>
+    <script src="../scripts/aiSettings.js"></script>
     <script src="../scripts/settings.js"></script>
 </body>
 </html>

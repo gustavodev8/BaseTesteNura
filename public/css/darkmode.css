@@ -45,6 +45,18 @@ body.dark-mode .btn-nav:hover {
   color: #f1f5f9 !important;
 }
 
+/* Navbar toggler (hamburguer) */
+body.dark-mode .navbar-toggler span {
+  background: #cbd5e1 !important;
+}
+
+/* Navbar mobile dropdown */
+body.dark-mode .navbar-nav {
+  background: rgba(30, 41, 59, 0.98) !important;
+  border-color: rgba(20, 101, 81, 0.3) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+}
+
 /* Hero Section Escuro */
 body.dark-mode .hero {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #146551 100%) !important;

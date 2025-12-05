@@ -18,7 +18,8 @@ const nuraSettings = {
     currentPlan: 'pro',
     planRenewalDate: '30 de dezembro de 2025',
     viewMode: 'lista',
-    emailNotifications: true
+    emailNotifications: true,
+    weeklyReport: true
 };
 
 // ===== OBTER ID DO USUÁRIO =====
@@ -370,24 +371,48 @@ async function toggleAutoSuggestions(enabled) {
 // ===== NOTIFICAÇÕES POR EMAIL =====
 async function toggleEmailNotifications(enabled) {
     nuraSettings.emailNotifications = enabled;
-    
+
     // Atualizar toggle visual
     const toggle = Array.from(document.querySelectorAll('.toggle-switch')).find(t => {
         const row = t.closest('.setting-row');
         const text = row?.textContent.toLowerCase();
         return text && (text.includes('resumo diário') || text.includes('email'));
     });
-    
+
     if (toggle) {
         toggle.classList.toggle('active', enabled);
     }
-    
+
     await saveSettingsToDatabase();
-    
+
     if (enabled) {
         showNotification('📧 Resumo diário por email ATIVADO - Você receberá emails às 07:58 com suas tarefas pendentes');
     } else {
         showNotification('📪 Resumo diário por email DESATIVADO - Você não receberá mais emails automáticos');
+    }
+}
+
+// ===== RELATÓRIO SEMANAL =====
+async function toggleWeeklyReport(enabled) {
+    nuraSettings.weeklyReport = enabled;
+
+    // Atualizar toggle visual
+    const toggle = Array.from(document.querySelectorAll('.toggle-switch')).find(t => {
+        const row = t.closest('.setting-row');
+        const text = row?.textContent.toLowerCase();
+        return text && text.includes('relatório semanal');
+    });
+
+    if (toggle) {
+        toggle.classList.toggle('active', enabled);
+    }
+
+    await saveSettingsToDatabase();
+
+    if (enabled) {
+        showNotification('📊 Relatório semanal ATIVADO - Toda segunda às 08:00 você receberá análise de produtividade com IA');
+    } else {
+        showNotification('📪 Relatório semanal DESATIVADO - Você não receberá mais relatórios automáticos');
     }
 }
 
@@ -623,6 +648,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 toggleAutoSuggestions(!nuraSettings.autoSuggestions);
             } else if (text.includes('resumo diário') || text.includes('email')) {
                 toggleEmailNotifications(!nuraSettings.emailNotifications);
+            } else if (text.includes('relatório semanal')) {
+                toggleWeeklyReport(!nuraSettings.weeklyReport);
             } else {
                 // Toggle genérico para outros botões
                 this.classList.toggle('active');

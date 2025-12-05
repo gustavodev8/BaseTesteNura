@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Configurações de IA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section h2 {
+            color: #49a09d;
+            margin-top: 0;
+        }
+        button {
+            background: #49a09d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3a8582;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste de Configurações de IA</h1>
+    <p>Use esta página para testar todas as funcionalidades das configurações de IA</p>
+
+    <!-- TESTE 1: Carregar Configurações -->
+    <div class="test-section">
+        <h2>1️⃣ Carregar Configurações</h2>
+        <p>Simula login de usuário e carrega configurações do banco</p>
+        <label>User ID: <input type="number" id="userId" value="1"></label>
+        <button onclick="testLoadSettings()">Carregar Configurações</button>
+        <div id="loadResult" class="result"></div>
+    </div>
+
+    <!-- TESTE 2: Salvar Configurações -->
+    <div class="test-section">
+        <h2>2️⃣ Salvar Configurações</h2>
+        <p>Salva novas configurações no banco</p>
+        <label>
+            <input type="checkbox" id="descriptionsEnabled" checked> Descrições Automáticas
+        </label><br>
+        <label>
+            Nível:
+            <select id="detailLevel">
+                <option value="baixo">Baixo</option>
+                <option value="medio" selected>Médio</option>
+                <option value="alto">Alto</option>
+            </select>
+        </label><br>
+        <label>
+            <input type="checkbox" id="optimizationEnabled" checked> Otimização
+        </label><br>
+        <button onclick="testSaveSettings()">Salvar no Banco</button>
+        <div id="saveResult" class="result"></div>
+    </div>
+
+    <!-- TESTE 3: Gerar Descrição -->
+    <div class="test-section">
+        <h2>3️⃣ Gerar Descrição com IA</h2>
+        <p>Testa a geração de descrição automática</p>
+        <label>
+            Título da tarefa:
+            <input type="text" id="taskTitle" value="Estudar React hooks" style="width: 300px;">
+        </label><br>
+        <label>
+            Nível de detalhamento:
+            <select id="genDetailLevel">
+                <option value="baixo">Baixo (~20 palavras)</option>
+                <option value="medio" selected>Médio (~30-50 palavras)</option>
+                <option value="alto">Alto (~60-100 palavras)</option>
+            </select>
+        </label><br>
+        <button onclick="testGenerateDescription()">Gerar Descrição</button>
+        <div id="genResult" class="result"></div>
+    </div>
+
+    <!-- TESTE 4: Verificar Banco -->
+    <div class="test-section">
+        <h2>4️⃣ Verificar Banco de Dados</h2>
+        <p>Mostra todas as configurações de IA armazenadas</p>
+        <button onclick="testCheckDatabase()">Verificar Banco</button>
+        <div id="dbResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_URL = window.location.hostname === 'localhost'
+            ? 'http://localhost:3000'
+            : 'https://basetestenura-3.onrender.com';
+
+        function log(elementId, message, isError = false) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = 'result ' + (isError ? 'error' : 'success');
+        }
+
+        async function testLoadSettings() {
+            const userId = document.getElementById('userId').value;
+            log('loadResult', 'Carregando...');
+
+            try {
+                const response = await fetch(`${API_URL}/api/settings/${userId}`, {
+                    headers: {
+                        'x-user-id': userId
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    log('loadResult',
+                        `✅ Configurações carregadas!\n\n` +
+                        `Descrições Automáticas: ${data.settings.aiDescriptionsEnabled ? 'ATIVADO' : 'DESATIVADO'}\n` +
+                        `Nível de Detalhamento: ${data.settings.aiDetailLevel}\n` +
+                        `Otimização: ${data.settings.aiOptimizationEnabled ? 'ATIVADO' : 'DESATIVADO'}\n\n` +
+                        JSON.stringify(data.settings, null, 2)
+                    );
+
+                    // Atualizar campos do formulário
+                    document.getElementById('descriptionsEnabled').checked = data.settings.aiDescriptionsEnabled;
+                    document.getElementById('detailLevel').value = data.settings.aiDetailLevel;
+                    document.getElementById('optimizationEnabled').checked = data.settings.aiOptimizationEnabled;
+                } else {
+                    log('loadResult', `❌ ${data.error}`, true);
+                }
+            } catch (error) {
+                log('loadResult', `❌ Erro: ${error.message}`, true);
+            }
+        }
+
+        async function testSaveSettings() {
+            const userId = document.getElementById('userId').value;
+            const descriptionsEnabled = document.getElementById('descriptionsEnabled').checked;
+            const detailLevel = document.getElementById('detailLevel').value;
+            const optimizationEnabled = document.getElementById('optimizationEnabled').checked;
+
+            log('saveResult', 'Salvando...');
+
+            try {
+                const response = await fetch(`${API_URL}/api/settings/${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-id': userId
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        settings: {
+                            hideCompleted: false,
+                            highlightUrgent: true,
+                            autoSuggestions: true,
+                            detailLevel: 'Médio',
+                            darkMode: false,
+                            primaryColor: '#49a09d',
+                            currentPlan: 'pro',
+                            planRenewalDate: '30 de dezembro de 2025',
+                            viewMode: 'lista',
+                            emailNotifications: true,
+                            aiDescriptionsEnabled: descriptionsEnabled,
+                            aiDetailLevel: detailLevel,
+                            aiOptimizationEnabled: optimizationEnabled
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    log('saveResult',
+                        `✅ Configurações salvas com sucesso!\n\n` +
+                        `Descrições: ${descriptionsEnabled ? 'ATIVADO' : 'DESATIVADO'}\n` +
+                        `Nível: ${detailLevel}\n` +
+                        `Otimização: ${optimizationEnabled ? 'ATIVADO' : 'DESATIVADO'}`
+                    );
+                } else {
+                    log('saveResult', `❌ ${data.error}\n${data.details || ''}`, true);
+                }
+            } catch (error) {
+                log('saveResult', `❌ Erro: ${error.message}`, true);
+            }
+        }
+
+        async function testGenerateDescription() {
+            const taskTitle = document.getElementById('taskTitle').value;
+            const detailLevel = document.getElementById('genDetailLevel').value;
+
+            log('genResult', 'Gerando descrição com IA...');
+
+            try {
+                const response = await fetch(`${API_URL}/api/ai/generate-description`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        taskTitle,
+                        detailLevel
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const wordCount = data.description.split(' ').length;
+                    log('genResult',
+                        `✅ Descrição gerada!\n\n` +
+                        `Tarefa: "${data.taskTitle}"\n` +
+                        `Nível: ${data.detailLevel}\n` +
+                        `Palavras: ${wordCount}\n\n` +
+                        `Descrição:\n"${data.description}"`
+                    );
+                } else {
+                    log('genResult', `❌ ${data.error}`, true);
+                }
+            } catch (error) {
+                log('genResult', `❌ Erro: ${error.message}`, true);
+            }
+        }
+
+        async function testCheckDatabase() {
+            const userId = document.getElementById('userId').value;
+            log('dbResult', 'Verificando banco...');
+
+            try {
+                const response = await fetch(`${API_URL}/api/settings/${userId}`, {
+                    headers: {
+                        'x-user-id': userId
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    log('dbResult',
+                        `✅ Dados no banco de dados:\n\n` +
+                        JSON.stringify(data.settings, null, 2)
+                    );
+                } else if (response.status === 404) {
+                    log('dbResult',
+                        `⚠️ Nenhuma configuração encontrada para o usuário ${userId}\n\n` +
+                        `Clique em "Salvar no Banco" para criar configurações.`
+                    );
+                } else {
+                    log('dbResult', `❌ ${data.error}`, true);
+                }
+            } catch (error) {
+                log('dbResult', `❌ Erro: ${error.message}`, true);
+            }
+        }
+
+        // Simular login local
+        localStorage.setItem('nura_user', JSON.stringify({
+            id: 1,
+            name: 'Usuário Teste',
+            email: 'teste@nura.com'
+        }));
+
+        console.log('🧪 Página de teste carregada!');
+        console.log('📝 User ID simulado: 1');
+        console.log('🌐 API URL:', API_URL);
+    </script>
+</body>
+</html>

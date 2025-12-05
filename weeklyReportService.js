@@ -216,8 +216,8 @@ Continue assim! 💪
 NURA - Seu assistente de produtividade
                     `.trim();
 
-                    // Enviar por email (se disponível)
-                    if (user.email && process.env.EMAIL_ENABLED) {
+                    // Enviar por email (se usuário tiver email cadastrado)
+                    if (user.email) {
                         try {
                             const { enviarEmail } = require('./emailService');
                             await enviarEmail(
@@ -229,6 +229,8 @@ NURA - Seu assistente de produtividade
                         } catch (emailError) {
                             console.error(`❌ Erro ao enviar email para ${user.email}:`, emailError.message);
                         }
+                    } else {
+                        console.log(`⚠️ Usuário ${user.name} não tem email cadastrado`);
                     }
 
                     // Enviar por Telegram (se disponível)

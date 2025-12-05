@@ -413,7 +413,124 @@ async function enviarResumoParaTodos() {
     }
 }
 
+/**
+ * Envia email genérico (usado para relatórios semanais e outras mensagens)
+ * @param {string} destinatario - Email do destinatário
+ * @param {string} assunto - Assunto do email
+ * @param {string} mensagem - Corpo do email (texto simples)
+ * @returns {Object} Resultado do envio
+ */
+async function enviarEmail(destinatario, assunto, mensagem) {
+    try {
+        console.log(`📧 Enviando email para ${destinatario}...`);
+
+        // Converter texto simples em HTML formatado
+        const htmlContent = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #49a09d 0%, #5f9ea0 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .message {
+            white-space: pre-wrap;
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #49a09d;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 ${assunto}</h1>
+        </div>
+        <div class="content">
+            <div class="message">${mensagem}</div>
+        </div>
+        <div class="footer">
+            <p>NURA - Seu assistente de produtividade</p>
+            <p>Este é um email automático, por favor não responda.</p>
+        </div>
+    </div>
+</body>
+</html>
+        `.trim();
+
+        const msg = {
+            to: destinatario,
+            from: process.env.SENDGRID_FROM_EMAIL || 'noreply@nura.com',
+            subject: assunto,
+            text: mensagem,
+            html: htmlContent
+        };
+
+        await sgMail.send(msg);
+
+        console.log(`✅ Email enviado com sucesso para ${destinatario}`);
+
+        return {
+            success: true,
+            sent: true,
+            email: destinatario
+        };
+
+    } catch (error) {
+        console.error(`❌ Erro ao enviar email para ${destinatario}:`, error.message);
+
+        if (error.response) {
+            console.error('Detalhes do erro SendGrid:', error.response.body);
+        }
+
+        return {
+            success: false,
+            sent: false,
+            error: error.message,
+            email: destinatario
+        };
+    }
+}
+
 module.exports = {
     enviarResumoDiario,
-    enviarResumoParaTodos
+    enviarResumoParaTodos,
+    enviarEmail
 };

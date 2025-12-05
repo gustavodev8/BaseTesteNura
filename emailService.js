@@ -5,6 +5,17 @@ const db = require('./database');
 // Configurar SendGrid com a API Key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+// Aceitar EMAIL_FROM ou SENDGRID_FROM_EMAIL
+const EMAIL_FROM = process.env.EMAIL_FROM || process.env.SENDGRID_FROM_EMAIL;
+const EMAIL_NAME = process.env.EMAIL_NAME || process.env.SENDGRID_FROM_NAME || 'NURA - Sistema de Tarefas';
+
+// Debug: mostrar configurações ao iniciar
+console.log('📧 ===== CONFIGURAÇÃO DE EMAIL =====');
+console.log(`   SENDGRID_API_KEY: ${process.env.SENDGRID_API_KEY ? '✅ Configurada' : '❌ NÃO configurada'}`);
+console.log(`   EMAIL_FROM: ${EMAIL_FROM || '❌ NÃO CONFIGURADO'}`);
+console.log(`   EMAIL_NAME: ${EMAIL_NAME}`);
+console.log('=====================================');
+
 /**
  * Envia resumo diário para um usuário específico
  * @param {number} userId - ID do usuário
@@ -316,8 +327,8 @@ Este é um email automático enviado pelo sistema Nura.
         const msg = {
             to: userEmail,
             from: {
-                email: process.env.SENDGRID_FROM_EMAIL,
-                name: process.env.SENDGRID_FROM_NAME || 'Nura - Sistema de Tarefas'
+                email: EMAIL_FROM,
+                name: EMAIL_NAME
             },
             subject: `📋 Seu Resumo Diário - ${tasks.length} tarefa${tasks.length > 1 ? 's' : ''} pendente${tasks.length > 1 ? 's' : ''}`,
             text: textContent,
@@ -497,7 +508,7 @@ async function enviarEmail(destinatario, assunto, mensagem) {
 
         const msg = {
             to: destinatario,
-            from: process.env.SENDGRID_FROM_EMAIL || 'noreply@nura.com',
+            from: EMAIL_FROM,
             subject: assunto,
             text: mensagem,
             html: htmlContent

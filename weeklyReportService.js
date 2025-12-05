@@ -46,13 +46,26 @@ function calculateWeeklyStats(tasks) {
     console.log(`   Total de tarefas recebidas: ${tasks.length}`);
 
     const total = tasks.length;
-    const completed = tasks.filter(t => t.status === 'concluido').length;
-    const inProgress = tasks.filter(t => t.status === 'progresso').length;
-    const pending = tasks.filter(t => t.status === 'pendente').length;
+
+    // Aceitar status em português E inglês
+    const completed = tasks.filter(t =>
+        t.status === 'concluido' || t.status === 'completed' || t.status === 'done'
+    ).length;
+
+    const inProgress = tasks.filter(t =>
+        t.status === 'progresso' || t.status === 'in_progress' || t.status === 'in-progress'
+    ).length;
+
+    const pending = tasks.filter(t =>
+        t.status === 'pendente' || t.status === 'pending' || t.status === 'todo'
+    ).length;
 
     console.log(`   Status - Concluídas: ${completed}, Progresso: ${inProgress}, Pendentes: ${pending}`);
 
-    // Debug: verificar quais valores de priority existem
+    // Debug: verificar quais valores de status e priority existem
+    const statusValues = [...new Set(tasks.map(t => t.status))];
+    console.log(`   ⚠️ Valores de STATUS encontrados no banco: "${statusValues.join('", "')}"`);
+
     const priorityValues = [...new Set(tasks.map(t => t.priority))];
     console.log(`   Valores de priority encontrados: ${priorityValues.join(', ')}`);
 
@@ -69,7 +82,9 @@ function calculateWeeklyStats(tasks) {
     const overdue = tasks.filter(t =>
         t.due_date &&
         new Date(t.due_date) < now &&
-        t.status !== 'concluido'
+        t.status !== 'concluido' &&
+        t.status !== 'completed' &&
+        t.status !== 'done'
     ).length;
 
     return {
@@ -107,7 +122,7 @@ Prioridades:
 
 **TAREFAS DA SEMANA:**
 ${tasks.slice(0, 10).map((t, i) =>
-    `${i + 1}. ${t.name} - ${t.status} (Prioridade: ${t.priority})`
+    `${i + 1}. ${t.name || t.title || t.description || 'Sem título'} - ${t.status} (Prioridade: ${t.priority})`
 ).join('\n')}
 
 **SUA MISSÃO:**

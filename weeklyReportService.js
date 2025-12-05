@@ -14,13 +14,24 @@ async function getWeeklyTasks(userId) {
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const oneWeekAgoStr = oneWeekAgo.toISOString().split('T')[0];
 
+    // Buscar todas as tarefas que foram criadas OU atualizadas na última semana
     const tasks = await db.query(
         `SELECT * FROM tasks
          WHERE user_id = $1
-         AND created_at >= $2
+         AND (created_at >= $2 OR updated_at >= $2)
          ORDER BY created_at DESC`,
         [userId, oneWeekAgoStr]
     );
+
+    console.log(`📊 Encontradas ${tasks.length} tarefas da última semana para usuário ${userId}`);
+
+    // Debug: mostrar contagem por status
+    const statusCount = {
+        concluido: tasks.filter(t => t.status === 'concluido').length,
+        progresso: tasks.filter(t => t.status === 'progresso').length,
+        pendente: tasks.filter(t => t.status === 'pendente').length
+    };
+    console.log(`   Status: ${statusCount.concluido} concluídas, ${statusCount.progresso} em progresso, ${statusCount.pendente} pendentes`);
 
     return tasks;
 }
@@ -29,6 +40,8 @@ async function getWeeklyTasks(userId) {
  * Calcula estatísticas da semana
  */
 function calculateWeeklyStats(tasks) {
+    console.log('📊 Calculando estatísticas...');
+
     const total = tasks.length;
     const completed = tasks.filter(t => t.status === 'concluido').length;
     const inProgress = tasks.filter(t => t.status === 'progresso').length;
@@ -47,6 +60,10 @@ function calculateWeeklyStats(tasks) {
         new Date(t.due_date) < now &&
         t.status !== 'concluido'
     ).length;
+
+    console.log(`   📈 Total: ${total} | Concluídas: ${completed} (${completionRate}%)`);
+    console.log(`   🚧 Em progresso: ${inProgress} | Pendentes: ${pending} | Atrasadas: ${overdue}`);
+    console.log(`   🎯 Prioridades - Alta: ${highPriority} | Média: ${mediumPriority} | Baixa: ${lowPriority}`);
 
     return {
         total,

@@ -14,24 +14,26 @@ async function getWeeklyTasks(userId) {
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const oneWeekAgoStr = oneWeekAgo.toISOString().split('T')[0];
 
-    // Buscar todas as tarefas que foram criadas OU atualizadas na última semana
+    console.log(`🔍 Buscando tarefas para userId=${userId} desde ${oneWeekAgoStr}`);
+
     const tasks = await db.query(
         `SELECT * FROM tasks
          WHERE user_id = $1
-         AND (created_at >= $2 OR updated_at >= $2)
+         AND created_at >= $2
          ORDER BY created_at DESC`,
         [userId, oneWeekAgoStr]
     );
 
-    console.log(`📊 Encontradas ${tasks.length} tarefas da última semana para usuário ${userId}`);
+    console.log(`📊 Encontradas ${tasks.length} tarefas`);
 
-    // Debug: mostrar contagem por status
-    const statusCount = {
-        concluido: tasks.filter(t => t.status === 'concluido').length,
-        progresso: tasks.filter(t => t.status === 'progresso').length,
-        pendente: tasks.filter(t => t.status === 'pendente').length
-    };
-    console.log(`   Status: ${statusCount.concluido} concluídas, ${statusCount.progresso} em progresso, ${statusCount.pendente} pendentes`);
+    if (tasks.length > 0) {
+        console.log('🔍 Primeira tarefa de exemplo:', {
+            name: tasks[0].name,
+            status: tasks[0].status,
+            priority: tasks[0].priority,
+            created_at: tasks[0].created_at
+        });
+    }
 
     return tasks;
 }
@@ -41,15 +43,24 @@ async function getWeeklyTasks(userId) {
  */
 function calculateWeeklyStats(tasks) {
     console.log('📊 Calculando estatísticas...');
+    console.log(`   Total de tarefas recebidas: ${tasks.length}`);
 
     const total = tasks.length;
     const completed = tasks.filter(t => t.status === 'concluido').length;
     const inProgress = tasks.filter(t => t.status === 'progresso').length;
     const pending = tasks.filter(t => t.status === 'pendente').length;
 
+    console.log(`   Status - Concluídas: ${completed}, Progresso: ${inProgress}, Pendentes: ${pending}`);
+
+    // Debug: verificar quais valores de priority existem
+    const priorityValues = [...new Set(tasks.map(t => t.priority))];
+    console.log(`   Valores de priority encontrados: ${priorityValues.join(', ')}`);
+
     const highPriority = tasks.filter(t => t.priority === 'high').length;
     const mediumPriority = tasks.filter(t => t.priority === 'medium').length;
     const lowPriority = tasks.filter(t => t.priority === 'low').length;
+
+    console.log(`   Prioridades - Alta: ${highPriority}, Média: ${mediumPriority}, Baixa: ${lowPriority}`);
 
     const completionRate = total > 0 ? ((completed / total) * 100).toFixed(1) : 0;
 
@@ -60,10 +71,6 @@ function calculateWeeklyStats(tasks) {
         new Date(t.due_date) < now &&
         t.status !== 'concluido'
     ).length;
-
-    console.log(`   📈 Total: ${total} | Concluídas: ${completed} (${completionRate}%)`);
-    console.log(`   🚧 Em progresso: ${inProgress} | Pendentes: ${pending} | Atrasadas: ${overdue}`);
-    console.log(`   🎯 Prioridades - Alta: ${highPriority} | Média: ${mediumPriority} | Baixa: ${lowPriority}`);
 
     return {
         total,

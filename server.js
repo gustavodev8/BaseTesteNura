@@ -62,10 +62,10 @@ db.initializeDatabase(); // Cria tabelas se não existirem~
             SELECT column_name
             FROM information_schema.columns
             WHERE table_name = 'user_settings'
-            AND column_name IN ('ai_descriptions_enabled', 'ai_detail_level', 'ai_optimization_enabled')
+            AND column_name IN ('ai_descriptions_enabled', 'ai_detail_level', 'ai_optimization_enabled', 'weekly_report')
         `);
 
-        if (checkAIColumns.length < 3) {
+        if (checkAIColumns.length < 4) {
             console.log('🔄 Adicionando colunas de IA na tabela user_settings...');
 
             // Adicionar ai_descriptions_enabled
@@ -93,6 +93,15 @@ db.initializeDatabase(); // Cria tabelas se não existirem~
                     ADD COLUMN ai_optimization_enabled BOOLEAN DEFAULT TRUE
                 `);
                 console.log('✅ Coluna ai_optimization_enabled adicionada');
+            }
+
+            // Adicionar weekly_report
+            if (!checkAIColumns.find(c => c.column_name === 'weekly_report')) {
+                await db.query(`
+                    ALTER TABLE user_settings
+                    ADD COLUMN weekly_report BOOLEAN DEFAULT TRUE
+                `);
+                console.log('✅ Coluna weekly_report adicionada');
             }
 
             console.log('✅ Todas as colunas de IA foram adicionadas com sucesso!');
@@ -972,6 +981,7 @@ app.get('/api/settings/:userId', async (req, res) => {
                 planRenewalDate: settings.plan_renewal_date,
                 viewMode: settings.view_mode || 'lista',
                 emailNotifications: settings.email_notifications !== false,
+                weeklyReport: settings.weekly_report !== false,
                 aiDescriptionsEnabled: settings.ai_descriptions_enabled !== false,
                 aiDetailLevel: settings.ai_detail_level || 'medio',
                 aiOptimizationEnabled: settings.ai_optimization_enabled !== false
@@ -1043,6 +1053,7 @@ app.post('/api/settings/:userId', async (req, res) => {
                     plan_renewal_date = ?,
                     view_mode = ?,
                     email_notifications = ?,
+                    weekly_report = ?,
                     ai_descriptions_enabled = ?,
                     ai_detail_level = ?,
                     ai_optimization_enabled = ?,
@@ -1059,6 +1070,7 @@ app.post('/api/settings/:userId', async (req, res) => {
                     settings.planRenewalDate || '30 de dezembro de 2025',
                     settings.viewMode || 'lista',
                     settings.emailNotifications !== false ? 1 : 0,
+                    settings.weeklyReport !== false ? 1 : 0,
                     settings.aiDescriptionsEnabled !== false ? 1 : 0,
                     settings.aiDetailLevel || 'medio',
                     settings.aiOptimizationEnabled !== false ? 1 : 0,
@@ -1072,8 +1084,8 @@ app.post('/api/settings/:userId', async (req, res) => {
             // Converter booleanos para 0 ou 1 para SQLite
             const result = await db.run(
                 `INSERT INTO user_settings
-                (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date, view_mode, email_notifications, ai_descriptions_enabled, ai_detail_level, ai_optimization_enabled)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                (user_id, hide_completed, highlight_urgent, auto_suggestions, detail_level, dark_mode, primary_color, current_plan, plan_renewal_date, view_mode, email_notifications, weekly_report, ai_descriptions_enabled, ai_detail_level, ai_optimization_enabled)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     userId,
                     settings.hideCompleted ? 1 : 0,
@@ -1086,6 +1098,7 @@ app.post('/api/settings/:userId', async (req, res) => {
                     settings.planRenewalDate || '30 de dezembro de 2025',
                     settings.viewMode || 'lista',
                     settings.emailNotifications !== false ? 1 : 0,
+                    settings.weeklyReport !== false ? 1 : 0,
                     settings.aiDescriptionsEnabled !== false ? 1 : 0,
                     settings.aiDetailLevel || 'medio',
                     settings.aiOptimizationEnabled !== false ? 1 : 0
@@ -1194,8 +1207,83 @@ cron.schedule('58 7 * * *', async () => {
 });
 
 console.log('⏰ Cron job configurado: Resumos diários às 07:58 (Horário de Brasília)');
+
+// ===== CRON JOB - RELATÓRIOS SEMANAIS =====
+// Toda segunda-feira às 08:00 (Horário de Brasília)
+const weeklyReportService = require('./weeklyReportService');
+
+cron.schedule('0 8 * * 1', async () => {
+    console.log('📊 ========================================');
+    console.log('📊 INICIANDO ENVIO DE RELATÓRIOS SEMANAIS');
+    console.log('📊 ========================================');
+
+    try {
+        const result = await weeklyReportService.sendWeeklyReportsToAll();
+        console.log(`✅ Relatórios enviados: ${result.sent}/${result.total}`);
+    } catch (error) {
+        console.error('❌ Erro no cron job de relatórios semanais:', error);
+    }
+}, {
+    timezone: "America/Sao_Paulo"
+});
+
+console.log('⏰ Cron job configurado: Relatórios semanais às segundas 08:00 (Horário de Brasília)');
 console.log('📧 Serviço de email: SendGrid');
 console.log(`📨 Email remetente: ${process.env.SENDGRID_FROM_EMAIL || 'NÃO CONFIGURADO'}`);
+
+// ===== API - RELATÓRIO SEMANAL COM IA =====
+
+// GET - Gerar relatório semanal para um usuário específico
+app.get('/api/weekly-report/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const headerUserId = req.headers['x-user-id'];
+
+        if (userId !== headerUserId) {
+            return res.status(403).json({
+                success: false,
+                error: 'Acesso negado'
+            });
+        }
+
+        console.log(`📊 Gerando relatório semanal para usuário ${userId}...`);
+
+        const report = await weeklyReportService.generateWeeklyReport(userId);
+
+        if (report.success) {
+            res.json(report);
+        } else {
+            res.status(500).json(report);
+        }
+
+    } catch (err) {
+        console.error('❌ Erro ao gerar relatório:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao gerar relatório semanal',
+            details: err.message
+        });
+    }
+});
+
+// POST - Enviar relatórios semanais para todos os usuários
+app.post('/api/weekly-report/send-all', async (req, res) => {
+    try {
+        console.log('📧 Iniciando envio de relatórios semanais para todos...');
+
+        const result = await weeklyReportService.sendWeeklyReportsToAll();
+
+        res.json(result);
+
+    } catch (err) {
+        console.error('❌ Erro ao enviar relatórios:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao enviar relatórios semanais',
+            details: err.message
+        });
+    }
+});
 
 // ===== KEEP-ALIVE - Previne servidor de "dormir" no plano free =====
 // Faz uma requisição a cada 14 minutos para manter o servidor ativo

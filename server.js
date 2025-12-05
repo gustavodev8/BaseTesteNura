@@ -1233,6 +1233,16 @@ console.log(`📨 Email remetente: ${process.env.SENDGRID_FROM_EMAIL || 'NÃO CO
 
 // ===== API - RELATÓRIO SEMANAL COM IA =====
 
+// GET - Debug: Verificar configuração de email
+app.get('/api/weekly-report/debug/config', async (req, res) => {
+    res.json({
+        sendgrid_configured: !!process.env.SENDGRID_API_KEY,
+        sendgrid_from_email: process.env.SENDGRID_FROM_EMAIL || 'NÃO CONFIGURADO',
+        gemini_configured: !!process.env.GEMINI_API_KEY,
+        database: db.isPostgres ? 'PostgreSQL' : 'SQLite'
+    });
+});
+
 // GET - Gerar relatório semanal para um usuário específico
 app.get('/api/weekly-report/:userId', async (req, res) => {
     try {
